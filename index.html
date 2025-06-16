@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIGHTARM 仕様設計手順書</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">RIGHTARM</h1>
+            <p class="subtitle">仕様設計手順書</p>
+        </div>
+    </header>
+
+    <nav class="sidebar">
+        <ul class="nav-list">
+            <li><a href="#overview" class="nav-link active" onclick="showSection('overview')">概要</a></li>
+            <li><a href="#step1" class="nav-link" onclick="showSection('step1')">1. 目的と範囲の定義</a></li>
+            <li><a href="#step2" class="nav-link" onclick="showSection('step2')">2. ユーザーリサーチとペルソナ設計</a></li>
+            <li><a href="#step3" class="nav-link" onclick="showSection('step3')">3. ユーザージャーニーマップの作成</a></li>
+            <li><a href="#step4" class="nav-link" onclick="showSection('step4')">4. ワイヤーフレーム設計</a></li>
+            <li><a href="#step5" class="nav-link" onclick="showSection('step5')">5. プロトタイピングとレビュー</a></li>
+            <li><a href="#step6" class="nav-link" onclick="showSection('step6')">6. 実装仕様書の整備</a></li>
+            <li><a href="#step7" class="nav-link" onclick="showSection('step7')">7. 開発／テスト／ローンチ</a></li>
+            <li><a href="#step8" class="nav-link" onclick="showSection('step8')">8. 運用・フィードバックループ</a></li>
+            <li><a href="#site-layout" class="nav-link" onclick="showSection('site-layout')">サイト掲載イメージ</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <section id="overview" class="content-section active">
+                <h2>仕様設計手順書（RIGHTARM 公式ガイド）</h2>
+                <p>本ガイドは、RIGHTARM プラットフォームの「使用設計」を円滑に進めるための手順をまとめたものです。プロジェクトメンバーやステークホルダーが共通理解を持ち、効率的に設計から実装までを推進できるよう、以下のステップと成果物の例を参照してください。</p>
+                
+                <div class="process-overview">
+                    <h3>プロセス概要</h3>
+                    <div class="step-grid">
+                        <div class="step-card" onclick="showSection('step1')">
+                            <div class="step-number">1</div>
+                            <h4>目的と範囲の定義</h4>
+                            <p>プラットフォーム導入目的と対象ユーザーの明確化</p>
+                        </div>
+                        <div class="step-card" onclick="showSection('step2')">
+                            <div class="step-number">2</div>
+                            <h4>ユーザーリサーチとペルソナ設計</h4>
+                            <p>ユーザーの課題とニーズの把握、ペルソナ策定</p>
+                        </div>
+                        <div class="step-card" onclick="showSection('step3')">
+                            <div class="step-number">3</div>
+                            <h4>ユーザージャーニーマップの作成</h4>
+                            <p>サービス利用の一連の流れを可視化</p>
+                        </div>
+                        <div class="step-card" onclick="showSection('step4')">
+                            <div class="step-number">4</div>
+                            <h4>ワイヤーフレーム設計</h4>
+                            <p>画面構成要素とレイアウトの決定</p>
+                        </div>
+                        <div class="step-card" onclick="showSection('step5')">
+                            <div class="step-number">5</div>
+                            <h4>プロトタイピングとレビュー</h4>
+                            <p>操作感を確認できるプロトタイプ作成</p>
+                        </div>
+                        <div class="step-card" onclick="showSection('step6')">
+                            <div class="step-number">6</div>
+                            <h4>実装仕様書の整備</h4>
+                            <p>デザイナー・エンジニア間の詳細仕様共有</p>
+                        </div>
+                        <div class="step-card" onclick="showSection('step7')">
+                            <div class="step-number">7</div>
+                            <h4>開発／テスト／ローンチ</h4>
+                            <p>実際の開発とテスト、リリース準備</p>
+                        </div>
+                        <div class="step-card" onclick="showSection('step8')">
+                            <div class="step-number">8</div>
+                            <h4>運用・フィードバックループ</h4>
+                            <p>公開後のモニタリングと改善サイクル</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="step1" class="content-section">
+                <h2>1. 目的と範囲の定義</h2>
+                <p>まずは何のために使用設計を行うのか、どこまでを手順書の対象とするのかを明確にします。具体的には以下の観点で整理します。</p>
+                
+                <div class="checklist">
+                    <h3>✅ 確定事項</h3>
+                    <ul>
+                        <li><strong>サービス名:</strong> RIGHTARM</li>
+                        <li><strong>ミッション:</strong> 全国の企業に、"右腕CFO"を届ける</li>
+                        <li><strong>プラットフォーム導入目的:</strong> CFO⇔企業間マッチングの最適化</li>
+                        <li><strong>対象ユーザー:</strong> 企業担当者、CFO、管理者</li>
+                        <li><strong>収益モデル:</strong> 契約金額の5%仲介手数料</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>成果物のイメージ</h3>
+                    <ul>
+                        <li><strong>ユーザーフロー図:</strong> 登録→検索→スカウト→面談→契約→支払いの流れ</li>
+                        <li><strong>ワイヤーフレーム:</strong> ホーム、検索結果、プロフィール詳細、メッセージ画面、管理画面</li>
+                        <li><strong>プロトタイプ:</strong> 主要機能の操作感確認用</li>
+                    </ul>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('overview')">← 概要に戻る</button>
+                    <button class="btn btn-primary" onclick="showSection('step2')">次のステップ →</button>
+                </div>
+            </section>
+
+            <section id="step2" class="content-section">
+                <h2>2. ユーザーリサーチとペルソナ設計</h2>
+                <p>ユーザーが抱える課題やニーズを把握し、代表的な利用者像（ペルソナ）を策定します。</p>
+                
+                <div class="checklist">
+                    <h3>✅ 確定ペルソナ（詳細版）</h3>
+                    
+                    <h4>CFO側ペルソナ</h4>
+                    <ul>
+                        <li><strong>ペルソナ1：ベテラン戦略型CFO・田中康平さん（50歳）</strong>
+                            <ul>
+                                <li>背景: 大手製造業で財務部長を15年務めた後、独立してCFOとして複数の上場企業支援を経験。IPOや大型M&Aをリードした実績が豊富</li>
+                                <li>ニーズ: 長期プロジェクトで深い信頼関係を築き、資本政策やIR体制構築を一貫して担当できる案件</li>
+                                <li>課題: 小規模・短期の案件ではミスマッチを感じやすく、報酬水準にもシビア</li>
+                                <li>求める機能: 企業の成長ステージや調達規模を見極められる詳細タグ機能、案件金額と稼働日数の明示</li>
+                            </ul>
+                        </li>
+                        <li><strong>ペルソナ2：シェアリングCFO志向のミッドキャリア・鈴木美咲さん（38歳）</strong>
+                            <ul>
+                                <li>背景: 公認会計士資格を持ち、スタートアップでシリーズAの資金調達支援や内部統制構築に携わってきた。複業で複数社をサポートしたい一方、ワークライフバランスも重視</li>
+                                <li>ニーズ: 週1～2日程度のリモート対応で、フェーズの近い企業と複数マッチングしたい</li>
+                                <li>課題: スカウト時に「企業文化」や「期待役割」があいまいだと稼働合意に至りにくい</li>
+                                <li>求める機能: 企業側が求めるミッションやビジョンを詳しく掲載できるプロフィール欄、メッセージテンプレート</li>
+                            </ul>
+                        </li>
+                        <li><strong>ペルソナ3：若手成長志向CFO候補・山本翔太さん（30歳）</strong>
+                            <ul>
+                                <li>背景: 大手コンサルティングファームの財務デューデリジェンス部門出身で、スタートアップに転身して3年。自ら裁量を持って事業成長にコミットできる環境を求める</li>
+                                <li>ニーズ: 資金調達フェーズや業務範囲が明確で、自身のスキルアップにつながるチャレンジングな案件</li>
+                                <li>課題: マッチング時に「実務の裁量範囲」や「上場準備の進捗度」がわかりにくいと応募を躊躇</li>
+                                <li>求める機能: 案件ごとに想定業務一覧・進行度ステータスを公開できるダッシュボード機能</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    
+                    <h4>企業側ペルソナ</h4>
+                    <ul>
+                        <li><strong>ペルソナA：シード期テック創業者・佐藤拓也さん（29歳）</strong>
+                            <ul>
+                                <li>背景: 技術バックグラウンドを持つ創業者で、エンジェルラウンドで数千万円の資金調達を実行済み。財務知識は浅く、基本的な資金繰り管理や次ラウンドの資料作成をサポートしてくれるCFOを探している</li>
+                                <li>ニーズ: 短期的な資金調達アドバイスとキャッシュフロー管理、社内財務フレームワークの立ち上げ支援</li>
+                                <li>課題: 会計用語や投資家の要望がわからず、必要な書類準備に手間取る</li>
+                                <li>求める機能: ベーシックな資金調達タグ、業務支援領域のチェックリスト、チャットでの素早いQ&A</li>
+                            </ul>
+                        </li>
+                        <li><strong>ペルソナB：シリーズA成長企業代表・伊藤里奈さん（35歳）</strong>
+                            <ul>
+                                <li>背景: FinTech領域でシリーズA・5億円調達を完了し、本格的な事業拡大フェーズに入った経営者。投資家への定期報告や次回調達に向けたDD対応体制の構築が急務</li>
+                                <li>ニーズ: 資金調達計画策定、投資家ミーティング資料作成、財務DD対応の実行支援</li>
+                                <li>課題: 社内人材が足りず、決算数字の正確性や資料クオリティに不安を抱える</li>
+                                <li>求める機能: フィルタで「シリーズA以降」「DD対応経験あり」のCFOを即絞り込める検索、レビュー欄での実績確認</li>
+                            </ul>
+                        </li>
+                        <li><strong>ペルソナC：上場準備中の中堅企業CEO・中川達也さん（45歳）</strong>
+                            <ul>
+                                <li>背景: 売上30億円規模で、次期IPOを見据えた内部統制やIR体制整備を求めている。従来の財務メンバーでは対応できない高度なガバナンス構築を外部CFOに依頼したいフェーズ</li>
+                                <li>ニーズ: J-SOX対応、連結決算・開示資料作成、機関投資家向けIR戦略の策定</li>
+                                <li>課題: 内部に高度専門人材がおらず、外部CFOからの提案内容やスコープの妥当性を判定しにくい</li>
+                                <li>求める機能: 業務範囲・期間・報酬が事前に明示されたプロジェクト一覧、専門領域タグによる絞り込み</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>🎯 ペルソナ精緻化のこだわりポイント</h3>
+                    <ul>
+                        <li><strong>利用者像の詳細設計:</strong> 3～5つのペルソナを設定し、企業側・CFO側それぞれの典型的な課題とゴールを明確化</li>
+                        <li><strong>マッチング精度向上:</strong> ペルソナごとに提供価値を擦り合わせ、最適なマッチングを実現</li>
+                        <li><strong>継続的なブラッシュアップ:</strong> ユーザーフィードバックを基にペルソナを継続的に改善</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>実施内容</h3>
+                    <ul>
+                        <li>インタビューやアンケートで得た定性・定量データを整理</li>
+                        <li>上記のペルソナを詳細化し、具体的なユーザーストーリーを作成</li>
+                        <li>それぞれのユーザーがプラットフォームに求める体験やゴールを明文化</li>
+                    </ul>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('step1')">← 前のステップ</button>
+                    <button class="btn btn-primary" onclick="showSection('step3')">次のステップ →</button>
+                </div>
+            </section>
+
+            <section id="step3" class="content-section">
+                <h2>3. ユーザージャーニーマップの作成</h2>
+                <p>ペルソナごとにサービス利用の一連の流れを可視化し、各タッチポイントでのユーザーの行動・感情・要件を整理します。</p>
+                
+                <div class="checklist">
+                    <h3>✅ 確定ユーザーフロー</h3>
+                    <ul>
+                        <li><strong>企業側:</strong> 登録（10項目程度）→ CFO検索・フィルタリング → いいね → スカウト送信 → 面談設定 → 契約 → 支払い（手動振込）</li>
+                        <li><strong>CFO側:</strong> 登録（10項目程度）→ 企業検索・フィルタリング → プロフィール確認 → スカウト受信 → 面談設定 → 契約 → 支払い受領</li>
+                        <li><strong>管理者側:</strong> ユーザー管理 → 支払い確認 → ステータス更新 → KPIモニタリング</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>KPI測定ポイント</h3>
+                    <ul>
+                        <li><strong>いいね率:</strong> いいねアクション数 ÷ 表示数</li>
+                        <li><strong>スカウト率:</strong> スカウト送信数 ÷ いいね数</li>
+                        <li><strong>面談率:</strong> 面談設定数 ÷ スカウト数</li>
+                        <li><strong>契約率:</strong> 契約締結数 ÷ 面談数</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>実施内容</h3>
+                    <ul>
+                        <li>上記フローを詳細化し、各フェーズでのユーザーの感情変化をマッピング</li>
+                        <li>各フェーズで発生しうる障壁（入力項目の多さ、通知漏れなど）と改善案を併記</li>
+                        <li>優先度の高い改善ポイントを抽出し、バックログとして管理</li>
+                    </ul>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('step2')">← 前のステップ</button>
+                    <button class="btn btn-primary" onclick="showSection('step4')">次のステップ →</button>
+                </div>
+            </section>
+
+            <section id="step4" class="content-section">
+                <h2>4. ワイヤーフレーム設計</h2>
+                <p>画面ごとの構成要素とレイアウトを決定し、実際の画面設計に向けた青写真を作成します。</p>
+                
+                <div class="checklist">
+                    <h3>✅ 確定タグ・プロフィール設計</h3>
+                    <ul>
+                        <li><strong>資金調達フェーズ:</strong> シード、シリーズA、シリーズB以降</li>
+                        <li><strong>専門領域:</strong> M&A支援、内部統制構築、IR、タックスプランニング</li>
+                        <li><strong>業界経験:</strong> IT／テック、バイオ、製造、小売り</li>
+                        <li><strong>稼働条件:</strong> 週1日～5日、リモート可否、短期／長期契約</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>🏷️ タグ・プロフィール充実のこだわりポイント</h3>
+                    <ul>
+                        <li><strong>マッチング精度の向上:</strong> タグ付けはマッチング精度の肝として、初期はシンプル運用後に階層化・拡張</li>
+                        <li><strong>検索・フィルター最適化:</strong> ユーザーが直感的に使えるタグ体系の構築</li>
+                        <li><strong>将来の拡張性:</strong> 管理画面からタグの追加・編集が可能な柔軟な設計</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>🎨 UX/UI設計のこだわりポイント</h3>
+                    <ul>
+                        <li><strong>登録フロー最適化:</strong> 10項目程度に限定し、離脱率を最小化</li>
+                        <li><strong>直感的な検索UI:</strong> フィルターUIを直感的に配置、未読／既読ステータス明確表示</li>
+                        <li><strong>利便性向上:</strong> カレンダー連携とオンライン面談リンク自動生成</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>実施内容</h3>
+                    <ul>
+                        <li>主要ページ（ホーム、検索結果、プロフィール詳細、メッセージ画面、管理画面ダッシュボード）のワイヤーフレームを用意</li>
+                        <li>キーユーザーアクション（「いいね」「スカウト」「面談予約」「支払い確認」など）を強調して配置</li>
+                        <li>入力項目やボタンのラベル、通知バナーの文言もプレーンテキストで定義</li>
+                    </ul>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('step3')">← 前のステップ</button>
+                    <button class="btn btn-primary" onclick="showSection('step5')">次のステップ →</button>
+                </div>
+            </section>
+
+            <section id="step5" class="content-section">
+                <h2>5. プロトタイピングとレビュー</h2>
+                <p>本フェーズでは、画面デザインの磨き込みよりも「機能・操作感の検証」を優先し、デザインツールを用いずにコードベースでプロトタイプを構築します。あくまでユーザーが実際に触れるインターフェイスを通じて、エンジニアと経営陣が早期に課題を発見・改善できることを狙いとします。</p>
+                
+                <div class="process-steps">
+                    <h3>実施内容</h3>
+                    
+                    <h4>ライブコーディングによるプロトタイプ実装</h4>
+                    <ul>
+                        <li>初期画面や主要フロー（登録→検索→メッセージ送信→面談予約）を、Next.js や React コンポーネントを用いて直接コーディングします</li>
+                        <li>UI ライブラリや基本的なスタイルガイドに従いつつ、画面遷移とインタラクションの安定動作を最優先に組み立てます</li>
+                    </ul>
+                    
+                    <h4>内部レビュー（二人体制）</h4>
+                    <ul>
+                        <li>エンジニアの黒澤と社長のさく、二人でセッションを実施し、操作フロー上の死角や文言の違和感を洗い出します</li>
+                        <li>ドキュメントやスプレッドシートでフィードバックを整理し、即座にコードに反映することで、設計と実装のズレを最小化します</li>
+                    </ul>
+                    
+                    <h4>実ユーザーによるユーザーテスト</h4>
+                    <ul>
+                        <li>7月から実際の想定ユーザーにプロトタイプを触ってもらい、以下を中心に検証します：
+                            <ul>
+                                <li>各画面で「次に何をすればよいか」が直感的にわかるか</li>
+                                <li>登録フォームや検索フィルターの入力・操作時のつまずきポイント</li>
+                                <li>メッセージ送信や面談予約フローでの離脱・中断の有無</li>
+                            </ul>
+                        </li>
+                        <li>定量的にはタスク完了率、各タスクに要する平均時間、重要なクリック箇所の誤操作率などをログに残し、レポートとしてまとめます</li>
+                    </ul>
+                </div>
+                
+                <div class="checklist">
+                    <h3>📅 スケジュール</h3>
+                    <ul>
+                        <li><strong>6月：</strong>本格的な開発着手（プロトタイプ作成開始）</li>
+                        <li><strong>7月：</strong>ユーザーテスト開始（4～6名程度の実ユーザーに参加依頼）</li>
+                        <li><strong>7月下旬～8月上旬：</strong>テスト結果の分析→改善タスクの優先順位付け</li>
+                    </ul>
+                    <p><em>デザインの細部調整は次フェーズ（ビジュアルデザイン・高精度ワイヤーフレーム作成）にて行うため、本段階では「動く試作品」として機能要件のつながりや操作感にフォーカスします。</em></p>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('step4')">← 前のステップ</button>
+                    <button class="btn btn-primary" onclick="showSection('step6')">次のステップ →</button>
+                </div>
+            </section>
+
+            <section id="step6" class="content-section">
+                <h2>6. 実装仕様書の整備</h2>
+                <p>プロトタイプをベースに、デザイナー・エンジニア間で共有するための詳細仕様書をまとめます。</p>
+                
+                <div class="checklist">
+                    <h3>✅ 確定技術スタック</h3>
+                    <ul>
+                        <li><strong>データベース & 認証:</strong> Supabase（PostgreSQL + Auth）</li>
+                        <li><strong>フロントエンド & バックエンド:</strong> Next.js（フルスタック）</li>
+                        <li><strong>通知 & メール:</strong> SendGrid または SES、Firebase Cloud Messaging</li>
+                        <li><strong>モバイル対応:</strong> レスポンシブデザイン + PWA（Progressive Web App）対応</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>💰 MVP無料構成案</h3>
+                    <p><strong>前提：</strong>NEXT.js、Vercel、SendGrid、Supabase のいずれも無料プランを組み合わせて、RIGHTARM の初期フェーズを立ち上げることは十分に可能です。MVP（Minimum Viable Product）段階では、開発コストを抑えつつ早期にプロトタイプを市場に投入し、ユーザー反応を収集するのが狙いです。</p>
+                    
+                    <h4>無料プランでの構成案</h4>
+                    <ul>
+                        <li><strong>Next.js on Vercel</strong>
+                            <ul>
+                                <li>概要：React ベースのフレームワーク Next.js を、Vercel の無料ホスティングプランにデプロイ</li>
+                                <li>メリット：自動デプロイ、無料 SSL、サーバーレス関数も無料枠で利用可能</li>
+                            </ul>
+                        </li>
+                        <li><strong>Supabase（無料プラン）</strong>
+                            <ul>
+                                <li>概要：PostgreSQL データベース、Auth（認証）、Storage、Edge Functions を無償で提供</li>
+                                <li>メリット：データベース容量・認証ユーザー数の無料枠で MVP をカバー</li>
+                            </ul>
+                        </li>
+                        <li><strong>SendGrid（無料プラン）</strong>
+                            <ul>
+                                <li>概要：12,000 通／月 のトランザクションメールを無料送信可能</li>
+                                <li>用途：サインアップ確認メール、パスワードリセット、通知メールなどの SMTP サーバーとして利用</li>
+                            </ul>
+                        </li>
+                        <li><strong>Vercel サーバーレス関数 or Supabase Edge Functions</strong>
+                            <ul>
+                                <li>概要：NEXT.js 画面上の API を Vercel Functions で処理しつつ、認証トークンの発行やカスタム通知は Supabase Edge Functions に振り分け</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="checklist">
+                    <h3>📊 各サービスの無料枠と留意点</h3>
+                    <ul>
+                        <li><strong>Next.js / Vercel</strong>
+                            <ul>
+                                <li>ビルド数や帯域幅に上限あり（無料プランで試作から小規模運用までは十分）</li>
+                                <li>高トラフィック時はパフォーマンス低下の可能性</li>
+                            </ul>
+                        </li>
+                        <li><strong>Supabase</strong>
+                            <ul>
+                                <li>データベースサイズ：500MB 無料枠</li>
+                                <li>Auth ユーザー数：50,000 MAU（Monthly Active Users）無料枠</li>
+                                <li>Edge Functions：125,000 実行/月 まで無料</li>
+                            </ul>
+                        </li>
+                        <li><strong>SendGrid</strong>
+                            <ul>
+                                <li>月間 12,000 通のメール送信が無料</li>
+                                <li>大量ユーザー獲得でメール数が増えると超過リスク</li>
+                            </ul>
+                        </li>
+                        <li><strong>注意事項</strong>
+                            <ul>
+                                <li>いずれも無料枠を超過すると「メール未送信」「API レスポンス低下」「デプロイ不可」などの障害リスク</li>
+                                <li>リソース使用量は定期的にモニタリングし、必要に応じて有料プランへのアップグレードを検討</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>⚙️ 設定と運用フロー</h3>
+                    <ol>
+                        <li><strong>各アカウント作成</strong>
+                            <ul>
+                                <li>Vercel、Supabase、SendGrid で無料アカウント登録</li>
+                                <li>SendGrid で API キー発行</li>
+                            </ul>
+                        </li>
+                        <li><strong>Supabase に SMTP 設定</strong>
+                            <ul>
+                                <li>Supabase コンソール → Authentication → Settings → SMTP に SendGrid 情報を登録</li>
+                            </ul>
+                        </li>
+                        <li><strong>Next.js プロジェクト設定</strong>
+                            <ul>
+                                <li>`@supabase/supabase-js` をインストールし、環境変数に Supabase URL / ANON_KEY を設定</li>
+                                <li>Vercel のプロジェクト環境変数にも同じく登録</li>
+                            </ul>
+                        </li>
+                        <li><strong>認証フロー実装</strong>
+                            <ul>
+                                <li>Supabase Auth でマジックリンク or メール+パスワードログインを有効化</li>
+                                <li>Next.js の API Routes 経由で `supabase.auth.signInWithOtp({ email })` を呼び出し</li>
+                            </ul>
+                        </li>
+                        <li><strong>デプロイ＆テスト</strong>
+                            <ul>
+                                <li>Vercel にプッシュ → 自動デプロイ</li>
+                                <li>本番ドメイン・SSL 構成済みの状態で動作確認</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    
+                    <p><strong>まとめ：</strong>無料プランだけで MVP を構築し、ユーザーからのフィードバックを得ることは十分に可能です。ただし、トラフィック増大やユーザー数急増に伴い無料枠がつきるリスクもあるため、定期的に利用状況をモニタリングし、本格展開前に有料プラン移行のタイミングを検討してください。</p>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>📱 モバイル対応戦略</h3>
+                    <p>CFOマッチングサービスはビジネスユーザーが外出先でも利用する可能性が高いため、スマートフォン対応は必須です。以下の戦略でモバイルファーストのユーザー体験を提供します。</p>
+                    
+                    <h4>レスポンシブデザイン</h4>
+                    <ul>
+                        <li><strong>Tailwind CSS</strong>を活用したモバイルファーストデザイン</li>
+                        <li>ブレークポイント：スマホ（～768px）、タブレット（768px～1024px）、PC（1024px～）</li>
+                        <li>タッチ操作に最適化されたボタンサイズ（最小44px）とタップ領域の確保</li>
+                        <li>スワイプジェスチャーによる直感的な操作（カード切り替え、メニュー表示など）</li>
+                    </ul>
+                    
+                    <h4>PWA（Progressive Web App）対応</h4>
+                    <ul>
+                        <li><strong>Next.js PWA</strong>でネイティブアプリライクな体験を提供</li>
+                        <li>ホーム画面への追加機能（Add to Home Screen）</li>
+                        <li>オフライン時の基本機能利用（プロフィール閲覧、下書き保存など）</li>
+                        <li>プッシュ通知対応（新しいスカウト、メッセージ受信時）</li>
+                        <li>Service Workerによるキャッシュ最適化</li>
+                    </ul>
+                    
+                    <h4>モバイル特化機能</h4>
+                    <ul>
+                        <li><strong>カメラ連携：</strong>プロフィール写真撮影、資格証明書アップロード</li>
+                        <li><strong>位置情報：</strong>地域別CFO検索、面談場所の提案</li>
+                        <li><strong>カレンダー連携：</strong>スマホのネイティブカレンダーアプリとの同期</li>
+                        <li><strong>通話・ビデオ通話：</strong>面談予約からワンタップで通話開始</li>
+                        <li><strong>タッチID/FaceID：</strong>生体認証によるセキュアなログイン</li>
+                    </ul>
+                    
+                    <h4>パフォーマンス最適化</h4>
+                    <ul>
+                        <li>モバイル回線でも高速表示を実現する画像最適化（WebP、遅延読み込み）</li>
+                        <li>Critical CSS inliningによる初期表示速度向上</li>
+                        <li>API応答の最適化（必要最小限のデータ転送）</li>
+                        <li>Service Workerによるバックグラウンド同期</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>主要機能詳細</h3>
+                    <ul>
+                        <li><strong>登録・認証機能:</strong> メール認証ベース、10項目程度、SNS連携は任意</li>
+                        <li><strong>検索・フィルター機能:</strong> タグ管理、地域・稼働日数フィルタ、ソート機能</li>
+                        <li><strong>コミュニケーション機能:</strong> プラットフォーム内メッセージ、Google Calendar連携</li>
+                        <li><strong>レビュー・評価機能:</strong> 星評価+テキスト、支払い完了後に解放</li>
+                        <li><strong>契約・決済管理機能:</strong> 初期は手動振込、5%固定手数料</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>🤖 高精度マッチングアルゴリズムのこだわりポイント</h3>
+                    <ul>
+                        <li><strong>点数化システム:</strong> 企業要件とCFOスキルを点数化し、自動レコメンド機能を実装</li>
+                        <li><strong>マッチスコア算出:</strong> 資金調達規模適合度、過去実績の類似度、稼働可能日数を反映</li>
+                        <li><strong>学習機能:</strong> スカウト・メッセージの反応率を学習し、時間とともに精度を向上</li>
+                        <li><strong>表示順序:</strong> スコア順・関連度順での候補表示機能</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>🔒 信頼性・安心感担保のこだわりポイント</h3>
+                    <ul>
+                        <li><strong>本人確認（KYC）:</strong> 業務履歴や資格証明書のアップロード機能</li>
+                        <li><strong>NDA同意システム:</strong> 機密保持の仕組みを組み込み</li>
+                        <li><strong>レビュー品質管理:</strong> 支払い完了後のみ投稿解放、匿名設定・承認フロー</li>
+                        <li><strong>悪意防止機能:</strong> 悪意ある書き込みの抑制システム</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>API設計要件</h3>
+                    <ul>
+                        <li><strong>ユーザーデータ構造:</strong> ユーザー情報、企業情報、CFOプロフィール</li>
+                        <li><strong>メッセージデータ:</strong> スレッド管理、通知状態</li>
+                        <li><strong>レビューデータ:</strong> 評価スコア、コメント、相互評価</li>
+                        <li><strong>契約ステータス:</strong> 面談→契約→支払い→完了のフロー管理</li>
+                        <li><strong>マッチングアルゴリズム:</strong> スコア計算、レコメンド生成、学習データ蓄積</li>
+                    </ul>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('step5')">← 前のステップ</button>
+                    <button class="btn btn-primary" onclick="showSection('step7')">次のステップ →</button>
+                </div>
+            </section>
+
+            <section id="step7" class="content-section">
+                <h2>7. 開発／テスト／ローンチ</h2>
+                <p>整備した設計・仕様をもとに、実際の開発を進めます。並行して以下を実行します。</p>
+                
+                <div class="process-steps">
+                    <h3>💳 決済・契約フロー最適化のこだわりポイント</h3>
+                    <ul>
+                        <li><strong>初期フェーズ:</strong> 手動振込→管理者確認→手動支払方式で、仲介手数料5％を確実徴収</li>
+                        <li><strong>中長期計画:</strong> エスクロー導入、カード決済、請求書自動発行を組み込み</li>
+                        <li><strong>完全自動化:</strong> 企業入金からCFOへの支払いまでをプラットフォーム上で完結</li>
+                        <li><strong>契約書対応:</strong> 契約書テンプレートと電子署名機能の検討</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>実施内容</h3>
+                    <ul>
+                        <li>単体テスト・結合テストで主要機能を網羅</li>
+                        <li>ステージング環境で全ユーザーフローを検証</li>
+                        <li>ローンチ前チェックリストを使ってリリース判定（パフォーマンス、セキュリティ、アクセシビリティなど）</li>
+                        <li>決済フローの完全検証（手動→自動の段階的移行計画）</li>
+                    </ul>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('step6')">← 前のステップ</button>
+                    <button class="btn btn-primary" onclick="showSection('step8')">次のステップ →</button>
+                </div>
+            </section>
+
+            <section id="step8" class="content-section">
+                <h2>8. 運用・フィードバックループ</h2>
+                <p>公開後は定期的にユーザー行動データやKPI（いいね率、スカウト率、面談率、契約率）をモニタリングし、改善サイクルを回します。</p>
+                
+                <div class="checklist">
+                    <h3>✅ 確定運用体制</h3>
+                    <ul>
+                        <li><strong>初期運用:</strong> RIGHTARMの社長とエンジニアが管理画面で全権行使</li>
+                        <li><strong>将来的には:</strong> 秘書、カスタマーサポート、経理担当者を採用</li>
+                        <li><strong>権限管理:</strong> KPIモニタリング、対顺客コミュニケーションを分担</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>KPIモニタリング詳細</h3>
+                    <ul>
+                        <li><strong>いいね率:</strong> 企業からCFOへのいいねアクション数 ÷ 表示数</li>
+                        <li><strong>スカウト率:</strong> スカウト送信数 ÷ いいね数</li>
+                        <li><strong>面談率:</strong> 面談設定数 ÷ スカウト数</li>
+                        <li><strong>契約率:</strong> 契約締結数 ÷ 面談数</li>
+                        <li><strong>集計間隔:</strong> 週次・月次でデータを集計しPDCAサイクルを実行</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>管理画面機能</h3>
+                    <ul>
+                        <li><strong>ユーザー管理:</strong> 企業・CFOアカウントの状態管理</li>
+                        <li><strong>案件進捗管理:</strong> マッチング進捗、契約状態を一覧表示</li>
+                        <li><strong>支払いステータス管理:</strong> 振込確認→ステータス更新→CFOへ支払い</li>
+                        <li><strong>売上・手数料集計:</strong> 仲介手数料（5%）の管理、売上レポート</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>📊 データ分析・PDCAサイクルのこだわりポイント</h3>
+                    <ul>
+                        <li><strong>リアルタイム可視化:</strong> 主要KPIをダッシュボードでリアルタイム可視化</li>
+                        <li><strong>自動レポート生成:</strong> 週次／月次の自動レポート生成機能</li>
+                        <li><strong>行動ログ分析:</strong> ユーザー行動ログを分析して離脱ポイントを特定</li>
+                        <li><strong>継続的改善:</strong> UI・マッチングアルゴリズムの継続的改善を推進</li>
+                    </ul>
+                </div>
+                
+                <div class="process-steps">
+                    <h3>実施内容</h3>
+                    <ul>
+                        <li>UI ボトルネックや離脱ポイントをアクセスログ分析で特定</li>
+                        <li>レビューコメントやサポート問い合わせ内容を運用チームで分類し、優先度をつけてプロダクトバックログへ反映</li>
+                        <li>四半期ごとに仕様設計手順書をアップデートし、プロセスを改善</li>
+                        <li>マッチングアルゴリズムの精度向上のための継続的なデータ分析</li>
+                    </ul>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('step7')">← 前のステップ</button>
+                    <button class="btn btn-primary" onclick="showSection('site-layout')">次のセクション →</button>
+                </div>
+            </section>
+
+            <section id="site-layout" class="content-section">
+                <h2>サイト上の掲載イメージ</h2>
+                <p>本手順書は RIGHTARM サイト内の「設計ガイド」または「開発者向けドキュメント」ページとして公開します。ユーザー（社内チームやパートナー企業）がいつでも参照・ダウンロードできるよう、以下の構成を推奨します。</p>
+                
+                <div class="site-structure">
+                    <h3>推奨サイト構成</h3>
+                    <ul>
+                        <li>はじめに（目的・対象範囲）</li>
+                        <li>手順概要ダッシュボード（各ステップへのリンク）</li>
+                        <li>各ステップ詳細（本手順書の本文）</li>
+                        <li>テンプレート・サンプルファイル（Figma テンプレート、ワイヤーフレーム、設計チェックリスト）</li>
+                        <li>よくある質問（FAQ）</li>
+                    </ul>
+                </div>
+
+                <div class="checklist">
+                    <h3>✅ 確定セキュリティ・コンプライアンス要件</h3>
+                    <ul>
+                        <li><strong>本人確認（KYC）:</strong> オンライン本人確認サービス（Onfido、Jumioなど）導入検討</li>
+                        <li><strong>機密保持契約:</strong> プラットフォーム利用規約にNDA的な機密保持条項を自動同意</li>
+                        <li><strong>プライバシーポリシー:</strong> 個人情報取り扱い、データ削除リクエスト対応を明示</li>
+                        <li><strong>利用規約:</strong> 支払い条件、仲介手数料、解約条件、責任範囲を明文化</li>
+                    </ul>
+                </div>
+
+                <div class="conclusion">
+                    <p>以上をベースに、RIGHTARM の使用設計プロセスを標準化し、開発・運用の品質を高めていきましょう。</p>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('step8')">← 前のセクション</button>
+                    <button class="btn btn-primary" onclick="showSection('overview')">概要に戻る</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

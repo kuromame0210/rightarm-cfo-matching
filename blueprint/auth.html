@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIGHTARM - ログイン・会員登録</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-google {
+            background: #db4437;
+            color: white;
+        }
+
+        .btn-google:hover {
+            background: #c23321;
+            transform: translateY(-2px);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+            position: relative;
+        }
+
+        .divider:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 15px;
+        }
+
+        .user-type-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .user-type-option {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-type-option.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .user-type-option h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .user-type-option p {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">
+            <h1>RIGHTARM</h1>
+            <p>全国の企業に、"右腕CFO"を届ける</p>
+        </div>
+
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchTab('login')">ログイン</button>
+            <button class="auth-tab" onclick="switchTab('register')">会員登録</button>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>処理中...</p>
+        </div>
+
+        <!-- ログインフォーム -->
+        <form id="login-form" class="auth-form active">
+            <div class="form-group">
+                <label for="login-email">メールアドレス</label>
+                <input type="email" id="login-email" required>
+            </div>
+            <div class="form-group">
+                <label for="login-password">パスワード</label>
+                <input type="password" id="login-password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">ログイン</button>
+        </form>
+
+        <!-- 会員登録フォーム -->
+        <form id="register-form" class="auth-form">
+            <div class="user-type-selector">
+                <div class="user-type-option" onclick="selectUserType('company')">
+                    <h4>企業</h4>
+                    <p>CFOを探している</p>
+                </div>
+                <div class="user-type-option" onclick="selectUserType('cfo')">
+                    <h4>CFO</h4>
+                    <p>企業をサポートしたい</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="register-email">メールアドレス</label>
+                <input type="email" id="register-email" required>
+            </div>
+            <div class="form-group">
+                <label for="register-password">パスワード</label>
+                <input type="password" id="register-password" required minlength="6">
+            </div>
+            <div class="form-group">
+                <label for="register-confirm-password">パスワード確認</label>
+                <input type="password" id="register-confirm-password" required minlength="6">
+            </div>
+            <div class="form-group">
+                <label for="register-display-name">表示名</label>
+                <input type="text" id="register-display-name" required>
+            </div>
+            <button type="submit" class="btn btn-primary">会員登録</button>
+        </form>
+
+        <div class="divider">
+            <span>または</span>
+        </div>
+
+        <button id="google-signin" class="btn btn-google">
+            Googleアカウントでログイン
+        </button>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { authFunctions } from './firebase-config.js';
+
+        let selectedUserType = null;
+
+        // タブ切り替え
+        window.switchTab = function(tabName) {
+            // タブボタンの状態更新
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+            // フォームの表示切り替え
+            document.querySelectorAll('.auth-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-form`).classList.add('active');
+        };
+
+        // ユーザータイプ選択
+        window.selectUserType = function(type) {
+            selectedUserType = type;
+            document.querySelectorAll('.user-type-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.closest('.user-type-option').classList.add('selected');
+        };
+
+        // エラーメッセージ表示
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // 成功メッセージ表示
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success-message');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // ローディング表示
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // バックエンドにIDトークンを送信
+        async function sendTokenToBackend(idToken, userData) {
+            try {
+                const response = await fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        idToken,
+                        userData
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('サーバーでの認証に失敗しました');
+                }
+
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                throw new Error(`認証処理でエラーが発生しました: ${error.message}`);
+            }
+        }
+
+        // ログインフォーム処理
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading(true);
+
+            try {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+
+                const { user, idToken } = await authFunctions.signInWithEmail(email, password);
+                
+                await sendTokenToBackend(idToken, {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                });
+
+                showSuccess('ログインに成功しました！');
+                // ここでメインページにリダイレクト
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 1000);
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        // 会員登録フォーム処理
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading(true);
+
+            try {
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirmPassword = document.getElementById('register-confirm-password').value;
+                const displayName = document.getElementById('register-display-name').value;
+
+                if (!selectedUserType) {
+                    throw new Error('ユーザータイプを選択してください');
+                }
+
+                if (password !== confirmPassword) {
+                    throw new Error('パスワードが一致しません');
+                }
+
+                const { user, idToken } = await authFunctions.createUserWithEmail(email, password);
+                
+                await sendTokenToBackend(idToken, {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: displayName,
+                    photoURL: user.photoURL,
+                    userType: selectedUserType
+                });
+
+                showSuccess('会員登録に成功しました！');
+                // ここでプロフィール設定ページにリダイレクト
+                setTimeout(() => {
+                    window.location.href = '/profile-setup.html';
+                }, 1000);
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        // Google認証処理
+        document.getElementById('google-signin').addEventListener('click', async () => {
+            showLoading(true);
+
+            try {
+                const { user, idToken } = await authFunctions.signInWithGoogle();
+                
+                await sendTokenToBackend(idToken, {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                });
+
+                showSuccess('Google認証に成功しました！');
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 1000);
+
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        // 認証状態の監視
+        authFunctions.onAuthStateChange((user) => {
+            if (user) {
+                console.log('ユーザーがログイン中:', user);
+            } else {
+                console.log('ユーザーがログアウト中');
+            }
+        });
+    </script>
+</body>
+</html>
