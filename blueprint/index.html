@@ -639,6 +639,9 @@
             <section id="authentication" class="content-section">
                 <h2>9. 認証システム設計</h2>
                 <p>RIGHTARM プラットフォームの認証システムは、Firebase Authentication と Supabase データベースを連携させた安全で拡張性の高いシステムを構築します。</p>
+                <div class="checklist">
+                    <p><strong>重要:</strong> この認証システムは、youbou.md要件のUI/UX実装が完了後の二次実装項目です。まずはセクション10のUI/UX要件を最優先で実装してください。</p>
+                </div>
                 
                 <div class="process-steps">
                     <h3>🔐 認証システム概要</h3>
@@ -801,11 +804,13 @@
                 
                 <div class="process-steps">
                     <h3>🎨 基本デザインコンセプト</h3>
+                    <p><strong>youbou.md要件最優先:</strong> 以下の仕様は社長からの直接要望であり、最高優先度で実装</p>
                     <ul>
                         <li><strong>基調色:</strong> 白 + グレー（基本的な背景は白、一部グレーを使用）</li>
-                        <li><strong>参考サイト:</strong> クラウドワークスのUIを参考</li>
-                        <li><strong>全体的な雰囲気:</strong> ビジネス向けのプロフェッショナルなデザイン</li>
-                        <li><strong>フレームワーク:</strong> Next.js + Tailwind CSS</li>
+                        <li><strong>参考サイト:</strong> クラウドワークスのUIを参考 <em>※「基本的にはクラウドワークスを真似する」</em></li>
+                        <li><strong>背景:</strong> ビジネスっぽい背景</li>
+                        <li><strong>ボタン:</strong> 「CFOを探す」「企業を探す」をよりボタン感を出す</li>
+                        <li><strong>技術実装:</strong> UI/UX最優先、複雑な技術スタックは後回し</li>
                     </ul>
                 </div>
 
@@ -815,9 +820,10 @@
                     <h4>ヘッダー構成</h4>
                     <ul>
                         <li>ロゴ（RIGHTARM）</li>
-                        <li>ナビゲーション: 「ホーム」「会社概要」「お問い合わせ」</li>
+                        <li>ナビゲーション: 「ホーム」「会社概要」</li>
                         <li>「CFOを探す」「企業を探す」ボタン（ボタン感を強調）</li>
                     </ul>
+                    <p><em>※ youbou.md要件：「会社概要の左にホームも付け足す」に従い、お問い合わせは削除</em></p>
 
                     <h4>フッター構成</h4>
                     <ul>
@@ -1114,13 +1120,31 @@
 
                 <div class="process-steps">
                     <h3>💻 技術実装要件</h3>
+                    <p><strong>実装優先度:</strong> UI/UX実装 > 認証システム > その他機能</p>
+                    
+                    <h4>最優先実装（youbou.md要件）</h4>
+                    <ul>
+                        <li><strong>UIライブラリ:</strong> Tailwind CSS（クラウドワークス風デザイン実現）</li>
+                        <li><strong>コンポーネント:</strong> カード形式のプロフィール表示</li>
+                        <li><strong>フィルター機能:</strong> 左サイドバーでの絞り込み</li>
+                        <li><strong>アコーディオンUI:</strong> CFOスキルタグの階層表示</li>
+                        <li><strong>検索機能:</strong> キーワード検索</li>
+                        <li><strong>ナビゲーション:</strong> ホーム/スカウト/メッセージ/面談予定</li>
+                    </ul>
+
+                    <h4>二次実装（必要最小限）</h4>
                     <ul>
                         <li><strong>フレームワーク:</strong> Next.js + React</li>
-                        <li><strong>UIライブラリ:</strong> Tailwind CSS</li>
-                        <li><strong>コンポーネント:</strong> カード形式のプロフィール表示</li>
-                        <li><strong>レスポンシブ:</strong> モバイルファーストデザイン</li>
-                        <li><strong>検索機能:</strong> リアルタイム絞り込み</li>
-                        <li><strong>状態管理:</strong> React Context API または Zustand</li>
+                        <li><strong>認証:</strong> セクション9の認証システム</li>
+                        <li><strong>データベース:</strong> 企業側とCFO側でデータ分離</li>
+                    </ul>
+
+                    <h4>後回し実装</h4>
+                    <ul>
+                        <li>PWA対応、モバイル特化機能</li>
+                        <li>決済・契約フロー</li>
+                        <li>管理者ダッシュボード</li>
+                        <li>高度なマッチングアルゴリズム</li>
                     </ul>
                 </div>
 
