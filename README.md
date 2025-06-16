@@ -5,43 +5,53 @@
 ## プロジェクト構成
 
 ```
-├── blueprint/           # 設計・仕様書フォルダ
-│   ├── firebase-config.js
-│   ├── supabase-config.js
-│   ├── auth.html
-│   ├── profile-manager.js
-│   ├── SETUP_GUIDE.md
-│   └── api/
-├── implementation/      # 実装フォルダ（今後開発）
-├── md/                 # 既存のマークダウン文書
-│   ├── blueprint_v3.md
-│   ├── persona.md
-│   └── readme.md
-├── index.html          # デザインガイド（既存）
-├── script.js           # デザインガイド用スクリプト
-└── styles.css          # デザインガイド用スタイル
+├── blueprint/           # 設計・仕様書フォルダ（全設計資料）
+│   ├── firebase-config.js       # Firebase認証設定
+│   ├── supabase-config.js       # Supabaseデータベース設定
+│   ├── auth.html                # ログイン・会員登録画面
+│   ├── profile-manager.js       # プロフィール管理システム
+│   ├── SETUP_GUIDE.md          # 認証システムセットアップ手順
+│   ├── UI_DESIGN_REQUIREMENTS.md # UI/UX詳細要件書
+│   ├── index.html              # デザインガイド（RIGHTARM仕様書）
+│   ├── script.js               # デザインガイド用スクリプト
+│   ├── styles.css              # デザインガイド用スタイル
+│   ├── api/                    # API設計
+│   └── md/                     # 設計文書
+│       ├── blueprint_v3.md      # サービス仕様設計書
+│       ├── persona.md           # ユーザーペルソナ定義
+│       ├── readme.md            # 要件定義書
+│       ├── youbou.md           # UI/UX詳細要求書
+│       └── siteread.md         # サイト概要
+└── implementation/      # 実装フォルダ（今後開発）
 ```
 
 ## フォルダ説明
 
 ### blueprint/
-Firebase認証とSupabase連携の設計ファイルが含まれています：
+すべての設計・仕様書が含まれています：
+
+**認証システム設計**
 - **firebase-config.js**: Firebase認証設定
 - **supabase-config.js**: Supabaseデータベース設定
 - **supabase-schema.sql**: データベーススキーマ
 - **auth.html**: ログイン・会員登録画面のUI
 - **profile-manager.js**: プロフィール管理システム
-- **SETUP_GUIDE.md**: セットアップ手順書
-- **package.json**: 必要な依存関係
+- **SETUP_GUIDE.md**: 認証システムセットアップ手順書
 
-### implementation/
-実際の開発実装時に使用するフォルダ（今後作成予定）
+**UI/UX設計**
+- **UI_DESIGN_REQUIREMENTS.md**: 詳細なUI/UX要件書（youbou.mdを基に作成）
+- **index.html**: RIGHTARM仕様設計手順書（インタラクティブガイド）
+- **script.js / styles.css**: デザインガイド用ファイル
 
-### md/
-プロジェクトの設計文書：
+**設計文書（md/）**
 - **blueprint_v3.md**: サービス仕様設計書
 - **persona.md**: ユーザーペルソナ定義
 - **readme.md**: 要件定義書
+- **youbou.md**: UI/UX詳細要求書（クラウドワークス参考）
+- **siteread.md**: サイト概要
+
+### implementation/
+実際の開発実装時に使用するフォルダ（今後作成予定）
 
 ## 開発フロー
 
