@@ -25,6 +25,8 @@
             <li><a href="#step6" class="nav-link" onclick="showSection('step6')">6. 実装仕様書の整備</a></li>
             <li><a href="#step7" class="nav-link" onclick="showSection('step7')">7. 開発／テスト／ローンチ</a></li>
             <li><a href="#step8" class="nav-link" onclick="showSection('step8')">8. 運用・フィードバックループ</a></li>
+            <li><a href="#authentication" class="nav-link" onclick="showSection('authentication')">9. 認証システム設計</a></li>
+            <li><a href="#ui-design" class="nav-link" onclick="showSection('ui-design')">10. UI/UX詳細設計</a></li>
             <li><a href="#site-layout" class="nav-link" onclick="showSection('site-layout')">サイト掲載イメージ</a></li>
         </ul>
     </nav>
@@ -77,6 +79,16 @@
                             <div class="step-number">8</div>
                             <h4>運用・フィードバックループ</h4>
                             <p>公開後のモニタリングと改善サイクル</p>
+                        </div>
+                        <div class="step-card" onclick="showSection('authentication')">
+                            <div class="step-number">9</div>
+                            <h4>認証システム設計</h4>
+                            <p>Firebase + Supabase による安全な認証基盤</p>
+                        </div>
+                        <div class="step-card" onclick="showSection('ui-design')">
+                            <div class="step-number">10</div>
+                            <h4>UI/UX詳細設計</h4>
+                            <p>クラウドワークス参考のプロフェッショナルデザイン</p>
                         </div>
                     </div>
                 </div>
@@ -624,6 +636,366 @@
                 </div>
             </section>
 
+            <section id="authentication" class="content-section">
+                <h2>9. 認証システム設計</h2>
+                <p>RIGHTARM プラットフォームの認証システムは、Firebase Authentication と Supabase データベースを連携させた安全で拡張性の高いシステムを構築します。</p>
+                
+                <div class="process-steps">
+                    <h3>🔐 認証システム概要</h3>
+                    <p>Firebase でユーザー認証を行い、Supabase にユーザー情報を安全に保存する全体の流れ：</p>
+                    <ol>
+                        <li>ユーザーがメールや Google アカウントでログイン</li>
+                        <li>Firebase が「IDトークン」という鍵を発行</li>
+                        <li>その鍵をサーバーに渡し、サーバー側で正当性を確認</li>
+                        <li>確認後、Supabase にユーザー情報を登録</li>
+                    </ol>
+                </div>
+
+                <div class="checklist">
+                    <h3>✅ Firebase プロジェクト設定</h3>
+                    <ul>
+                        <li><strong>Firebase Console:</strong> 新しいプロジェクト作成（rightarm-cfo-matching）</li>
+                        <li><strong>Authentication 設定:</strong> メール/パスワード認証と Google 認証を有効化</li>
+                        <li><strong>ウェブアプリ登録:</strong> APIキーやプロジェクトIDなどの設定情報を取得</li>
+                        <li><strong>Firebase Admin SDK:</strong> サーバー側でのIDトークン検証用の秘密鍵を設定</li>
+                    </ul>
+                </div>
+
+                <div class="checklist">
+                    <h3>✅ Supabase プロジェクト設定</h3>
+                    <ul>
+                        <li><strong>プロジェクト作成:</strong> Supabase で新しいプロジェクトを作成（Tokyo リージョン）</li>
+                        <li><strong>データベーススキーマ:</strong> profiles テーブルの作成（Firebase UID を保存）</li>
+                        <li><strong>API キー取得:</strong> Project URL、anon key、service_role key を控える</li>
+                        <li><strong>RLS設定:</strong> Row Level Security でユーザーごとのデータアクセス制御</li>
+                    </ul>
+                </div>
+
+                <div class="process-steps">
+                    <h3>📋 データベーススキーマ設計</h3>
+                    <h4>基本プロフィールテーブル（profiles）</h4>
+                    <ul>
+                        <li><code>id</code>: Firebase UID（主キー）</li>
+                        <li><code>email</code>: メールアドレス</li>
+                        <li><code>display_name</code>: 表示名</li>
+                        <li><code>photo_url</code>: プロフィール画像URL</li>
+                        <li><code>user_type</code>: ユーザータイプ（company / cfo）</li>
+                        <li><code>created_at</code>: 作成日時</li>
+                        <li><code>updated_at</code>: 更新日時</li>
+                    </ul>
+
+                    <h4>企業プロフィール拡張テーブル（company_profiles）</h4>
+                    <ul>
+                        <li><code>company_name</code>: 会社名</li>
+                        <li><code>industry</code>: 業界</li>
+                        <li><code>company_size</code>: 企業規模</li>
+                        <li><code>funding_stage</code>: 資金調達段階</li>
+                        <li><code>location</code>: 所在地</li>
+                        <li><code>description</code>: 会社概要</li>
+                    </ul>
+
+                    <h4>CFOプロフィール拡張テーブル（cfo_profiles）</h4>
+                    <ul>
+                        <li><code>first_name</code>, <code>last_name</code>: 氏名</li>
+                        <li><code>expertise</code>: 専門領域（JSON配列）</li>
+                        <li><code>experience_years</code>: 経験年数</li>
+                        <li><code>industries</code>: 業界経験（JSON配列）</li>
+                        <li><code>work_style</code>: 稼働条件（JSON）</li>
+                        <li><code>hourly_rate</code>: 時給</li>
+                        <li><code>bio</code>: 自己紹介</li>
+                    </ul>
+                </div>
+
+                <div class="process-steps">
+                    <h3>🔧 フロントエンド認証実装</h3>
+                    <h4>Firebase SDK 設定</h4>
+                    <ul>
+                        <li>Firebase 設定情報を環境変数で管理</li>
+                        <li>メール/パスワード認証とGoogle認証の実装</li>
+                        <li>IDトークン取得とバックエンドへの送信</li>
+                        <li>認証状態の監視とリダイレクト処理</li>
+                    </ul>
+
+                    <h4>認証フロー UI</h4>
+                    <ul>
+                        <li>ログイン・会員登録画面の統合</li>
+                        <li>ユーザータイプ選択（企業 / CFO）</li>
+                        <li>エラーハンドリングとローディング表示</li>
+                        <li>パスワード確認と入力バリデーション</li>
+                    </ul>
+                </div>
+
+                <div class="process-steps">
+                    <h3>⚙️ バックエンド API 設計</h3>
+                    <h4>IDトークン検証 API（/api/auth/verify）</h4>
+                    <ul>
+                        <li>Firebase Admin SDK でIDトークンを検証</li>
+                        <li>検証成功時にSupabaseへユーザー情報を保存（upsert）</li>
+                        <li>エラーハンドリング（期限切れ、無効トークンなど）</li>
+                        <li>セキュアなレスポンス設計</li>
+                    </ul>
+
+                    <h4>プロフィール管理 API</h4>
+                    <ul>
+                        <li><code>/api/profile/basic</code>: 基本プロフィール更新</li>
+                        <li><code>/api/profile/company</code>: 企業プロフィール更新</li>
+                        <li><code>/api/profile/cfo</code>: CFOプロフィール更新</li>
+                        <li><code>/api/profile/search</code>: プロフィール検索</li>
+                    </ul>
+                </div>
+
+                <div class="process-steps">
+                    <h3>💰 無料プラン構成</h3>
+                    <p>MVP段階では以下の無料プランを組み合わせて運用：</p>
+                    
+                    <h4>Next.js on Vercel（無料プラン）</h4>
+                    <ul>
+                        <li>自動デプロイ、無料SSL、サーバーレス関数</li>
+                        <li>制限：ビルド数・帯域幅に上限あり</li>
+                    </ul>
+
+                    <h4>Supabase（無料プラン）</h4>
+                    <ul>
+                        <li>データベース容量：500MB</li>
+                        <li>Auth ユーザー数：50,000 MAU</li>
+                        <li>Edge Functions：125,000 実行/月</li>
+                    </ul>
+
+                    <h4>SendGrid（無料プラン）</h4>
+                    <ul>
+                        <li>月間 12,000 通のメール送信</li>
+                        <li>用途：認証メール、通知メールなど</li>
+                    </ul>
+                </div>
+
+                <div class="process-steps">
+                    <h3>🔒 セキュリティ設計</h3>
+                    <ul>
+                        <li><strong>Firebase Security Rules:</strong> 承認済みドメインの設定</li>
+                        <li><strong>Supabase RLS:</strong> Row Level Security でデータアクセス制御</li>
+                        <li><strong>環境変数管理:</strong> 秘密鍵の安全な管理</li>
+                        <li><strong>HTTPS必須:</strong> 本番環境でのSSL/TLS通信</li>
+                    </ul>
+                </div>
+
+                <div class="process-steps">
+                    <h3>🧪 テスト・動作確認</h3>
+                    <ol>
+                        <li>開発サーバーの起動（<code>npm run dev</code>）</li>
+                        <li>会員登録フォームでテストユーザー作成</li>
+                        <li>ログインフォームでログインテスト</li>
+                        <li>Google認証のテスト</li>
+                        <li>Supabase Dashboard でデータ確認</li>
+                    </ol>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('step8')">← 前のステップ</button>
+                    <button class="btn btn-primary" onclick="showSection('ui-design')">次のステップ →</button>
+                </div>
+            </section>
+
+            <section id="ui-design" class="content-section">
+                <h2>10. UI/UX詳細設計</h2>
+                <p>クラウドワークスを参考にした、プロフェッショナルなCFOマッチングプラットフォームのUI/UX設計を定義します。</p>
+                
+                <div class="process-steps">
+                    <h3>🎨 基本デザインコンセプト</h3>
+                    <ul>
+                        <li><strong>基調色:</strong> 白 + グレー（基本的な背景は白、一部グレーを使用）</li>
+                        <li><strong>参考サイト:</strong> クラウドワークスのUIを参考</li>
+                        <li><strong>全体的な雰囲気:</strong> ビジネス向けのプロフェッショナルなデザイン</li>
+                        <li><strong>フレームワーク:</strong> Next.js + Tailwind CSS</li>
+                    </ul>
+                </div>
+
+                <div class="checklist">
+                    <h3>✅ ログイン前ページ（トップページ）</h3>
+                    
+                    <h4>ヘッダー構成</h4>
+                    <ul>
+                        <li>ロゴ（RIGHTARM）</li>
+                        <li>ナビゲーション: 「ホーム」「会社概要」「お問い合わせ」</li>
+                        <li>「CFOを探す」「企業を探す」ボタン（ボタン感を強調）</li>
+                    </ul>
+
+                    <h4>フッター構成</h4>
+                    <ul>
+                        <li>「会社概要」「プライバシーポリシー」「利用規約」</li>
+                        <li>SNSリンク: Instagram、X（Twitter）、Facebook</li>
+                    </ul>
+
+                    <h4>メイン要素</h4>
+                    <ul>
+                        <li>ビジネス向けの背景画像</li>
+                        <li>メインキャッチコピー: 「全国の企業に、"右腕CFO"を届ける」</li>
+                        <li>CTA（Call to Action）ボタンを目立つように配置</li>
+                    </ul>
+                </div>
+
+                <div class="checklist">
+                    <h3>✅ 会員登録ページ</h3>
+                    
+                    <h4>共通仕様</h4>
+                    <ul>
+                        <li>必須項目: メールアドレス、名前</li>
+                        <li>その他項目: 任意入力</li>
+                        <li>ユーザータイプ選択: 企業 / CFO</li>
+                        <li>会員登録時にデータベースに企業側とCFO側を分けて保存</li>
+                    </ul>
+
+                    <h4>企業プロフィール登録フォーム</h4>
+                    <ul>
+                        <li><strong>必須項目:</strong> 会社名/事業名、所在地、担当者名、メールアドレス、会社概要</li>
+                        <li><strong>推定年商:</strong> 1億円未満、1~10億円、10~30億円、30~50億円、50億円以上、非公開</li>
+                        <li><strong>抱えている財務課題:</strong> 資金繰り、IPO準備、M&A準備、再生・事業継承、管理会計、経営管理DX</li>
+                        <li><strong>課題の背景や状況:</strong> 自由記入（例：銀行融資を受けたいが、よく分からない）</li>
+                        <li><strong>CFOに求めたいこと:</strong> やってほしい業務/希望稼働日数/希望報酬額など</li>
+                        <li><strong>希望時期:</strong> 今すぐ、1ヶ月以内、検討中、その他</li>
+                    </ul>
+
+                    <h4>CFOプロフィール登録フォーム</h4>
+                    <ul>
+                        <li><strong>必須項目:</strong> 氏名/ニックネーム、メールアドレス</li>
+                        <li><strong>可能な業務/スキル:</strong> 階層化されたタグシステム（アコーディオン式）
+                            <ul>
+                                <li>【資金調達】銀行融資対応、補助金申請、VC調達、IR資料作成、資本政策設計など</li>
+                                <li>【IPO・M&A関連】IPO準備、内部統制、M&Aアドバイザリー、バリュエーションなど</li>
+                                <li>【経営管理・管理会計関連】管理会計構築、月次決算、BIツール導入など</li>
+                                <li>【財務DX/システム導入関連】クラウド会計、ERP導入、レポーティング設計など</li>
+                                <li>【事業再生・事業承継】資金繰り改善、事業再生計画、M&A支援など</li>
+                                <li>【組織・ガバナンス関連】経理部門構築、内部統制、監査対応など</li>
+                                <li>【その他】週1〜対応可、フルリモート対応可、成果報酬型対応可など</li>
+                            </ul>
+                        </li>
+                        <li><strong>実績・経歴:</strong> 自由記入</li>
+                        <li><strong>保有資格:</strong> 自由記入</li>
+                        <li><strong>稼働希望形態:</strong> 週1日、週2日以上、スポット、成果報酬型、リモート対応希望</li>
+                        <li><strong>希望報酬イメージ:</strong> 月額制希望、成果報酬型でもOK、応相談</li>
+                        <li><strong>自己紹介/一言:</strong> 自由記入</li>
+                    </ul>
+                </div>
+
+                <div class="checklist">
+                    <h3>✅ 会員登録後のページ（ダッシュボード）</h3>
+                    
+                    <h4>ヘッダー構成（ログイン後）</h4>
+                    <ul>
+                        <li>ロゴ（RIGHTARM）</li>
+                        <li>ナビゲーション: 「ホーム」「スカウト」「メッセージ」「面談予定」</li>
+                        <li>右上: アカウント名（プロフィール編集へのドロップダウン）</li>
+                    </ul>
+
+                    <h4>ホーム画面</h4>
+                    <ul>
+                        <li><strong>CFO登録者:</strong> 募集中の企業一覧を表示</li>
+                        <li><strong>企業登録者:</strong> 募集中のCFO一覧を表示</li>
+                        <li><strong>カード表示:</strong> プロフィール内容をカードタイプで表示</li>
+                    </ul>
+
+                    <h4>企業側カード表示項目</h4>
+                    <ul>
+                        <li>会社名/事業名</li>
+                        <li>会社概要</li>
+                        <li>抱えている財務課題</li>
+                        <li>課題の背景や状況</li>
+                        <li>CFOに求めたいこと</li>
+                        <li>希望時期</li>
+                    </ul>
+
+                    <h4>CFO側カード表示項目</h4>
+                    <ul>
+                        <li>氏名/ニックネーム</li>
+                        <li>可能な業務/スキル</li>
+                        <li>実績・経歴</li>
+                        <li>保有資格</li>
+                        <li>稼働希望形態</li>
+                        <li>希望報酬イメージ</li>
+                        <li>自己紹介/一言</li>
+                        <li>顔写真（可能であれば）</li>
+                    </ul>
+                </div>
+
+                <div class="process-steps">
+                    <h3>🔍 検索・フィルター機能（左サイドバー）</h3>
+                    <ul>
+                        <li><strong>キーワード検索:</strong> 全文検索機能</li>
+                        <li><strong>専門分野別フィルター:</strong> 資金調達、IPO、M&A、管理会計など</li>
+                        <li><strong>地域別フィルター:</strong> 都道府県での絞り込み</li>
+                        <li><strong>稼働形態フィルター:</strong> 週1〜、週2〜、スポット、リモート可</li>
+                        <li><strong>報酬範囲フィルター:</strong> 月額、時給、成果報酬</li>
+                        <li><strong>企業規模フィルター:</strong> スタートアップ、中小企業、大企業</li>
+                    </ul>
+                </div>
+
+                <div class="process-steps">
+                    <h3>📱 各ページ機能詳細</h3>
+                    
+                    <h4>1. スカウト画面</h4>
+                    <ul>
+                        <li>受信したスカウト一覧表示</li>
+                        <li>スカウト詳細表示</li>
+                        <li>承認/拒否機能</li>
+                        <li>企業側からCFOへのスカウト</li>
+                    </ul>
+
+                    <h4>2. メッセージ画面</h4>
+                    <ul>
+                        <li>LINE風のチャット画面</li>
+                        <li>今まで会話した人の一覧</li>
+                        <li>リアルタイムメッセージ機能</li>
+                        <li>メッセージ履歴の保存</li>
+                    </ul>
+
+                    <h4>3. 面談予定画面</h4>
+                    <ul>
+                        <li>面談が決まっている日程の表示</li>
+                        <li>カレンダー形式またはテキスト形式</li>
+                        <li>Google Calendar連携</li>
+                        <li>オンライン面談リンクの自動生成</li>
+                    </ul>
+                </div>
+
+                <div class="process-steps">
+                    <h3>📋 クラウドワークス参考要素</h3>
+                    
+                    <h4>取り入れる機能</h4>
+                    <ul>
+                        <li>左サイドバーによるフィルター機能</li>
+                        <li>カードタイプの一覧表示</li>
+                        <li>キーワード検索機能</li>
+                        <li>右上アカウントメニューからのプロフィール編集</li>
+                        <li>直感的なナビゲーション</li>
+                    </ul>
+
+                    <h4>RIGHTARM独自要素</h4>
+                    <ul>
+                        <li>CFO特化のスキルタグシステム</li>
+                        <li>財務課題に特化したフィルター</li>
+                        <li>面談予定管理機能</li>
+                        <li>双方向スカウト機能</li>
+                        <li>階層化されたアコーディオン式スキル選択</li>
+                    </ul>
+                </div>
+
+                <div class="process-steps">
+                    <h3>💻 技術実装要件</h3>
+                    <ul>
+                        <li><strong>フレームワーク:</strong> Next.js + React</li>
+                        <li><strong>UIライブラリ:</strong> Tailwind CSS</li>
+                        <li><strong>コンポーネント:</strong> カード形式のプロフィール表示</li>
+                        <li><strong>レスポンシブ:</strong> モバイルファーストデザイン</li>
+                        <li><strong>検索機能:</strong> リアルタイム絞り込み</li>
+                        <li><strong>状態管理:</strong> React Context API または Zustand</li>
+                    </ul>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('authentication')">← 前のステップ</button>
+                    <button class="btn btn-primary" onclick="showSection('site-layout')">次のセクション →</button>
+                </div>
+            </section>
+
             <section id="site-layout" class="content-section">
                 <h2>サイト上の掲載イメージ</h2>
                 <p>本手順書は RIGHTARM サイト内の「設計ガイド」または「開発者向けドキュメント」ページとして公開します。ユーザー（社内チームやパートナー企業）がいつでも参照・ダウンロードできるよう、以下の構成を推奨します。</p>
@@ -650,11 +1022,11 @@
                 </div>
 
                 <div class="conclusion">
-                    <p>以上をベースに、RIGHTARM の使用設計プロセスを標準化し、開発・運用の品質を高めていきましょう。</p>
+                    <p>以上をベースに、RIGHTARM の使用設計プロセスを標準化し、開発・運用の品質を高めていきましょう。認証システムとUI/UX設計を含む包括的な仕様書により、効率的な開発とユーザー体験の最適化を実現します。</p>
                 </div>
 
                 <div class="navigation-buttons">
-                    <button class="btn btn-secondary" onclick="showSection('step8')">← 前のセクション</button>
+                    <button class="btn btn-secondary" onclick="showSection('ui-design')">← 前のセクション</button>
                     <button class="btn btn-primary" onclick="showSection('overview')">概要に戻る</button>
                 </div>
             </section>

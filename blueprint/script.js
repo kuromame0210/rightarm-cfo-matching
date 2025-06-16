@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const sectionOrder = [
                     'overview', 'step1', 'step2', 'step3', 'step4',
-                    'step5', 'step6', 'step7', 'step8', 'site-layout'
+                    'step5', 'step6', 'step7', 'step8', 'authentication', 'ui-design', 'site-layout'
                 ];
                 
                 const currentIndex = sectionOrder.indexOf(currentId);
@@ -193,13 +193,13 @@ function createProgressBar() {
 
 // プログレスバーを更新
 function updateProgressBar() {
-    const totalSections = 10; // overview + 8 steps + site-layout
+    const totalSections = 12; // overview + 8 steps + authentication + ui-design + site-layout
     const currentSection = document.querySelector('.content-section.active');
     
     if (currentSection) {
         const sectionOrder = [
             'overview', 'step1', 'step2', 'step3', 'step4',
-            'step5', 'step6', 'step7', 'step8', 'site-layout'
+            'step5', 'step6', 'step7', 'step8', 'authentication', 'ui-design', 'site-layout'
         ];
         
         const currentIndex = sectionOrder.indexOf(currentSection.id);

@@ -30,18 +30,19 @@
 ### blueprint/
 すべての設計・仕様書が含まれています：
 
-**認証システム設計**
+**包括的仕様書**
+- **index.html**: RIGHTARM完全仕様設計書（インタラクティブガイド）
+  - 1-8: 従来の設計手順
+  - 9: 認証システム設計（Firebase + Supabase）
+  - 10: UI/UX詳細設計（クラウドワークス参考）
+- **script.js / styles.css**: デザインガイド用ファイル
+
+**技術実装ファイル**
 - **firebase-config.js**: Firebase認証設定
 - **supabase-config.js**: Supabaseデータベース設定
 - **supabase-schema.sql**: データベーススキーマ
 - **auth.html**: ログイン・会員登録画面のUI
 - **profile-manager.js**: プロフィール管理システム
-- **SETUP_GUIDE.md**: 認証システムセットアップ手順書
-
-**UI/UX設計**
-- **UI_DESIGN_REQUIREMENTS.md**: 詳細なUI/UX要件書（youbou.mdを基に作成）
-- **index.html**: RIGHTARM仕様設計手順書（インタラクティブガイド）
-- **script.js / styles.css**: デザインガイド用ファイル
 
 **設計文書（md/）**
 - **blueprint_v3.md**: サービス仕様設計書
