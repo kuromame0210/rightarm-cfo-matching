@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RightArm ペルソナ別ユーザージャーニー</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans JP', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8fafc;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .section {
+            background: white;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .section h2 {
+            color: #1e40af;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .section h3 {
+            color: #374151;
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        
+        .section h4 {
+            color: #6b7280;
+            margin: 1rem 0 0.5rem 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .persona-card {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .persona-title {
+            background: #3b82f6;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+        
+        .emotion-tag {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin: 0.25rem;
+            display: inline-block;
+        }
+        
+        .behavior-list {
+            background: #ecfdf5;
+            border-left: 4px solid #10b981;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .behavior-list ol {
+            margin-left: 1rem;
+        }
+        
+        .behavior-list li {
+            margin: 0.5rem 0;
+            color: #065f46;
+        }
+        
+        .risk-alert {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .risk-alert h4 {
+            color: #dc2626;
+            margin-bottom: 0.5rem;
+        }
+        
+        .conversion-moment {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .conversion-moment h4 {
+            color: #166534;
+            margin-bottom: 0.5rem;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .summary-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .summary-card h3 {
+            color: #1f2937;
+            margin-bottom: 1rem;
+            border-bottom: none;
+            font-size: 1.2rem;
+        }
+        
+        .navigation {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 250px;
+        }
+        
+        .navigation h4 {
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+        
+        .navigation ul {
+            list-style: none;
+        }
+        
+        .navigation a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 0.875rem;
+            display: block;
+            padding: 0.25rem 0;
+        }
+        
+        .navigation a:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        th {
+            background: #f8fafc;
+            color: #374151;
+            font-weight: 600;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: top;
+        }
+        
+        tr:hover {
+            background: #f9fafb;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .navigation {
+                display: none;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .highlight {
+            background: #fef3c7;
+            padding: 0.125rem 0.25rem;
+            border-radius: 3px;
+        }
+        
+        .badge {
+            background: #3b82f6;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="navigation">
+        <h4>目次</h4>
+        <ul>
+            <li><a href="#overview">概要</a></li>
+            <li><a href="#company-personas">企業側ペルソナ</a></li>
+            <li><a href="#cfo-personas">CFO側ペルソナ</a></li>
+            <li><a href="#summary">分析サマリー</a></li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>RightArm ペルソナ別ユーザージャーニー</h1>
+            <p>企業×CFOマッチングプラットフォームを訪れたペルソナの反応、感情、行動パターンを詳細に分析</p>
+        </div>
+
+        <div class="section" id="overview">
+            <h2>📊 概要</h2>
+            <p>RightArm（企業×CFOマッチングプラットフォーム）を訪れたペルソナの反応、感情、行動パターンを詳細に分析。各ペルソナの心理状態から具体的な行動まで、コンバージョンに至る道筋を明確化しています。</p>
+        </div>
+
+        <div class="section" id="company-personas">
+            <h2>🏢 企業側ペルソナ</h2>
+
+            <div class="persona-card">
+                <div class="persona-title">35歳 製造業の2代目社長（年商50億）</div>
+                <p><strong>基本情報：</strong> 創業家、経理部ありだが経営管理が弱い、原価把握・部門別管理の強化／資金調達が必要</p>
+
+                <h4>🎯 サイト訪問時の第一印象</h4>
+                <div class="emotion-tag">半信半疑</div>
+                <div class="emotion-tag">慎重</div>
+                
+                <ul style="margin: 1rem 0;">
+                    <li>「また人材紹介サービスか...」（警戒心）</li>
+                    <li>「でも"週1から"って書いてあるな...」（興味）</li>
+                    <li>「完全無料面談まで？本当かな」（疑問）</li>
+                </ul>
+
+                <h4>💭 内心の反応</h4>
+                <p><strong>期待と不安のミックス</strong></p>
+                <ul style="margin: 1rem 0;">
+                    <li>「CFOってフルタイムで2000万円クラスの人材でしょ？うちにそんな予算はない」</li>
+                    <li>「週1なら月10-20万円くらい？それなら検討できるかも」</li>
+                    <li>「原価計算がグチャグチャなの、誰かに整理してもらいたい」</li>
+                </ul>
+
+                <h4>🔍 サイト内での行動パターン</h4>
+                <div class="behavior-list">
+                    <ol>
+                        <li><strong>検索フィルター使用</strong><br>"製造業" "原価管理" "管理会計"でフィルタリング、年収レンジを確認（月80万円〜の表示に「高いな...」）</li>
+                        <li><strong>CFOプロフィール閲覧</strong><br>元大手メーカー経理部長のプロフィールを重点的にチェック、"ERP導入実績"の文字に反応</li>
+                        <li><strong>気になる機能の使用</strong><br>3-4人を「気になる」に追加、ただしまだスカウトは送らない（慎重な性格）</li>
+                    </ol>
+                </div>
+
+                <div class="risk-alert">
+                    <h4>😟 離脱リスク要因</h4>
+                    <ul>
+                        <li>「高そう」「敷居が高そう」という先入観</li>
+                        <li>競合他社の事例がないことへの不安</li>
+                        <li>「週1で本当に効果あるの？」という疑問</li>
+                    </ul>
+                </div>
+
+                <div class="conversion-moment">
+                    <h4>✅ コンバージョンへの道筋</h4>
+                    <p><strong>決定的瞬間：</strong> 同業他社の成功事例を発見</p>
+                    <p>「年商60億の金属加工業、原価率5%改善、月15万円契約」→「うちでもできるかも」（行動開始）</p>
+                </div>
+            </div>
+
+            <div class="persona-card">
+                <div class="persona-title">47歳 地方建設業の創業者社長（年商30億）</div>
+                <p><strong>基本情報：</strong> 財務に無頓着、補助金経験ほぼなし、補助金活用/金融機関交渉代行/後継者に向けた管理体制構築</p>
+
+                <h4>🎯 サイト訪問時の第一印象</h4>
+                <div class="emotion-tag">困惑</div>
+                <div class="emotion-tag">期待</div>
+                
+                <ul style="margin: 1rem 0;">
+                    <li>「CFOって何？」（無知を自覚）</li>
+                    <li>「補助金もらえるって本当？」（強い関心）</li>
+                    <li>「地方でもリモートでやってくれるの？」（驚き）</li>
+                </ul>
+
+                <h4>💭 内心の反応</h4>
+                <p><strong>現実逃避と希望</strong></p>
+                <ul style="margin: 1rem 0;">
+                    <li>「今まで税理士任せで何とかなってたけど...」</li>
+                    <li>「最近資金繰りがキツイ。銀行の担当者も冷たいし」</li>
+                    <li>「補助金で1000万もらえたら設備投資できるな」</li>
+                </ul>
+
+                <div class="conversion-moment">
+                    <h4>✅ コンバージョンへの道筋</h4>
+                    <p><strong>決定的瞬間：</strong> 無料相談の簡単さを理解</p>
+                    <p>「まずは話だけでも聞いてもらおう」補助金の概算金額シミュレーターで「2000万円可能性」表示→即座にスカウト送信</p>
+                </div>
+            </div>
+
+            <div class="persona-card">
+                <div class="persona-title">28歳 EC/D2C系の成長中小企業（年商8億）</div>
+                <p><strong>基本情報：</strong> オンライン集客で急拡大中、資金繰り不安定、原価と広告費のバランスが読めない</p>
+
+                <h4>🎯 サイト訪問時の第一印象</h4>
+                <div class="emotion-tag">即座に理解</div>
+                <div class="emotion-tag">期待大</div>
+                
+                <ul style="margin: 1rem 0;">
+                    <li>「これ求めてたやつだ！」（瞬間的理解）</li>
+                    <li>「Uber的なマッチングか、スマート」（サービス理解）</li>
+                    <li>「週1なら現実的、フルタイムは無理だし」（納得）</li>
+                </ul>
+
+                <div class="conversion-moment">
+                    <h4>✅ コンバージョンへの道筋</h4>
+                    <p><strong>決定的瞬間：</strong> 元メルカリCFOのプロフィール発見</p>
+                    <p>「この人ならグロース企業のこと分かってる」IPO準備経験に魅力を感じる→即日スカウト・面談アポ取得</p>
+                </div>
+            </div>
+
+            <div class="persona-card">
+                <div class="persona-title">25歳 地方の老舗卸業2代目（年商18億）</div>
+                <p><strong>基本情報：</strong> 2代目社長継いだばかり、経理は税理士任せ、財務が税務会計のままで戦略が立てられない</p>
+
+                <h4>🎯 サイト訪問時の第一印象</h4>
+                <div class="emotion-tag">漠然とした不安</div>
+                <div class="emotion-tag">学習意欲</div>
+                
+                <ul style="margin: 1rem 0;">
+                    <li>「CFOって大企業にしかいないと思ってた」（発見）</li>
+                    <li>「うちみたいな古い業界でも使えるのかな？」（疑問）</li>
+                    <li>「父の時代とは経営環境が違う...」（現状認識）</li>
+                </ul>
+
+                <div class="conversion-moment">
+                    <h4>✅ コンバージョンへの道筋</h4>
+                    <p><strong>決定的瞬間：</strong> 老舗酒造業の事業承継成功事例を発見</p>
+                    <p>「3代目社長、管理会計導入で売上30%向上」同世代経営者の成功に刺激を受ける→勇気を出してスカウト送信</p>
+                </div>
+            </div>
+
+            <div class="persona-card">
+                <div class="persona-title">62歳 建材卸売業の創業者社長（年商9億）</div>
+                <p><strong>基本情報：</strong> 事業承継候補なし、M&A検討中、勝手に売られそうで怖い、準備方法が不明</p>
+
+                <h4>🎯 サイト訪問時の第一印象</h4>
+                <div class="emotion-tag">警戒</div>
+                <div class="emotion-tag">慎重</div>
+                <div class="emotion-tag">希望</div>
+                
+                <ul style="margin: 1rem 0;">
+                    <li>「M&A業者は信用できん...」（過去の嫌な経験）</li>
+                    <li>「でも第三者の目線は必要だ」（現実認識）</li>
+                    <li>「無料相談なら話だけでも...」（興味）</li>
+                </ul>
+
+                <div class="conversion-moment">
+                    <h4>✅ コンバージョンへの道筋</h4>
+                    <p><strong>決定的瞬間：</strong> 同規模企業の成功事例と元銀行支店長CFOの存在</p>
+                    <p>「この人なら地方企業のことも分かってる」M&A成功事例「年商10億→売却価格15億円」に納得→信頼関係構築のため面談希望</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="cfo-personas">
+            <h2>🎓 CFO側ペルソナ</h2>
+
+            <div class="persona-card">
+                <div class="persona-title">42歳 元メガバンク出身の副業希望者</div>
+                <p><strong>基本情報：</strong> 法人営業/融資/財務分析に強み、週1で地方案件、地方創生に貢献したい</p>
+
+                <h4>🎯 サイト訪問時の第一印象</h4>
+                <div class="emotion-tag">共感</div>
+                <div class="emotion-tag">使命感</div>
+                
+                <ul style="margin: 1rem 0;">
+                    <li>「これは面白いプラットフォームだ」（理解）</li>
+                    <li>「地方企業の課題解決に貢献できそう」（使命感）</li>
+                    <li>「銀行員時代の経験が活かせる」（自信）</li>
+                </ul>
+
+                <div class="conversion-moment">
+                    <h4>✅ 活動開始への道筋</h4>
+                    <p><strong>決定的瞬間：</strong> 地方製造業からの直接相談</p>
+                    <p>融資相談内容が具体的で現実的、自分の経験がピンポイントで活かせると確信→プロフィール充実化・積極営業開始</p>
+                </div>
+            </div>
+
+            <div class="persona-card">
+                <div class="persona-title">35歳 スタートアップCFO経験者</div>
+                <p><strong>基本情報：</strong> IPO準備/資金調達経験あり、フルタイム避けたいが収入増やしたい</p>
+
+                <h4>🎯 サイト訪問時の第一印象</h4>
+                <div class="emotion-tag">即座に価値理解</div>
+                <div class="emotion-tag">戦略的</div>
+                
+                <ul style="margin: 1rem 0;">
+                    <li>「これはスケールするビジネスモデル」（投資家目線）</li>
+                    <li>「僕のスキルセットにぴったり」（適合性認識）</li>
+                    <li>「複数案件でポートフォリオ組めそう」（戦略思考）</li>
+                </ul>
+
+                <div class="conversion-moment">
+                    <h4>✅ 活動開始への道筋</h4>
+                    <p><strong>決定的瞬間：</strong> シリーズB準備企業からの高単価オファー</p>
+                    <p>月額50万円＋調達成功時3%の条件提示、IPO準備企業特有の課題に共感→専業CFOとしての本格活動開始</p>
+                </div>
+            </div>
+
+            <div class="persona-card">
+                <div class="persona-title">47歳 会計士出身・PEファンド勤務歴あり</div>
+                <p><strong>基本情報：</strong> DD・資本政策・再生支援に強い、スペシャリストとして複数案件を持ちたい</p>
+
+                <h4>🎯 サイト訪問時の第一印象</h4>
+                <div class="emotion-tag">専門性の活用機会として評価</div>
+                
+                <ul style="margin: 1rem 0;">
+                    <li>「M&A案件なら任せろ」（専門性への自信）</li>
+                    <li>「PEファンド時代の人脈も活かせそう」（リソース認識）</li>
+                    <li>「複数案件並行なら収入も安定」（リスクヘッジ）</li>
+                </ul>
+
+                <div class="conversion-moment">
+                    <h4>✅ 活動開始への道筋</h4>
+                    <p><strong>決定的瞬間：</strong> 事業承継M&A案件で年収20%成功報酬の好条件</p>
+                    <p>企業価値10億円規模の本格案件、自分の専門性がフルに活かせる内容→専門特化CFOとしてのポジション確立</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="summary">
+            <h2>📈 行動パターン分析サマリー</h2>
+            
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>企業側の共通傾向</h3>
+                    <ul>
+                        <li><strong>初期：</strong> 警戒心 → 興味 → 検討 → 行動</li>
+                        <li><strong>重視点：</strong> コスト、実績、同業事例、リスクの低さ</li>
+                        <li><strong>決定要因：</strong> 具体的成功事例との遭遇</li>
+                    </ul>
+                </div>
+                
+                <div class="summary-card">
+                    <h3>CFO側の共通傾向</h3>
+                    <ul>
+                        <li><strong>初期：</strong> 理解 → 評価 → 戦略立案 → 実行</li>
+                        <li><strong>重視点：</strong> 専門性の活用、収入最大化、やりがい</li>
+                        <li><strong>決定要因：</strong> 自分のスキルにマッチする案件発見</li>
+                    </ul>
+                </div>
+                
+                <div class="summary-card">
+                    <h3>離脱防止策</h3>
+                    <ul>
+                        <li><strong>企業側：</strong> 同業事例の充実、料金の透明化、無料相談の強調</li>
+                        <li><strong>CFO側：</strong> 案件の質向上、マッチング精度向上、手数料の最適化</li>
+                    </ul>
+                </div>
+                
+                <div class="summary-card">
+                    <h3>コンバージョン向上策</h3>
+                    <ul>
+                        <li><strong>パーソナライゼーション：</strong> 業界・規模別のコンテンツ最適化</li>
+                        <li><strong>社会的証明：</strong> 具体的事例・数値の充実</li>
+                        <li><strong>リスク軽減：</strong> 段階的コミットメントの提案</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
