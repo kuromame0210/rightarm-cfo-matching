@@ -20,7 +20,8 @@
       "Bash(npm run build:*)",
       "Bash(curl:*)",
       "Bash(pkill:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(yarn build)"
     ],
     "deny": []
   }

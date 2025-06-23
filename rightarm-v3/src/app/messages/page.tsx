@@ -43,7 +43,7 @@ const CHAT_LIST = [
     status: '気軽の相談',
     avatar: '👤'
   }
-] as const
+]
 
 const MESSAGES = [
   {
@@ -82,13 +82,13 @@ const MESSAGES = [
     timestamp: '14:25',
     isFile: false
   }
-] as const
+]
 
 export default function MessagesPage() {
   const [selectedChatId, setSelectedChatId] = useState(1)
   const [messageInput, setMessageInput] = useState('')
   
-  const selectedChat = CHAT_LIST.find(chat => chat.id === selectedChatId)
+  const selectedChat = CHAT_LIST.find(chat => chat.id === selectedChatId) || CHAT_LIST[0]
   const [showChatList, setShowChatList] = useState(true)
 
   return (
@@ -117,7 +117,7 @@ export default function MessagesPage() {
               <div className="flex-1 flex flex-col">
                 <ChatList 
                   chatList={CHAT_LIST} 
-                  selectedChat={selectedChat} 
+                  selectedChat={selectedChatId} 
                   onSelectChat={(id) => {
                     setSelectedChatId(id)
                     setShowChatList(false)
@@ -148,7 +148,7 @@ export default function MessagesPage() {
           <div className="hidden md:flex md:flex-1">
             <ChatList 
               chatList={CHAT_LIST} 
-              selectedChat={selectedChat} 
+              selectedChat={selectedChatId} 
               onSelectChat={setSelectedChatId} 
             />
             <MessageArea 

@@ -45,7 +45,7 @@ const RECEIVED_SCOUTS = [
       workStyle: 'プロジェクト単位',
       avatar: '🏢'
     }
-  ] as const
+  ]
 
 // サンプル送信スカウトデータ
 const SENT_SCOUTS = [
@@ -69,7 +69,7 @@ const SENT_SCOUTS = [
       status: 'accepted',
       avatar: '🏢'
     }
-  ] as const
+  ]
 
 export default function ScoutPage() {
   const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received')

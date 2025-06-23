@@ -50,22 +50,30 @@ export default function AppHeader({ userName = '山田さん', userAvatar = '�
     { path: '/meetings', label: '面談予定', icon: '📅' }
   ]
 
+  // デモページかどうかをチェック
+  const isDemoPage = pathname?.startsWith('/demo')
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-[100]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14 md:h-16">
           {/* ロゴ */}
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
             <Link 
               href="/home" 
               className="text-lg md:text-xl font-bold text-gray-900 tracking-wide hover:text-gray-700 transition-colors"
             >
               RIGHTARM
             </Link>
+            {isDemoPage && (
+              <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                🎬 DEMO
+              </div>
+            )}
           </div>
           
           {/* PC用ナビゲーション */}
-          {isLoggedIn && (
+          {isLoggedIn && !isDemoPage && (
             <nav className="hidden md:flex space-x-6 lg:space-x-8 h-full">
               {navigationItems.map((item) => (
                 <Link
@@ -81,6 +89,42 @@ export default function AppHeader({ userName = '山田さん', userAvatar = '�
                   {item.label}
                 </Link>
               ))}
+            </nav>
+          )}
+          
+          {/* デモページ用ナビゲーション */}
+          {isDemoPage && (
+            <nav className="hidden md:flex space-x-4 h-full">
+              <Link
+                href="/demo/overview"
+                className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                  pathname === '/demo/overview'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-green-100 text-green-800 hover:bg-green-200'
+                }`}
+              >
+                📊 概要
+              </Link>
+              <Link
+                href="/demo/flows"
+                className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                  pathname === '/demo/flows'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                }`}
+              >
+                🔄 フロー
+              </Link>
+              <Link
+                href="/debug/components"
+                className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                  pathname === '/debug/components'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+                }`}
+              >
+                🧩 UI
+              </Link>
             </nav>
           )}
 
