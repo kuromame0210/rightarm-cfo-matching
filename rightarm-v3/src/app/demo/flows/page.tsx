@@ -267,7 +267,8 @@ export default function DemoFlowsPage() {
                   <li>上記振込先に支払い</li>
                   <li className="text-green-600 font-medium">✓ 振込証明書等をアップロード</li>
                   <li className="text-blue-600 font-medium">← 支払い報告ボタンを押下</li>
-                  <li>管理者の入金確認</li>
+                  <li>管理者が手動で入金確認</li>
+                  <li>管理者がステータス更新・通知送信</li>
                   <li>契約開始</li>
                 </ol>
               </div>
@@ -292,35 +293,97 @@ export default function DemoFlowsPage() {
     },
     {
       step: 4,
-      title: '入金確認完了',
-      description: '管理者による入金確認後、契約開始状態に',
+      title: '管理者による入金確認',
+      description: '管理者が管理画面で手動確認・ステータス更新',
+      screenshot: {
+        component: (
+          <div className="bg-white border rounded-lg p-6">
+            <h3 className="font-semibold mb-4">🛠️ 管理画面 - 入金確認</h3>
+            
+            <div className="space-y-4">
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="font-medium">請求書 INV-001</h4>
+                    <p className="text-sm text-gray-600">株式会社テックスタート × 山田太郎CFO</p>
+                  </div>
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                    支払い報告済み
+                  </span>
+                </div>
+                
+                <div className="bg-gray-50 rounded p-3 mb-3">
+                  <p className="text-sm text-gray-700 mb-2">証憑ファイル:</p>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-lg">📄</span>
+                    <span className="text-sm">振込証明書.pdf</span>
+                  </div>
+                </div>
+
+                <div className="flex space-x-3">
+                  <button className="flex-1 px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700">
+                    ✅ 入金確認完了
+                  </button>
+                  <button className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50">
+                    ❌ 差戻し
+                  </button>
+                </div>
+              </div>
+
+              <div className="text-center text-sm text-gray-500">
+                ↓ 「入金確認完了」クリック後、自動で通知送信
+              </div>
+            </div>
+          </div>
+        )
+      }
+    },
+    {
+      step: 5,
+      title: '契約開始通知',
+      description: 'ステータス更新後、企業・CFOに自動で通知送信',
       screenshot: {
         component: (
           <div className="bg-white border rounded-lg p-6">
             <div className="text-center mb-6">
-              <div className="text-4xl mb-3">✅</div>
-              <h3 className="font-medium text-gray-900 mb-2">入金確認完了</h3>
+              <div className="text-4xl mb-3">📧</div>
+              <h3 className="font-medium text-gray-900 mb-2">契約開始通知を送信</h3>
               <p className="text-sm text-gray-600">
-                契約が正式に開始されました
+                企業・CFO双方に自動で通知メールが送信されます
               </p>
             </div>
             
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <h4 className="font-medium text-green-900 mb-2">契約情報</h4>
-              <div className="space-y-1 text-sm text-green-800">
-                <p>• 契約開始日: 2024年2月15日</p>
-                <p>• 契約期間: 6ヶ月</p>
-                <p>• ステータス: <span className="font-semibold">契約中</span></p>
+            <div className="space-y-3 mb-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-sm font-medium text-blue-900">📧 企業様向け通知</span>
+                  <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">送信済み</span>
+                </div>
+                <p className="text-xs text-blue-800">
+                  件名: 【RightArm】契約開始のお知らせ<br/>
+                  宛先: contact@techstart.com
+                </p>
+              </div>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-sm font-medium text-blue-900">📧 CFO様向け通知</span>
+                  <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">送信済み</span>
+                </div>
+                <p className="text-xs text-blue-800">
+                  件名: 【RightArm】契約開始のお知らせ<br/>
+                  宛先: yamada@example.com
+                </p>
               </div>
             </div>
 
-            <div className="flex space-x-3">
-              <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded text-sm">
-                💬 メッセージ
-              </button>
-              <button className="flex-1 px-4 py-2 border border-gray-300 rounded text-sm">
-                📋 契約詳細
-              </button>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h4 className="font-medium text-green-900 mb-2">✅ 契約開始完了</h4>
+              <div className="space-y-1 text-sm text-green-800">
+                <p>• 契約開始日: 2024年2月15日</p>
+                <p>• ステータス: <span className="font-semibold">契約中</span></p>
+                <p>• 通知送信: 完了</p>
+              </div>
             </div>
           </div>
         )
@@ -502,17 +565,17 @@ export default function DemoFlowsPage() {
               <div className="text-sm text-yellow-700 space-y-1">
                 {selectedFlow === 'meeting' ? (
                   <>
-                    <p>• 面談リンクはZoom API / Google Meet APIを使用して自動生成</p>
+                    <p>• 面談リンクはZoom APIを使用して自動生成</p>
                     <p>• カレンダー連携はGoogle Calendar API / Outlook APIで実装</p>
-                    <p>• リマインダー機能はスケジューラー（Cron）で自動送信</p>
-                    <p>• 参加者への通知はメール/プッシュ通知で多重送信</p>
+                    <p>• リマインダー機能はGitHub Actionsで定期実行</p>
+                    <p>• 参加者への通知はResendで自動メール送信</p>
                   </>
                 ) : (
                   <>
-                    <p>• 振込先情報は管理画面で設定可能（暗号化して保存）</p>
-                    <p>• ファイルアップロードはAWS S3 / Google Cloud Storageに保存</p>
-                    <p>• 支払い確認は管理者画面で一括処理可能</p>
-                    <p>• 入金確認後は自動でステータス更新・通知送信</p>
+                    <p>• 振込先情報はENV変数で管理（シンプル・安全）</p>
+                    <p>• ファイルアップロードはVercel Blob Storageに保存</p>
+                    <p>• 支払い確認は管理者が管理画面で手動確認・承認</p>
+                    <p>• 管理者の操作後、Resendで自動ステータス更新・通知送信</p>
                   </>
                 )}
               </div>
