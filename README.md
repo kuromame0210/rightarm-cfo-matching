@@ -1,6 +1,14 @@
-# RIGHTARM - CFOマッチングプラットフォーム
+# RightArm - CFOマッチングプラットフォーム
 
-全国の企業に、"右腕CFO"を届けるマッチングプラットフォーム
+全国の中小企業に、"経営の右腕"を届けるマッチングプラットフォーム
+
+## サービス概要
+
+- **サービス名:** RightArm
+- **事業内容:** 全国・小中堅企業×CFOのマッチングサイト
+- **ミッション:** 全国の中小企業に、"経営の右腕"を届ける
+- **ビジョン:** 全ての企業に"最適な経営パートナー"が当たり前にいる世界を。
+- **ポジショニング:** 「経営に自由な出会いを」
 
 ## プロジェクト構成
 
@@ -31,7 +39,7 @@
 すべての設計・仕様書が含まれています：
 
 **包括的仕様書**
-- **index.html**: RIGHTARM完全仕様設計書（インタラクティブガイド）
+- **index.html**: RightArm完全仕様設計書（インタラクティブガイド）
   - 1-8: 従来の設計手順
   - 9: 認証システム設計（Firebase + Supabase）
   - 10: UI/UX詳細設計（クラウドワークス参考）
@@ -49,6 +57,7 @@
 - **persona.md**: ユーザーペルソナ定義
 - **readme.md**: 要件定義書
 - **youbou.md**: UI/UX詳細要求書（クラウドワークス参考）
+- **youbou_v2.md**: 最新正式仕様書（CEO要件）
 - **siteread.md**: サイト概要
 
 ### implementation/
@@ -65,13 +74,22 @@
 2. **二次実装**: 認証システム・基本機能
 3. **後回し**: PWA対応・決済機能・管理機能
 
-## 技術スタック（予定）
+## 技術スタック（確定）
 
-- **認証**: Firebase Authentication
-- **データベース**: Supabase (PostgreSQL)
+- **認証**: Firebase Authentication (メール/パスワード + Google OAuth)
+- **データベース**: Supabase (PostgreSQL + Row Level Security)
 - **フロントエンド**: Next.js / React
 - **バックエンド**: Next.js API Routes
-- **デプロイ**: Vercel (無料プラン対応)
+- **決済**: Stripe (Connect対応)
+- **通知**: SendGrid または SES、Firebase Cloud Messaging
+- **モバイル**: レスポンシブデザイン + PWA対応
+- **デプロイ**: Vercel (Next.js最適化)
+
+### 認証アーキテクチャ
+**Firebase認証 + Supabaseデータベース連携**
+- Firebase: Google OAuth、セキュリティ管理
+- Supabase: データ管理、リアルタイム機能
+- 連携: Firebase IDトークン → Next.js API → Supabase
 
 ## セットアップ
 

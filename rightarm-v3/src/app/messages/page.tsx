@@ -5,7 +5,7 @@ import AppHeader from '@/components/AppHeader'
 import ChatList from '@/components/ChatList'
 import MessageArea from '@/components/MessageArea'
 
-// サンプルデータを外に出して再作成を防ぐ
+// v5.1仕様書準拠：4段階ステータス日本語ラベル
 const CHAT_LIST = [
   {
     id: 1,
@@ -13,7 +13,7 @@ const CHAT_LIST = [
     lastMessage: 'ありがとうございます。来週の面談楽しみにしております。',
     timestamp: '2時間前',
     unreadCount: 2,
-    status: '面談調整',
+    status: '面談',
     avatar: '👤'
   },
   {
@@ -32,6 +32,15 @@ const CHAT_LIST = [
     timestamp: '3日前',
     unreadCount: 1,
     status: '応募・スカウト',
+    avatar: '👤'
+  },
+  {
+    id: 4,
+    name: '佐藤 次郎（CFO）',
+    lastMessage: 'M&Aについて気軽にご相談いただければと思います。',
+    timestamp: '5日前',
+    unreadCount: 0,
+    status: '気軽の相談',
     avatar: '👤'
   }
 ] as const
@@ -76,8 +85,10 @@ const MESSAGES = [
 ] as const
 
 export default function MessagesPage() {
-  const [selectedChat, setSelectedChat] = useState(1)
+  const [selectedChatId, setSelectedChatId] = useState(1)
   const [messageInput, setMessageInput] = useState('')
+  
+  const selectedChat = CHAT_LIST.find(chat => chat.id === selectedChatId)
   const [showChatList, setShowChatList] = useState(true)
 
   return (
@@ -108,7 +119,7 @@ export default function MessagesPage() {
                   chatList={CHAT_LIST} 
                   selectedChat={selectedChat} 
                   onSelectChat={(id) => {
-                    setSelectedChat(id)
+                    setSelectedChatId(id)
                     setShowChatList(false)
                   }} 
                 />
@@ -126,7 +137,8 @@ export default function MessagesPage() {
                 <MessageArea 
                   messages={MESSAGES} 
                   messageInput={messageInput} 
-                  onMessageInputChange={setMessageInput} 
+                  onMessageInputChange={setMessageInput}
+                  selectedChat={selectedChat}
                 />
               </div>
             )}
@@ -137,12 +149,13 @@ export default function MessagesPage() {
             <ChatList 
               chatList={CHAT_LIST} 
               selectedChat={selectedChat} 
-              onSelectChat={setSelectedChat} 
+              onSelectChat={setSelectedChatId} 
             />
             <MessageArea 
               messages={MESSAGES} 
               messageInput={messageInput} 
-              onMessageInputChange={setMessageInput} 
+              onMessageInputChange={setMessageInput}
+              selectedChat={selectedChat}
             />
           </div>
         </div>

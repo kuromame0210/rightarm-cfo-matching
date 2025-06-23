@@ -5,16 +5,79 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
 function RegisterPageContent() {
-  const [userType, setUserType] = useState<'company' | 'cfo' | null>(null)
   const searchParams = useSearchParams()
+  const initialType = searchParams.get('type')
+  const [userType, setUserType] = useState<'company' | 'cfo' | null>(
+    (initialType === 'company' || initialType === 'cfo') ? initialType : null
+  )
+  const [selectedRevenue, setSelectedRevenue] = useState('')
+  const [selectedChallenges, setSelectedChallenges] = useState<string[]>([])
+  const [selectedSkills, setSelectedSkills] = useState<{[key: string]: string[]}>({})
+  const [expandedSkillCategory, setExpandedSkillCategory] = useState<string | null>(null)
 
-  // URLパラメータからuserTypeを取得
+  // v5.1仕様書に基づく推定年商選択肢
+  const revenueOptions = [
+    { value: 'under_100m', label: '1億円未満' },
+    { value: '100m_1b', label: '1〜10億円' },
+    { value: '1b_10b', label: '10〜30億円' },
+    { value: '10b_30b', label: '30〜50億円' },
+    { value: 'over_50b', label: '50億円以上' },
+    { value: 'private', label: '非公開' }
+  ]
+
+  // v5.1仕様書に基づく財務課題タグ大分類
+  const challengeTags = [
+    '資金調達', 'IPO準備', '財務DX・システム導入', '事業承継・再生', 
+    '組織・ガバナンス', 'M&A関連', '管理会計強化', '補助金活用',
+    '銀行融資', '投資家対応', '原価計算', '予実管理', 'その他'
+  ]
+
+  // v5.1仕様書に基づく専門スキル大分類6種
+  const skillCategories = {
+    '資金調達': ['VC調達', '銀行融資', '補助金申請', '投資家対応', 'クラウドファンディング', '社債発行'],
+    'IPO・M&A関連': ['IPO準備', 'M&A戦略', '企業価値評価', 'DD対応', 'IR活動', '上場審査対応'],
+    '財務DX・システム導入': ['ERP導入', '管理会計システム', 'BI導入', 'API連携', 'RPA導入', 'SaaS選定'],
+    '事業承継・再生': ['事業承継計画', '事業再生', 'リストラクチャリング', '組織再編', '後継者育成', '株価算定'],
+    '組織・ガバナンス': ['内部統制', 'コンプライアンス', 'リスク管理', 'KPI設計', '予算管理', '取締役会運営'],
+    'その他': ['国際税務', '連結決算', 'IFRS', '原価計算', '管理会計', '財務分析']
+  }
+
+  // URLパラメータの変更を監視（必要に応じて更新）
   useEffect(() => {
     const type = searchParams.get('type')
     if (type === 'company' || type === 'cfo') {
       setUserType(type)
     }
   }, [searchParams])
+
+  // 財務課題タグの選択/解除
+  const toggleChallenge = (challenge: string) => {
+    setSelectedChallenges(prev =>
+      prev.includes(challenge)
+        ? prev.filter(c => c !== challenge)
+        : [...prev, challenge]
+    )
+  }
+
+  // スキル選択/解除
+  const toggleSkill = (category: string, skill: string) => {
+    setSelectedSkills(prev => {
+      const categorySkills = prev[category] || []
+      const newCategorySkills = categorySkills.includes(skill)
+        ? categorySkills.filter(s => s !== skill)
+        : [...categorySkills, skill]
+      
+      return {
+        ...prev,
+        [category]: newCategorySkills
+      }
+    })
+  }
+
+  // アコーディオンの開閉
+  const toggleSkillCategory = (category: string) => {
+    setExpandedSkillCategory(expandedSkillCategory === category ? null : category)
+  }
 
   if (!userType) {
     return (
@@ -152,27 +215,68 @@ function RegisterPageContent() {
                     rows={3}
                   />
                 </div>
+                {/* v5.1仕様書準拠：推定年商ラジオボタンリスト */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">推定年商</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent">
-                    <option value="">選択してください</option>
-                    <option value="under_100m">1億円未満</option>
-                    <option value="100m_1b">1〜10億円</option>
-                    <option value="1b_10b">10〜30億円</option>
-                    <option value="10b_30b">30〜50億円</option>
-                    <option value="over_50b">50億円以上</option>
-                    <option value="private">非公開</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">抱えている財務課題</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {['資金調達', 'IPO・上場', '管理会計', '事業承継', 'M&A', '財務DX', '事業再生', 'その他'].map((challenge) => (
-                      <label key={challenge} className="flex items-center">
-                        <input type="checkbox" className="mr-2" />
-                        <span className="text-sm">{challenge}</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">推定年商</label>
+                  <div className="space-y-2">
+                    {revenueOptions.map((option) => (
+                      <label key={option.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                        <input
+                          type="radio"
+                          name="revenue"
+                          value={option.value}
+                          checked={selectedRevenue === option.value}
+                          onChange={(e) => setSelectedRevenue(e.target.value)}
+                          className="mr-3 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium text-gray-900">{option.label}</span>
                       </label>
                     ))}
+                  </div>
+                </div>
+
+                {/* v5.1仕様書準拠：財務課題タグ大分類（TagSelector展開式UI） */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    財務課題タグ大分類
+                    <span className="text-xs text-gray-500 ml-2">（複数選択可）</span>
+                  </label>
+                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex flex-wrap gap-2">
+                      {challengeTags.map((challenge) => (
+                        <button
+                          key={challenge}
+                          type="button"
+                          onClick={() => toggleChallenge(challenge)}
+                          className={`px-3 py-2 rounded-full text-sm border transition-all duration-200 ${
+                            selectedChallenges.includes(challenge)
+                              ? 'bg-blue-100 text-blue-700 border-blue-300 shadow-sm'
+                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                          }`}
+                        >
+                          {challenge}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedChallenges.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-300">
+                        <p className="text-xs text-gray-600">選択中: {selectedChallenges.length}件</p>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {selectedChallenges.map((challenge) => (
+                            <span key={challenge} className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                              {challenge}
+                              <button
+                                type="button"
+                                onClick={() => toggleChallenge(challenge)}
+                                className="ml-1 text-blue-600 hover:text-blue-800"
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -183,29 +287,108 @@ function RegisterPageContent() {
           {userType === 'cfo' && (
             <div className="border-b border-gray-200 pb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">CFO情報</h3>
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {/* v5.1仕様書準拠：専門スキル大分類6種（Accordion-TagSelector） */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">専門スキル</label>
-                  <div className="space-y-3">
-                    {[
-                      { category: '資金調達', skills: ['VC調達', '銀行融資', '補助金申請', '投資家対応'] },
-                      { category: 'IPO・M&A関連', skills: ['IPO準備', 'M&A', '企業価値評価', 'DD対応'] },
-                      { category: '財務DX', skills: ['ERP導入', 'システム導入', 'DX推進', 'プロセス改善'] },
-                      { category: '事業承継・再生', skills: ['事業承継', '事業再生', 'リストラ', '組織再編'] }
-                    ].map((group) => (
-                      <div key={group.category} className="border border-gray-200 rounded-lg p-3">
-                        <div className="font-medium text-gray-900 mb-2">{group.category}</div>
-                        <div className="grid grid-cols-2 gap-2">
-                          {group.skills.map((skill) => (
-                            <label key={skill} className="flex items-center">
-                              <input type="checkbox" className="mr-2" />
-                              <span className="text-sm">{skill}</span>
-                            </label>
-                          ))}
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    専門スキル大分類
+                    <span className="text-xs text-gray-500 ml-2">（カテゴリをクリックして展開）</span>
+                  </label>
+                  <div className="space-y-2">
+                    {Object.entries(skillCategories).map(([category, skills]) => {
+                      const isExpanded = expandedSkillCategory === category
+                      const selectedCount = (selectedSkills[category] || []).length
+                      
+                      return (
+                        <div key={category} className="border border-gray-200 rounded-lg overflow-hidden">
+                          {/* アコーディオンヘッダー */}
+                          <button
+                            type="button"
+                            onClick={() => toggleSkillCategory(category)}
+                            className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left flex items-center justify-between"
+                          >
+                            <div className="flex items-center">
+                              <span className="font-medium text-gray-900">{category}</span>
+                              {selectedCount > 0 && (
+                                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                  {selectedCount}選択
+                                </span>
+                              )}
+                            </div>
+                            <span className={`transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                              ▼
+                            </span>
+                          </button>
+                          
+                          {/* アコーディオンコンテンツ */}
+                          {isExpanded && (
+                            <div className="p-4 bg-white border-t border-gray-200">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {skills.map((skill) => {
+                                  const isSelected = (selectedSkills[category] || []).includes(skill)
+                                  return (
+                                    <label 
+                                      key={skill} 
+                                      className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
+                                        isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => toggleSkill(category, skill)}
+                                        className="mr-3 text-blue-600 focus:ring-blue-500"
+                                      />
+                                      <span className={`text-sm ${isSelected ? 'text-blue-900 font-medium' : 'text-gray-700'}`}>
+                                        {skill}
+                                      </span>
+                                    </label>
+                                  )
+                                })}
+                              </div>
+                              
+                              {/* 選択済みスキル表示 */}
+                              {selectedCount > 0 && (
+                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                  <p className="text-xs text-gray-600 mb-2">選択中のスキル:</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {(selectedSkills[category] || []).map((skill) => (
+                                      <span key={skill} className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                                        {skill}
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleSkill(category, skill)}
+                                          className="ml-1 text-blue-600 hover:text-blue-800"
+                                        >
+                                          ✕
+                                        </button>
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
+                  
+                  {/* 全体の選択サマリー */}
+                  {Object.values(selectedSkills).some(skills => skills.length > 0) && (
+                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">選択済みスキル一覧</h4>
+                      <div className="text-xs text-blue-800">
+                        {Object.entries(selectedSkills).map(([category, skills]) => 
+                          skills.length > 0 && (
+                            <div key={category} className="mb-1">
+                              <strong>{category}:</strong> {skills.join(', ')}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">実績・経歴</label>

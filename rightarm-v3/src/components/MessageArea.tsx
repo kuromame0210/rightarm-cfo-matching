@@ -1,6 +1,6 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useState } from 'react'
 
 interface Message {
   id: number
@@ -15,43 +15,146 @@ interface MessageAreaProps {
   messages: Message[]
   messageInput: string
   onMessageInputChange: (value: string) => void
+  selectedChat?: {
+    name: string
+    status: string
+    avatar: string
+  }
 }
 
-const MessageArea = memo(({ messages, messageInput, onMessageInputChange }: MessageAreaProps) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case '気軽な相談': return 'bg-blue-100 text-blue-800'
-      case '応募・スカウト': return 'bg-yellow-100 text-yellow-800'
-      case '条件交渉': return 'bg-orange-100 text-orange-800'
-      case '面談調整': return 'bg-green-100 text-green-800'
-      case '契約検討': return 'bg-purple-100 text-purple-800'
-      default: return 'bg-gray-100 text-gray-800'
+const MessageArea = memo(({ messages, messageInput, onMessageInputChange, selectedChat }: MessageAreaProps) => {
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+
+  const showToastMessage = (message: string) => {
+    console.log('トースト表示:', message)
+    setToastMessage(message)
+    setShowToast(true)
+    setTimeout(() => {
+      setShowToast(false)
+      console.log('トースト非表示')
+    }, 3000)
+  }
+
+  const handleMeetingSetup = () => {
+    console.log('面談設定ボタンがクリックされました')
+    showToastMessage('面談設定機能は開発中です')
+  }
+
+  const handleViewProfile = () => {
+    if (selectedChat?.name.includes('CFO')) {
+      window.open('/cfo/1', '_blank')
+    } else {
+      window.open('/company/1', '_blank')
     }
+  }
+  // v5.1仕様書準拠：4段階ステータス日本語ラベル
+  const statusSteps = [
+    { id: 'inquiry', label: '気軽の相談', order: 1 },
+    { id: 'shortlist', label: '応募・スカウト', order: 2 },
+    { id: 'negotiation', label: '条件交渉', order: 3 },
+    { id: 'meeting', label: '面談', order: 4 }
+  ]
+
+  // 現在のステータスを判定（デモ用：面談調整 = meeting）
+  const getCurrentStep = (status: string) => {
+    switch (status) {
+      case '気軽な相談':
+      case '気軽の相談': return 'inquiry'
+      case '応募・スカウト': return 'shortlist'
+      case '条件交渉': return 'negotiation'
+      case '面談調整':
+      case '面談': return 'meeting'
+      default: return 'inquiry'
+    }
+  }
+
+  const currentStep = getCurrentStep(selectedChat?.status || '面談')
+  const currentStepOrder = statusSteps.find(step => step.id === currentStep)?.order || 1
+
+  const getStepColor = (stepOrder: number, currentOrder: number) => {
+    if (stepOrder <= currentOrder) {
+      return 'bg-blue-600 text-white border-blue-600'
+    }
+    return 'bg-gray-200 text-gray-600 border-gray-200'
+  }
+
+  const getLineColor = (stepOrder: number, currentOrder: number) => {
+    return stepOrder < currentOrder ? 'bg-blue-600' : 'bg-gray-200'
   }
 
   return (
     <div className="w-full md:w-2/3 flex flex-col flex-1">
       {/* チャットヘッダー */}
       <div className="p-3 md:p-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 md:space-x-3">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-sm md:text-lg">👤</span>
+        <div className="flex flex-col space-y-4">
+          {/* 相手情報とボタン */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 md:space-x-3">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                <span className="text-sm md:text-lg">{selectedChat?.avatar || '👤'}</span>
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 text-sm md:text-base">{selectedChat?.name || '山田 太郎'}</h3>
+                <span className="text-xs text-gray-500">戦略CFO</span>
+              </div>
             </div>
-            <div>
-              <h3 className="font-medium text-gray-900 text-sm md:text-base">山田 太郎</h3>
-              <span className={`inline-block px-1 md:px-2 py-1 rounded-full text-xs ${getStatusColor('面談調整')}`}>
-                面談調整
-              </span>
+            <div className="flex space-x-1 md:space-x-2">
+              <button 
+                onClick={handleMeetingSetup}
+                className="min-h-[44px] px-2 md:px-3 py-1 bg-green-600 text-white rounded text-xs md:text-sm hover:bg-green-700 flex items-center transition-colors"
+              >
+                面談設定
+              </button>
+              <button 
+                onClick={handleViewProfile}
+                className="min-h-[44px] px-2 md:px-3 py-1 bg-gray-600 text-white rounded text-xs md:text-sm hover:bg-gray-700 flex items-center transition-colors"
+              >
+                プロフィール
+              </button>
             </div>
           </div>
-          <div className="flex space-x-1 md:space-x-2">
-            <button className="min-h-[44px] px-2 md:px-3 py-1 bg-green-600 text-white rounded text-xs md:text-sm hover:bg-green-700 flex items-center">
-              面談設定
-            </button>
-            <button className="min-h-[44px] px-2 md:px-3 py-1 bg-gray-600 text-white rounded text-xs md:text-sm hover:bg-gray-700 flex items-center">
-              プロフィール
-            </button>
+
+          {/* v5.1仕様書準拠：StatusStepper (4段階) */}
+          <div className="w-full mt-4">
+            <div className="flex items-start justify-between relative pb-6">
+              {statusSteps.map((step, index) => (
+                <div key={step.id} className="flex items-center justify-center flex-1 relative">
+                  {/* ステップ円 */}
+                  <div className="relative z-10">
+                    <div 
+                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-colors ${
+                        getStepColor(step.order, currentStepOrder)
+                      }`}
+                    >
+                      {step.order}
+                    </div>
+                  </div>
+                  
+                  {/* 接続線（最後以外） */}
+                  {index < statusSteps.length - 1 && (
+                    <div className="absolute top-4 left-1/2 w-full h-0.5 z-0">
+                      <div className={`h-full transition-colors ${
+                        getLineColor(step.order, currentStepOrder)
+                      }`}></div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            {/* ステップラベル */}
+            <div className="flex justify-between -mt-2">
+              {statusSteps.map((step) => (
+                <div key={`label-${step.id}`} className="flex-1 text-center px-1">
+                  <span className={`text-xs font-medium leading-tight block ${
+                    step.order <= currentStepOrder ? 'text-blue-600' : 'text-gray-500'
+                  }`}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -106,6 +209,15 @@ const MessageArea = memo(({ messages, messageInput, onMessageInputChange }: Mess
           </button>
         </div>
       </div>
+
+      {/* Toast通知 */}
+      {showToast && (
+        <div className="fixed bottom-20 md:bottom-4 right-4 bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg z-[9999] transition-all duration-300 ease-in-out transform translate-y-0 opacity-100">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm">{toastMessage}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 })

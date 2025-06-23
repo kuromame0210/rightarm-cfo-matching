@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RIGHTARM 仕様設計手順書</title>
+    <title>RightArm - 全国の企業に、"右腕CFO"を届ける</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header class="header">
         <div class="container">
-            <h1 class="logo">RIGHTARM</h1>
-            <p class="subtitle">仕様設計手順書</p>
+            <h1 class="logo">RightArm</h1>
+            <p class="subtitle">全国の企業に、"右腕CFO"を届ける</p>
         </div>
     </header>
 
@@ -26,7 +26,8 @@
             <li><a href="#step7" class="nav-link" onclick="showSection('step7')">7. 開発／テスト／ローンチ</a></li>
             <li><a href="#step8" class="nav-link" onclick="showSection('step8')">8. 運用・フィードバックループ</a></li>
             <li><a href="#authentication" class="nav-link" onclick="showSection('authentication')">9. 認証システム設計</a></li>
-            <li><a href="#ui-design" class="nav-link" onclick="showSection('ui-design')">10. UI/UX詳細設計</a></li>
+            <li><a href="#database-design" class="nav-link" onclick="showSection('database-design')">10. データベース設計</a></li>
+            <li><a href="#ui-design" class="nav-link" onclick="showSection('ui-design')">11. UI/UX詳細設計</a></li>
             <li><a href="#site-layout" class="nav-link" onclick="showSection('site-layout')">サイト掲載イメージ</a></li>
         </ul>
     </nav>
@@ -34,26 +35,83 @@
     <main class="main-content">
         <div class="container">
             <section id="overview" class="content-section active">
-                <h2>仕様設計手順書（RIGHTARM 公式ガイド）</h2>
-                <p>本ガイドは、RIGHTARM プラットフォームの「使用設計」を円滑に進めるための手順をまとめたものです。プロジェクトメンバーやステークホルダーが共通理解を持ち、効率的に設計から実装までを推進できるよう、以下のステップと成果物の例を参照してください。</p>
+                <h2>RightArm 設計書（わかりやすいバージョン）</h2>
+                <p><strong>これは何？</strong> CFO（お金の専門家）と困っている会社をマッチングするサイトの設計書です。</p>
+                
+                <div class="explanation-box">
+                    <h3>🎯 RightArmって何をするサービス？</h3>
+                    <p><strong>簡単に言うと「お金の専門家と困っている会社をつなぐマッチングアプリ」です。</strong></p>
+                    
+                    <h4>こんな問題を解決します：</h4>
+                    <ul>
+                        <li><strong>会社の社長:</strong> 「お金のことがよくわからない...でも専門家を雇うお金がない」</li>
+                        <li><strong>CFO（お金の専門家）:</strong> 「副業で色んな会社を手伝いたいけど、どうやって見つけるの？」</li>
+                    </ul>
+                    
+                    <h4>🔥 RightArmの解決方法：</h4>
+                    <ul>
+                        <li><strong>会社:</strong> サイトでお金の専門家を検索 → 気になる人にメッセージ → 面談 → 週1日だけ契約</li>
+                        <li><strong>CFO:</strong> サイトに登録 → 会社からスカウトが来る → 気になる会社があれば自分からもアプローチ → 面談 → 契約</li>
+                    </ul>
+                    
+                    <p><strong>💡 ポイント:</strong> 面談まで完全無料！週1日から働けるから、フルタイムより安い！</p>
+                </div>
+                
+                <div class="checklist">
+                    <h3>⚠️ 社長からの正式な要件（youbou_v2.md）</h3>
+                    <ul>
+                        <li><strong>サービス名:</strong> RightArm</li>
+                        <li><strong>事業内容:</strong> 全国・小中堅企業×CFOのマッチングサイト</li>
+                        <li><strong>ミッション:</strong> 全国の中小企業に、"経営の右腕"を届ける</li>
+                        <li><strong>ビジョン:</strong> 全ての企業に"最適な経営パートナー"が当たり前にいる世界を。</li>
+                        <li><strong>ポジショニング:</strong> 「経営に自由な出会いを」</li>
+                        <li><strong>対象顧客:</strong> 年商〜200億円・従業員〜300人の全国〜中堅規模企業、週1〜稼働可能なフリー／複業CFO</li>
+                    </ul>
+                </div>
+                
+                <div class="service-flow">
+                    <h3>🔄 実際の使い方（超シンプル版）</h3>
+                    <div class="flow-steps">
+                        <div class="flow-step">
+                            <strong>👨‍💼 会社の社長:</strong> 
+                            <ol>
+                                <li>サイトに登録</li>
+                                <li>お金の専門家を検索（または専門家からのスカウトを待つ）</li>
+                                <li>気になる人にメッセージ送信</li>
+                                <li>無料で面談してみる</li>
+                                <li>気に入ったら契約して仕事開始</li>
+                            </ol>
+                        </div>
+                        <div class="flow-step">
+                            <strong>💼 CFO（お金の専門家）:</strong>
+                            <ol>
+                                <li>サイトに登録</li>
+                                <li>会社からのスカウトを待つ（または自分で会社を検索）</li>
+                                <li>会社とメッセージでやり取り</li>
+                                <li>無料で面談してみる</li>
+                                <li>気に入ったら契約して仕事開始</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="process-overview">
-                    <h3>プロセス概要</h3>
+                    <h3>📋 サイト作りの手順（11ステップ）</h3>
                     <div class="step-grid">
                         <div class="step-card" onclick="showSection('step1')">
                             <div class="step-number">1</div>
-                            <h4>目的と範囲の定義</h4>
-                            <p>プラットフォーム導入目的と対象ユーザーの明確化</p>
+                            <h4>何を作るかを決める</h4>
+                            <p>誰のために何を解決するサイトなのかを明確にする</p>
                         </div>
                         <div class="step-card" onclick="showSection('step2')">
                             <div class="step-number">2</div>
-                            <h4>ユーザーリサーチとペルソナ設計</h4>
-                            <p>ユーザーの課題とニーズの把握、ペルソナ策定</p>
+                            <h4>ユーザーを深く知る</h4>
+                            <p>実際に使う人の悩みや欲しいものを調べる</p>
                         </div>
                         <div class="step-card" onclick="showSection('step3')">
                             <div class="step-number">3</div>
-                            <h4>ユーザージャーニーマップの作成</h4>
-                            <p>サービス利用の一連の流れを可視化</p>
+                            <h4>使い方の流れを作る</h4>
+                            <p>ユーザーがサイトをどう使うかの流れを図にする</p>
                         </div>
                         <div class="step-card" onclick="showSection('step4')">
                             <div class="step-number">4</div>
@@ -85,8 +143,13 @@
                             <h4>認証システム設計</h4>
                             <p>Firebase + Supabase による安全な認証基盤</p>
                         </div>
-                        <div class="step-card" onclick="showSection('ui-design')">
+                        <div class="step-card" onclick="showSection('database-design')">
                             <div class="step-number">10</div>
+                            <h4>データベース設計</h4>
+                            <p>わかりやすいKPI測定とデータ構造</p>
+                        </div>
+                        <div class="step-card" onclick="showSection('ui-design')">
+                            <div class="step-number">11</div>
                             <h4>UI/UX詳細設計</h4>
                             <p>クラウドワークス参考のプロフェッショナルデザイン</p>
                         </div>
@@ -95,27 +158,63 @@
             </section>
 
             <section id="step1" class="content-section">
-                <h2>1. 目的と範囲の定義</h2>
-                <p>まずは何のために使用設計を行うのか、どこまでを手順書の対象とするのかを明確にします。具体的には以下の観点で整理します。</p>
+                <h2>1. 目的と範囲の定義（何を作るかを決める）</h2>
+                
+                <div class="explanation-box">
+                    <h3>📝 このステップで何をするの？</h3>
+                    <p><strong>簡単に言うと：「何のためにこのサイトを作るのか」を明確にします</strong></p>
+                    <p>家を建てる前に設計図を描くように、サイトを作る前に「誰のために」「何を解決するために」「どんな機能が必要か」を決めておきます。これがないと、作っている途中で「あれ？何を作ってたんだっけ？」となってしまいます。</p>
+                </div>
                 
                 <div class="checklist">
-                    <h3>✅ 確定事項</h3>
+                    <h3>✅ 社長からの正式な要件（youbou_v2.md）</h3>
                     <ul>
-                        <li><strong>サービス名:</strong> RIGHTARM</li>
-                        <li><strong>ミッション:</strong> 全国の企業に、"右腕CFO"を届ける</li>
-                        <li><strong>プラットフォーム導入目的:</strong> CFO⇔企業間マッチングの最適化</li>
-                        <li><strong>対象ユーザー:</strong> 企業担当者、CFO、管理者</li>
-                        <li><strong>収益モデル:</strong> 契約金額の5%仲介手数料</li>
+                        <li><strong>サービス名:</strong> RightArm（仮）</li>
+                        <li><strong>サービス概要:</strong> 「全国・小中堅企業×CFOのマッチングサイト」</li>
+                        <li><strong>ミッション:</strong> 全国の中小企業に、"経営の右腕"を届ける</li>
+                        <li><strong>ビジョン:</strong> 全ての企業に"最適な経営パートナー"が当たり前にいる世界を。</li>
+                        <li><strong>対象顧客:</strong> 全国～中堅規模の企業（年商～200億円・従業員～300人）</li>
+                        <li><strong>提供価値:</strong> フルタイム雇用が難しいが財務専門家が欲しい企業に週1～稼働のCFOを提供</li>
+                        <li><strong>ポジショニング:</strong> 「経営に自由な出会いを」</li>
+                    </ul>
+                </div>
+                
+                <div class="explanation-box">
+                    <h4>🎯 これを中学生にもわかるように説明すると...</h4>
+                    <ul>
+                        <li><strong>何を作る？</strong> → お金の専門家と困っている会社をつなぐマッチングサイト</li>
+                        <li><strong>誰のため？</strong> → お金の専門家が欲しいけど正社員で雇えない中小企業の社長さん</li>
+                        <li><strong>何を解決？</strong> → 「お金のことがわからない社長」と「副業で働きたいお金の専門家」をマッチング</li>
+                        <li><strong>どんな特徴？</strong> → 週1日だけでもOK！面談まで無料！自由に交渉できる！</li>
                     </ul>
                 </div>
                 
                 <div class="process-steps">
-                    <h3>成果物のイメージ</h3>
-                    <ul>
-                        <li><strong>ユーザーフロー図:</strong> 登録→検索→スカウト→面談→契約→支払いの流れ</li>
-                        <li><strong>ワイヤーフレーム:</strong> ホーム、検索結果、プロフィール詳細、メッセージ画面、管理画面</li>
-                        <li><strong>プロトタイプ:</strong> 主要機能の操作感確認用</li>
-                    </ul>
+                    <h3>📋 実際の使い方の流れ（youbou_v2.md正式版）</h3>
+                    
+                    <div class="explanation-box">
+                        <h4>🏢 会社の社長さんの使い方</h4>
+                        <ol>
+                            <li><strong>サイトに登録</strong> → 会社の基本情報と「こんなお金の悩みがある」を入力</li>
+                            <li><strong>お金の専門家を探す</strong> → 検索して気になる人を見つける（または専門家からスカウトが来るのを待つ）</li>
+                            <li><strong>気になる人にメッセージ</strong> → 「うちの会社を手伝ってもらえませんか？」と連絡</li>
+                            <li><strong>無料で面談</strong> → お互いの顔を見て相性をチェック（ここまで完全無料！）</li>
+                            <li><strong>契約して仕事開始</strong> → 気に入ったら週1日から働いてもらう</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="explanation-box">
+                        <h4>💼 CFO（お金の専門家）の使い方</h4>
+                        <ol>
+                            <li><strong>サイトに登録</strong> → 自分のスキルと「こんな会社を手伝いたい」を入力</li>
+                            <li><strong>会社からのスカウトを待つ</strong> → 企業からメッセージが来る（または自分で気になる会社を探す）</li>
+                            <li><strong>会社とメッセージでやり取り</strong> → 「どんな仕事をするか」「いくらもらえるか」を相談</li>
+                            <li><strong>無料で面談</strong> → 実際の社長さんと話して「この会社で働きたいか」を判断</li>
+                            <li><strong>契約して仕事開始</strong> → 気に入ったら週1日から働き始める</li>
+                        </ol>
+                    </div>
+
+                    <p><strong>🎉 すごいポイント:</strong> 面談まで完全無料！お互いが納得してから契約！報酬も自由に相談できる！</p>
                 </div>
 
                 <div class="navigation-buttons">
@@ -125,64 +224,130 @@
             </section>
 
             <section id="step2" class="content-section">
-                <h2>2. ユーザーリサーチとペルソナ設計</h2>
-                <p>ユーザーが抱える課題やニーズを把握し、代表的な利用者像（ペルソナ）を策定します。</p>
+                <h2>2. ユーザーリサーチとペルソナ設計（ユーザーを深く知る）</h2>
+                
+                <div class="explanation-box">
+                    <h3>🕵️ このステップで何をするの？</h3>
+                    <p><strong>簡単に言うと：「実際にサイトを使う人たちのことをめちゃくちゃ深く知る」です</strong></p>
+                    <p>例えば、友達にプレゼントを選ぶ時、「その人が何を好きか」「どんな悩みを持っているか」を知ってから選びますよね？サイト作りでも同じで、「実際に使う人」のことを深く理解してから作ります。</p>
+                    
+                    <h4>📝 「ペルソナ」って何？</h4>
+                    <p>ペルソナとは、「代表的なユーザーの人物像」のことです。たとえば「田中さん（50歳）はこんな悩みを持っていて、こんなことを求めている」という具体的な人物像を作ります。こうすることで、「田中さんが使いやすいサイト」を作ることができます。</p>
+                </div>
                 
                 <div class="checklist">
-                    <h3>✅ 確定ペルソナ（詳細版）</h3>
+                    <h3>✅ 社長が決めた公式ペルソナ（youbou_v2.md正式版）</h3>
                     
-                    <h4>CFO側ペルソナ</h4>
+                    <div class="explanation-box">
+                        <p><strong>⚠️ 重要：</strong> 以下のペルソナは社長が正式に決めたもので、変更できません。</p>
+                    </div>
+                    
+                    <div class="explanation-box">
+                        <h4>💼 お金の専門家（CFO）たちのタイプ分け</h4>
+                        <p>実際にサイトを使うお金の専門家たちをタイプ別に分けて、それぞれの特徴を理解しましょう。</p>
+                    </div>
+                    
+                    <h4>💼 CFO（お金の専門家）のタイプ</h4>
                     <ul>
-                        <li><strong>ペルソナ1：ベテラン戦略型CFO・田中康平さん（50歳）</strong>
+                        <li><strong>タイプ1：ベテラン戦略型CFO・田中康平さん（50歳）</strong>
+                            <div class="explanation-box">
+                                <p><strong>👨‍💼 どんな人？</strong> 大きな会社でお金の仕事を15年もやっていたプロ中のプロ。会社の株式を上場させたり、他の会社を買収したりする大きなプロジェクトを成功させた経験がたくさんある</p>
+                                <p><strong>🎯 何を求めている？</strong> 長期間（1年以上）で深く関われる仕事。会社のお金の戦略を一から設計できるような重要な仕事</p>
+                                <p><strong>😟 困っていること：</strong> 小さなプロジェクトや短期の仕事だと、自分のスキルを十分発揮できない。あと、安い報酬では受けたくない</p>
+                                <p><strong>📱 サイトに求める機能：</strong> 会社の成長ステージや調達したい資金の規模がわかる詳しいタグ機能、お給料と働く日数が明確に書いてあること</p>
+                            </div>
+                        </li>
+                        <li><strong>タイプ2：シェアリングCFO志向のミッドキャリア・鈴木美咲さん（38歳）</strong>
+                            <div class="explanation-box">
+                                <p><strong>👩‍💼 どんな人？</strong> 公認会計士の資格を持っていて、スタートアップで資金調達や会社の内部システム作りをやってきた経験者。複数の会社で副業として働きたいけど、プライベートも大事にしたい</p>
+                                <p><strong>🎯 何を求めている？</strong> 週1～2日だけのリモートワークで、似たような成長ステージの企業を複数担当したい</p>
+                                <p><strong>😟 困っていること：</strong> スカウトされた時に「会社の雰囲気」や「具体的に何を期待されているか」があいまいだと、実際に働くことになるか決められない</p>
+                                <p><strong>📱 サイトに求める機能：</strong> 企業が「どんな使命やビジョンを持っているか」を詳しく書けるプロフィール欄、メッセージのテンプレート機能</p>
+                            </div>
+                        </li>
+                        <li><strong>タイプ3：若手成長志向CFO候補・山本翔太さん（30歳）</strong>
+                            <div class="explanation-box">
+                                <p><strong>👨‍💼 どんな人？</strong> 大手コンサルの財務調査部門出身で、スタートアップに転職して3年の若手。自分で判断して会社の成長に貢献できる環境を求めている</p>
+                                <p><strong>🎯 何を求めている？</strong> 資金調達の段階や業務範囲がはっきりしていて、自分のスキルアップにつながるチャレンジできる仕事</p>
+                                <p><strong>😟 困っていること：</strong> マッチングの時に「実際にどこまで自分で判断できるか」や「上場準備がどこまで進んでいるか」がわからないと応募を躊躇してしまう</p>
+                                <p><strong>📱 サイトに求める機能：</strong> 案件ごとに「具体的にどんな仕事をするか」「進捗状況」を公開できるダッシュボード機能</p>
+                            </div>
+                        </li>
+                    </ul>
+                    
+                    <div class="explanation-box">
+                        <h4>🏢 困っている会社の社長さんたちのタイプ分け</h4>
+                        <p>実際にサイトを使う会社の社長さんたちも、それぞれ違った悩みを持っています。どんな人たちがRightArmを使うのか見てみましょう。</p>
+                    </div>
+                    
+                    <h4>🏢 企業側（会社の社長さん）のタイプ（youbou_v2.md正式版）</h4>
+                    <ul>
+                        <li><strong>👨‍💼 タイプ1：35歳 製造業の2代目社長（年商50億）</strong>
+                            <div class="explanation-box">
+                                <p><strong>どんな人？</strong> 親から会社を引き継いだ2代目社長。経理担当者はいるけど、会社全体のお金の管理が弱い</p>
+                                <p><strong>困っていること：</strong> 「各部門でいくらお金がかかっているか」「製品を作るのに実際いくらかかっているか」がよくわからない。お金の管理のプロが欲しいけど、正社員で雇うほどのお金はない</p>
+                                <p><strong>欲しいもの：</strong> 原価の把握や部門別の管理を強化してくれる人、資金調達の手伝いをしてくれる人</p>
+                            </div>
+                        </li>
+                        <li><strong>47歳 地方建設業の創業者社長（年商30億）</strong>
                             <ul>
-                                <li>背景: 大手製造業で財務部長を15年務めた後、独立してCFOとして複数の上場企業支援を経験。IPOや大型M&Aをリードした実績が豊富</li>
-                                <li>ニーズ: 長期プロジェクトで深い信頼関係を築き、資本政策やIR体制構築を一貫して担当できる案件</li>
-                                <li>課題: 小規模・短期の案件ではミスマッチを感じやすく、報酬水準にもシビア</li>
-                                <li>求める機能: 企業の成長ステージや調達規模を見極められる詳細タグ機能、案件金額と稼働日数の明示</li>
+                                <li>背景: 財務に無頓着、補助金経験もほぼなし</li>
+                                <li>ニーズ: 補助金活用／金融機関交渉代行／後継者に向けた管理体制構築</li>
+                                <li>課題: 補助金とかよく分からないけど、もらいたい</li>
                             </ul>
                         </li>
-                        <li><strong>ペルソナ2：シェアリングCFO志向のミッドキャリア・鈴木美咲さん（38歳）</strong>
+                        <li><strong>28歳 EC／D2C系の成長中小企業（年商8億）</strong>
                             <ul>
-                                <li>背景: 公認会計士資格を持ち、スタートアップでシリーズAの資金調達支援や内部統制構築に携わってきた。複業で複数社をサポートしたい一方、ワークライフバランスも重視</li>
-                                <li>ニーズ: 週1～2日程度のリモート対応で、フェーズの近い企業と複数マッチングしたい</li>
-                                <li>課題: スカウト時に「企業文化」や「期待役割」があいまいだと稼働合意に至りにくい</li>
-                                <li>求める機能: 企業側が求めるミッションやビジョンを詳しく掲載できるプロフィール欄、メッセージテンプレート</li>
+                                <li>背景: オンライン集客で急拡大中、3年前に立ち上げて独立</li>
+                                <li>ニーズ: 資金繰りが不安定、原価と広告費のバランスが読めない</li>
+                                <li>課題: フルタイムCFOは無理だけど週1で専門家欲しい</li>
                             </ul>
                         </li>
-                        <li><strong>ペルソナ3：若手成長志向CFO候補・山本翔太さん（30歳）</strong>
+                        <li><strong>25歳 地方の老舗卸業（年商18億）</strong>
                             <ul>
-                                <li>背景: 大手コンサルティングファームの財務デューデリジェンス部門出身で、スタートアップに転身して3年。自ら裁量を持って事業成長にコミットできる環境を求める</li>
-                                <li>ニーズ: 資金調達フェーズや業務範囲が明確で、自身のスキルアップにつながるチャレンジングな案件</li>
-                                <li>課題: マッチング時に「実務の裁量範囲」や「上場準備の進捗度」がわかりにくいと応募を躊躇</li>
-                                <li>求める機能: 案件ごとに想定業務一覧・進行度ステータスを公開できるダッシュボード機能</li>
+                                <li>背景: 2代目社長が継いだばかり／経理は税理士任せ</li>
+                                <li>課題: 財務が"税務会計"のままで、戦略が立てられない</li>
+                            </ul>
+                        </li>
+                        <li><strong>62歳 建材卸売業の創業者社長（年商9億）</strong>
+                            <ul>
+                                <li>背景: 現在も現役で経営中、子どもは事業承継に関心がなく、社内にも後継候補がいない</li>
+                                <li>課題: M&A業者にいきなり頼むのは怖い。勝手に売られそう</li>
+                                <li>ニーズ: いくらで売れるのか？何を準備すべきか？誰に聞けばいいかわからない</li>
                             </ul>
                         </li>
                     </ul>
                     
-                    <h4>企業側ペルソナ</h4>
+                    <h4>CFO側ペルソナ（youbou_v2.md正式版）</h4>
                     <ul>
-                        <li><strong>ペルソナA：シード期テック創業者・佐藤拓也さん（29歳）</strong>
+                        <li><strong>42歳 元メガバンク出身の副業希望者</strong>
                             <ul>
-                                <li>背景: 技術バックグラウンドを持つ創業者で、エンジェルラウンドで数千万円の資金調達を実行済み。財務知識は浅く、基本的な資金繰り管理や次ラウンドの資料作成をサポートしてくれるCFOを探している</li>
-                                <li>ニーズ: 短期的な資金調達アドバイスとキャッシュフロー管理、社内財務フレームワークの立ち上げ支援</li>
-                                <li>課題: 会計用語や投資家の要望がわからず、必要な書類準備に手間取る</li>
-                                <li>求める機能: ベーシックな資金調達タグ、業務支援領域のチェックリスト、チャットでの素早いQ&A</li>
+                                <li>背景: 法人営業／融資／財務分析に強み</li>
+                                <li>ニーズ: 週1で地方案件、地方創生に貢献したい</li>
                             </ul>
                         </li>
-                        <li><strong>ペルソナB：シリーズA成長企業代表・伊藤里奈さん（35歳）</strong>
+                        <li><strong>35歳 スタートアップCFO経験者</strong>
                             <ul>
-                                <li>背景: FinTech領域でシリーズA・5億円調達を完了し、本格的な事業拡大フェーズに入った経営者。投資家への定期報告や次回調達に向けたDD対応体制の構築が急務</li>
-                                <li>ニーズ: 資金調達計画策定、投資家ミーティング資料作成、財務DD対応の実行支援</li>
-                                <li>課題: 社内人材が足りず、決算数字の正確性や資料クオリティに不安を抱える</li>
-                                <li>求める機能: フィルタで「シリーズA以降」「DD対応経験あり」のCFOを即絞り込める検索、レビュー欄での実績確認</li>
+                                <li>背景: IPO準備／資金調達の経験あり</li>
+                                <li>ニーズ: フルタイムは避けたいが経験を活かして収入を増やしたい</li>
                             </ul>
                         </li>
-                        <li><strong>ペルソナC：上場準備中の中堅企業CEO・中川達也さん（45歳）</strong>
+                        <li><strong>47歳 会計士出身・PEファンド勤務歴あり</strong>
                             <ul>
-                                <li>背景: 売上30億円規模で、次期IPOを見据えた内部統制やIR体制整備を求めている。従来の財務メンバーでは対応できない高度なガバナンス構築を外部CFOに依頼したいフェーズ</li>
-                                <li>ニーズ: J-SOX対応、連結決算・開示資料作成、機関投資家向けIR戦略の策定</li>
-                                <li>課題: 内部に高度専門人材がおらず、外部CFOからの提案内容やスコープの妥当性を判定しにくい</li>
-                                <li>求める機能: 業務範囲・期間・報酬が事前に明示されたプロジェクト一覧、専門領域タグによる絞り込み</li>
+                                <li>背景: DD・資本政策・再生支援などに強い</li>
+                                <li>ニーズ: スペシャリストとして複数案件を持ちたい</li>
+                            </ul>
+                        </li>
+                        <li><strong>53歳 地元在住の元経理部長</strong>
+                            <ul>
+                                <li>背景: ERP導入・予実管理の実績あり</li>
+                                <li>ニーズ: 地方で管理会計整備に関わりたいが常勤は不可</li>
+                            </ul>
+                        </li>
+                        <li><strong>32歳 元ベンチャーの経営企画マネージャー</strong>
+                            <ul>
+                                <li>背景: KPI設計・SaaS財務に精通</li>
+                                <li>ニーズ: リモート×短時間で専門性を発揮したい</li>
                             </ul>
                         </li>
                     </ul>
@@ -213,16 +378,78 @@
             </section>
 
             <section id="step3" class="content-section">
-                <h2>3. ユーザージャーニーマップの作成</h2>
-                <p>ペルソナごとにサービス利用の一連の流れを可視化し、各タッチポイントでのユーザーの行動・感情・要件を整理します。</p>
+                <h2>3. ユーザージャーニーマップの作成（使い方の流れを作る）</h2>
+                
+                <div class="explanation-box">
+                    <h3>🗺️ このステップで何をするの？</h3>
+                    <p><strong>簡単に言うと：「ユーザーがサイトをどんな順番で使うか」の地図を作ります</strong></p>
+                    <p>例えば、コンビニで買い物する時の流れは「①入店 → ②商品を探す → ③レジに行く → ④お金を払う → ⑤退店」ですよね？サイトでも同じように、「①登録 → ②検索 → ③メッセージ → ④面談 → ⑤契約」という流れがあります。この流れを詳しく地図にして、どこで困ったり迷ったりするかを予想します。</p>
+                    
+                    <h4>📋 ユーザージャーニーマップって何？</h4>
+                    <p>「ユーザーがサイトを使う時の行動や感情の変化を、ストーリー仕立てで描いた地図」のことです。「田中さんが最初にサイトを見た時はワクワクしていたけど、登録フォームで困って不安になった」みたいな感情の変化も含めて考えます。</p>
+                </div>
                 
                 <div class="checklist">
-                    <h3>✅ 確定ユーザーフロー</h3>
+                    <h3>✅ 社長が決めたRightArmの特徴（youbou_v2.md正式版）</h3>
+                    
+                    <div class="explanation-box">
+                        <h4>🚀 RightArmの「すごいところ」8つ</h4>
+                        <p>他のサービスとどこが違うのか、RightArmの特別なポイントを見てみましょう。</p>
+                    </div>
                     <ul>
-                        <li><strong>企業側:</strong> 登録（10項目程度）→ CFO検索・フィルタリング → いいね → スカウト送信 → 面談設定 → 契約 → 支払い（手動振込）</li>
-                        <li><strong>CFO側:</strong> 登録（10項目程度）→ 企業検索・フィルタリング → プロフィール確認 → スカウト受信 → 面談設定 → 契約 → 支払い受領</li>
-                        <li><strong>管理者側:</strong> ユーザー管理 → 支払い確認 → ステータス更新 → KPIモニタリング</li>
+                        <li><strong>① 完全セルフ型マッチング:</strong> 企業⇔CFO 両方が"選べる"、CFOから企業への"逆スカウト"ができる唯一の仕組み
+                            <div class="explanation-box">
+                                <p><em>→ マッチングアプリみたいに、お互いが自由に選び合える！CFOからも企業に「働かせてください」と言える！</em></p>
+                            </div>
+                        </li>
+                        <li><strong>② 週1・月10万円～の導入ハードルの低さ:</strong> フルタイムCFO紹介の代わりに週1～のスポット契約OK
+                            <div class="explanation-box">
+                                <p><em>→ 正社員で雇うお金がなくても、週1日だけなら月10万円くらいから始められる！</em></p>
+                            </div>
+                        </li>
+                        <li><strong>③ スカウト・交渉・面談が完全無料:</strong> 「まず無料で話して相性を確認 → よければ契約」
+                            <div class="explanation-box">
+                                <p><em>→ 実際に働いてもらうまで一切お金がかからない！気軽に「お試し面談」ができる！</em></p>
+                            </div>
+                        </li>
+                        <li><strong>④ 両面マーケティング:</strong> 企業側とCFO側の同時リード獲得、広告運用に強い
+                            <div class="explanation-box">
+                                <p><em>→ 会社とCFO、両方に効率よく宣伝できるから、たくさんのユーザーが集まる！</em></p>
+                            </div>
+                        </li>
+                        <li><strong>⑤ 成果報酬型の柔軟なマネタイズ:</strong> 融資・補助金・EXITに対して段階別・成果ベースで報酬設計
+                            <div class="explanation-box">
+                                <p><em>→ 「お金を調達できたら」「補助金がもらえたら」その時だけ手数料をもらう仕組み！</em></p>
+                            </div>
+                        </li>
+                        <li><strong>⑥ 目的別タレントタグ検索:</strong> 「資金調達に強い人を探す」など具体的な探し方が可能
+                            <div class="explanation-box">
+                                <p><em>→ 「銀行からお金を借りたい」「補助金がほしい」など、目的に合った専門家を見つけやすい！</em></p>
+                            </div>
+                        </li>
+                        <li><strong>⑦ CxOや専門職種への拡張可能性:</strong> 将来的な"右腕マッチング経済圏"の核に
+                            <div class="explanation-box">
+                                <p><em>→ 将来はCFOだけじゃなく、CTO（技術の専門家）やCMO（マーケティングの専門家）も見つけられるようになる！</em></p>
+                            </div>
+                        </li>
+                        <li><strong>⑧ 地方企業への完全対応:</strong> 週一のリモートから利用可能
+                            <div class="explanation-box">
+                                <p><em>→ 東京にいなくても、リモートワークで週1日から働ける！地方の会社でも安心！</em></p>
+                            </div>
+                        </li>
                     </ul>
+                    
+                    <div class="explanation-box">
+                        <h4>💡 専門用語の解説</h4>
+                        <ul>
+                            <li><strong>セルフ型マッチング:</strong> 人間が仲介せず、ユーザー同士が直接やり取りできる仕組み</li>
+                            <li><strong>逆スカウト:</strong> 普通は企業→CFOだけど、CFO→企業からもアプローチできること</li>
+                            <li><strong>両面マーケティング:</strong> 企業とCFO、両方に同時に宣伝すること</li>
+                            <li><strong>マネタイズ:</strong> お金を稼ぐ仕組み</li>
+                            <li><strong>EXIT:</strong> 会社を売却すること（M&AやIPO）</li>
+                            <li><strong>CxO:</strong> CEO、CFO、CTOなど、会社の役員クラスの人たち</li>
+                        </ul>
+                    </div>
                 </div>
                 
                 <div class="process-steps">
@@ -233,6 +460,18 @@
                         <li><strong>面談率:</strong> 面談設定数 ÷ スカウト数</li>
                         <li><strong>契約率:</strong> 契約締結数 ÷ 面談数</li>
                     </ul>
+                    
+                    <div class="explanation-box">
+                        <h4>💡 わかりやすく言うと...</h4>
+                        <p><strong>KPI = サービスがうまくいってるかを測る数字</strong></p>
+                        <ul>
+                            <li><strong>いいね率:</strong> 100人がCFOを見て、何人が「この人いいな」と思うか</li>
+                            <li><strong>スカウト率:</strong> 「いいな」と思った人の中で、何人が実際にメッセージを送るか</li>
+                            <li><strong>面談率:</strong> メッセージを送った人の中で、何人が「会いましょう」となるか</li>
+                            <li><strong>契約率:</strong> 実際に会った人の中で、何人が「一緒に働きましょう」となるか</li>
+                        </ul>
+                        <p><em>→ つまり、どの段階で人が諦めちゃうかがわかる仕組み！</em></p>
+                    </div>
                 </div>
                 
                 <div class="process-steps">
@@ -255,13 +494,105 @@
                 <p>画面ごとの構成要素とレイアウトを決定し、実際の画面設計に向けた青写真を作成します。</p>
                 
                 <div class="checklist">
-                    <h3>✅ 確定タグ・プロフィール設計</h3>
+                    <h3>✅ 確定タグ・プロフィール設計（youbou_v2.md正式版）</h3>
+                    
+                    <h4>🏢 企業側の財務課題タグ（youbou_v2.md準拠）</h4>
                     <ul>
-                        <li><strong>資金調達フェーズ:</strong> シード、シリーズA、シリーズB以降</li>
-                        <li><strong>専門領域:</strong> M&A支援、内部統制構築、IR、タックスプランニング</li>
-                        <li><strong>業界経験:</strong> IT／テック、バイオ、製造、小売り</li>
-                        <li><strong>稼働条件:</strong> 週1日～5日、リモート可否、短期／長期契約</li>
+                        <li><strong>① 資金調達:</strong> 銀行融資/補助金・助成金/VC出資/投資/その他</li>
+                        <li><strong>② IPO／M&A準備</strong></li>
+                        <li><strong>③ 管理会計強化</strong></li>
+                        <li><strong>④ 再生・事業継承</strong></li>
+                        <li><strong>⑤ 経営管理DX</strong></li>
                     </ul>
+                    
+                    <h4>💼 CFO側のスキルタグ（youbou.md詳細版）</h4>
+                    <ul>
+                        <li><strong>【資金調達】</strong>
+                            <ul>
+                                <li>銀行融資対応</li>
+                                <li>補助金・助成金申請支援</li>
+                                <li>VC・エクイティ調達支援</li>
+                                <li>投資家対応（IR資料作成／ピッチデック作成）</li>
+                                <li>資本政策設計</li>
+                                <li>財務DD対応</li>
+                                <li>資金繰り表の作成・改善</li>
+                                <li>キャッシュフロー改善施策</li>
+                            </ul>
+                        </li>
+                        <li><strong>【IPO・M&A関連】</strong>
+                            <ul>
+                                <li>IPO準備支援（証券会社／監査法人対応）</li>
+                                <li>IPO内部統制構築</li>
+                                <li>M&Aアドバイザリー（売り手）</li>
+                                <li>M&Aアドバイザリー（買い手）</li>
+                                <li>バリュエーション／事業価値評価</li>
+                                <li>PMI支援（統合後の財務管理整備）</li>
+                            </ul>
+                        </li>
+                        <li><strong>【経営管理・管理会計関連】</strong>
+                            <ul>
+                                <li>管理会計構築（部門別損益／予算実績管理）</li>
+                                <li>月次決算の早期化</li>
+                                <li>BIツール導入（Looker Studio／Tableau 等）</li>
+                                <li>原価計算・粗利管理の導入</li>
+                            </ul>
+                        </li>
+                        <li><strong>【財務DX／システム導入関連】</strong>
+                            <ul>
+                                <li>クラウド会計ソフト導入（freee／マネーフォワード）</li>
+                                <li>ERP導入（SAP／NetSuite／マネフォERPなど）</li>
+                                <li>会計データの可視化・レポーティング設計</li>
+                                <li>ワークフロー・経費精算システム導入</li>
+                            </ul>
+                        </li>
+                        <li><strong>【事業再生・事業承継】</strong>
+                            <ul>
+                                <li>資金繰り改善（借換／リスケ対応）</li>
+                                <li>事業再生計画の立案</li>
+                                <li>第三者承継（M&A）支援</li>
+                                <li>親族内承継支援</li>
+                            </ul>
+                        </li>
+                        <li><strong>【組織・ガバナンス関連】</strong>
+                            <ul>
+                                <li>経理部門の内製化／組織構築</li>
+                                <li>CFO直下チームの設計</li>
+                                <li>内部統制／監査対応（監査法人／金融機関）</li>
+                                <li>会計方針の統一・会計基準整備（IFRS対応も含む）</li>
+                            </ul>
+                        </li>
+                        <li><strong>【その他】</strong>
+                            <ul>
+                                <li>週1〜対応可</li>
+                                <li>フルリモート対応可</li>
+                                <li>成果報酬型対応可</li>
+                                <li>地方案件対応可</li>
+                                <li>スタートアップ支援経験あり</li>
+                                <li>上場企業勤務経験あり</li>
+                                <li>英語対応可</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    
+                    <h4>👥 CFO人材の背景タグ（youbou_v2.md準拠）</h4>
+                    <ul>
+                        <li><strong>元メガバンク</strong></li>
+                        <li><strong>監査法人出身</strong></li>
+                        <li><strong>PEファンド出身</strong></li>
+                        <li><strong>上場経験スタートアップCFO</strong></li>
+                        <li><strong>その他財務人材</strong></li>
+                    </ul>
+                    
+                    <div class="explanation-box">
+                        <h4>💡 タグ設計の考え方</h4>
+                        <p><strong>企業の課題 ↔ CFOのスキルが完全に対応するように設計！</strong></p>
+                        <ul>
+                            <li><strong>企業が「資金調達」で困ってる</strong> → CFOの「資金調達」スキルでマッチング</li>
+                            <li><strong>企業が「IPO準備」で困ってる</strong> → CFOの「IPO・M&A関連」スキルでマッチング</li>
+                            <li><strong>アコーディオン式:</strong> 大カテゴリをタップすると詳細スキルが展開表示</li>
+                        </ul>
+                        <p><em>→ つまり、企業の悩みとCFOの得意分野がピッタリ合うような仕組み！</em></p>
+                    </div>
                 </div>
                 
                 <div class="process-steps">
@@ -350,13 +681,51 @@
                 <p>プロトタイプをベースに、デザイナー・エンジニア間で共有するための詳細仕様書をまとめます。</p>
                 
                 <div class="checklist">
-                    <h3>✅ 確定技術スタック</h3>
+                    <h3>✅ 確定技術スタック（Firebase認証 + Supabaseデータベース）</h3>
                     <ul>
-                        <li><strong>データベース & 認証:</strong> Supabase（PostgreSQL + Auth）</li>
+                        <li><strong>認証:</strong> Firebase Authentication（メール/パスワード + Google OAuth）</li>
+                        <li><strong>データベース:</strong> Supabase（PostgreSQL + Row Level Security）</li>
                         <li><strong>フロントエンド & バックエンド:</strong> Next.js（フルスタック）</li>
                         <li><strong>通知 & メール:</strong> SendGrid または SES、Firebase Cloud Messaging</li>
                         <li><strong>モバイル対応:</strong> レスポンシブデザイン + PWA（Progressive Web App）対応</li>
+                        <li><strong>決済:</strong> Stripe（Connect対応）</li>
+                        <li><strong>ホスティング:</strong> Vercel（Next.js最適化）</li>
                     </ul>
+                    
+                    <div class="explanation-box">
+                        <h4>💡 Firebase認証 + Supabaseデータベースの理由</h4>
+                        <p><strong>なぜこの組み合わせがベスト？</strong></p>
+                        <ul>
+                            <li><strong>Firebase Authentication:</strong>
+                                <ul>
+                                    <li>Google OAuth認証が簡単に実装できる</li>
+                                    <li>メール/パスワード認証も安定</li>
+                                    <li>セキュリティが強固（Googleが管理）</li>
+                                    <li>ユーザー管理画面が使いやすい</li>
+                                </ul>
+                            </li>
+                            <li><strong>Supabase Database:</strong>
+                                <ul>
+                                    <li>PostgreSQLで複雑なクエリが書きやすい</li>
+                                    <li>JSONカラムでスキル情報を柔軟に保存</li>
+                                    <li>Row Level Security（RLS）で安全</li>
+                                    <li>リアルタイム機能でメッセージ対応</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <p><em>→ 認証はFirebaseの得意分野、データ管理はSupabaseの得意分野を使い分け！</em></p>
+                        
+                        <div style="background: #e8f5e8; border: 1px solid #4caf50; border-radius: 4px; padding: 1rem; margin-top: 1rem;">
+                            <h5>🔄 認証フロー（Firebase → Supabase連携）</h5>
+                            <ol>
+                                <li>ユーザーがFirebaseでログイン（Google OAuth or メール）</li>
+                                <li>FirebaseがIDトークンを発行</li>
+                                <li>Next.js APIでIDトークンを検証</li>
+                                <li>検証後、Supabaseにユーザーデータをupsert</li>
+                                <li>以降はSupabaseのデータを使ってサービス提供</li>
+                            </ol>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="process-steps">
@@ -583,7 +952,7 @@
                 <div class="checklist">
                     <h3>✅ 確定運用体制</h3>
                     <ul>
-                        <li><strong>初期運用:</strong> RIGHTARMの社長とエンジニアが管理画面で全権行使</li>
+                        <li><strong>初期運用:</strong> RightArmの社長とエンジニアが管理画面で全権行使</li>
                         <li><strong>将来的には:</strong> 秘書、カスタマーサポート、経理担当者を採用</li>
                         <li><strong>権限管理:</strong> KPIモニタリング、対顺客コミュニケーションを分担</li>
                     </ul>
@@ -630,15 +999,69 @@
                     </ul>
                 </div>
 
+                <div class="checklist">
+                    <h3>💰 収益モデル（youbou_v2.md正式版）</h3>
+                    <div class="revenue-models">
+                        <div class="revenue-model">
+                            <h4>1. 顧問料 × 稼働月数 × 5%</h4>
+                            <ul>
+                                <li><strong>方法:</strong> Stripe経由で企業に5%分を事前請求（自動決済可）</li>
+                                <li><strong>例:</strong> 20万円×3ヶ月×5% = 3万円の請求書を発行</li>
+                                <li><strong>決済:</strong> Stripe請求リンクで決済（カード／振込OK）</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="revenue-model">
+                            <h4>2. 毎月顧問料×3%</h4>
+                            <ul>
+                                <li><strong>方法:</strong> 顧問料の全額を企業からプラットフォームが受け取る→CFOに97%を送金</li>
+                                <li><strong>技術:</strong> Stripe Connect（Standard or Express）使用</li>
+                                <li><strong>フロー:</strong> 企業→プラットフォーム→CFO（自動振込）</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="revenue-model">
+                            <h4>3. 成果報酬型（融資・補助金・EXITなど）</h4>
+                            <ul>
+                                <li><strong>融資:</strong> 融資額の3%</li>
+                                <li><strong>補助金:</strong> 補助金額の5%</li>
+                                <li><strong>フルタイム採用転籍:</strong> 年収の20%</li>
+                                <li><strong>EXIT:</strong> 相場5-10%</li>
+                                <li><strong>報告:</strong> CFO側に成果報告義務、契約上企業にも報告義務を明記</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="explanation-box">
+                        <h4>💡 収益モデルをわかりやすく説明</h4>
+                        <p><strong>要するに、RightArmが儲かる3つのパターン：</strong></p>
+                        <ol>
+                            <li><strong>最初に手数料をもらう方式:</strong> 企業がCFOと契約したら、契約金額の5%を最初にいただく</li>
+                            <li><strong>毎月少しずつもらう方式:</strong> 毎月の支払いの3%をプラットフォーム利用料としていただく</li>
+                            <li><strong>成功したらもらう方式:</strong> CFOが融資や補助金を取ってきたら、その金額の一部をいただく</li>
+                        </ol>
+                        <p><em>→ つまり、マッチングが成功して、実際に成果が出た時だけお金をいただく仕組み！</em></p>
+                        
+                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 1rem; margin-top: 1rem;">
+                            <h5>🔧 技術用語の解説</h5>
+                            <ul>
+                                <li><strong>Stripe:</strong> オンライン決済を簡単にできるサービス</li>
+                                <li><strong>Stripe Connect:</strong> お金の分配を自動でやってくれる機能</li>
+                                <li><strong>自動決済:</strong> 人間が手作業しなくても、システムが勝手に請求・振込してくれる</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="navigation-buttons">
                     <button class="btn btn-secondary" onclick="showSection('step7')">← 前のステップ</button>
-                    <button class="btn btn-primary" onclick="showSection('site-layout')">次のセクション →</button>
+                    <button class="btn btn-primary" onclick="showSection('authentication')">次のセクション →</button>
                 </div>
             </section>
 
             <section id="authentication" class="content-section">
                 <h2>9. 認証システム設計</h2>
-                <p>RIGHTARM プラットフォームの認証システムは、Firebase Authentication と Supabase データベースを連携させた安全で拡張性の高いシステムを構築します。</p>
+                <p>RightArm プラットフォームの認証システムは、Firebase Authentication と Supabase データベースを連携させた安全で拡張性の高いシステムを構築します。</p>
                 <div class="checklist">
                     <p><strong>重要:</strong> この認証システムは、youbou.md要件のUI/UX実装が完了後の二次実装項目です。まずはセクション10のUI/UX要件を最優先で実装してください。</p>
                 </div>
@@ -652,6 +1075,19 @@
                         <li>その鍵をサーバーに渡し、サーバー側で正当性を確認</li>
                         <li>確認後、Supabase にユーザー情報を登録</li>
                     </ol>
+                    
+                    <div class="explanation-box">
+                        <h4>💡 Google OAuth認証の魅力</h4>
+                        <p><strong>なぜGoogle OAuth認証を追加するの？</strong></p>
+                        <ul>
+                            <li><strong>ユーザビリティ:</strong> 「Googleでログイン」ボタン1つで簡単登録</li>
+                            <li><strong>信頼性:</strong> パスワードを覚える必要がない</li>
+                            <li><strong>セキュリティ:</strong> Googleが二段階認証も管理</li>
+                            <li><strong>プロフィール情報:</strong> 名前、メール、プロフィール画像を自動取得</li>
+                            <li><strong>ビジネス向け:</strong> CFO・経営者はGoogleアカウントを必ず持っている</li>
+                        </ul>
+                        <p><em>→ 特にビジネス系サービスでは、Google OAuthは登録率が2-3倍向上！</em></p>
+                    </div>
                 </div>
 
                 <div class="checklist">
@@ -659,9 +1095,26 @@
                     <ul>
                         <li><strong>Firebase Console:</strong> 新しいプロジェクト作成（rightarm-cfo-matching）</li>
                         <li><strong>Authentication 設定:</strong> メール/パスワード認証と Google 認証を有効化</li>
+                        <li><strong>Google OAuth設定:</strong>
+                            <ul>
+                                <li>Google Cloud ConsoleでOAuth 2.0クライアントIDを作成</li>
+                                <li>承認済みドメイン設定（localhost、本番ドメイン）</li>
+                                <li>クライアントIDをFirebase Authenticationに設定</li>
+                            </ul>
+                        </li>
                         <li><strong>ウェブアプリ登録:</strong> APIキーやプロジェクトIDなどの設定情報を取得</li>
                         <li><strong>Firebase Admin SDK:</strong> サーバー側でのIDトークン検証用の秘密鍵を設定</li>
                     </ul>
+                    
+                    <div class="explanation-box">
+                        <h4>💡 Google OAuth設定のポイント</h4>
+                        <ul>
+                            <li><strong>開発環境:</strong> http://localhost:3000 を承認済みドメインに追加</li>
+                            <li><strong>本番環境:</strong> 実際のドメイン（例: rightarm.jp）を承認済みドメインに追加</li>
+                            <li><strong>スコープ:</strong> email、profile（基本情報のみで十分）</li>
+                            <li><strong>ブランディング:</strong> Google OAuth同意画面でアプリ名・ロゴを設定</li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="checklist">
@@ -794,12 +1247,623 @@
 
                 <div class="navigation-buttons">
                     <button class="btn btn-secondary" onclick="showSection('step8')">← 前のステップ</button>
+                    <button class="btn btn-primary" onclick="showSection('database-design')">次のステップ →</button>
+                </div>
+            </section>
+
+            <section id="database-design" class="content-section">
+                <h2>10. データベース設計</h2>
+                <p>RightArmプラットフォームのデータ構造を「頭のいい中学生でもわかる」ように設計します。KPI測定もシンプルで正確に行えるようにします。</p>
+                
+                <div class="checklist">
+                    <h3>🎯 データベース設計の基本思想</h3>
+                    <ul>
+                        <li><strong>シンプル第一:</strong> 複雑なリレーションより、わかりやすい構造を優先</li>
+                        <li><strong>KPI測定重視:</strong> ユーザーの行動を正確に追跡できる設計</li>
+                        <li><strong>将来対応:</strong> 新機能追加時に破綻しない拡張性</li>
+                        <li><strong>パフォーマンス:</strong> 検索・フィルタが高速動作する構造</li>
+                    </ul>
+                </div>
+
+                <div class="process-steps">
+                    <h3>📊 KPI測定の仕組み（超わかりやすく解説）</h3>
+                    
+                    <div class="kpi-explanation">
+                        <h4>🔍 ユーザーの行動フロー</h4>
+                        <div class="user-flow">
+                            <div class="flow-step-detailed">
+                                <span class="step-number">1</span>
+                                <strong>CFOリストを見る</strong>
+                                <p>→ データベースに「表示」を記録</p>
+                            </div>
+                            <div class="arrow">↓</div>
+                            <div class="flow-step-detailed">
+                                <span class="step-number">2</span>
+                                <strong>気になるCFOに「いいね」</strong>
+                                <p>→ データベースに「いいね」を記録</p>
+                            </div>
+                            <div class="arrow">↓</div>
+                            <div class="flow-step-detailed">
+                                <span class="step-number">3</span>
+                                <strong>スカウトメッセージ送信</strong>
+                                <p>→ データベースに「スカウト」を記録</p>
+                            </div>
+                            <div class="arrow">↓</div>
+                            <div class="flow-step-detailed">
+                                <span class="step-number">4</span>
+                                <strong>面談の約束</strong>
+                                <p>→ データベースに「面談」を記録</p>
+                            </div>
+                            <div class="arrow">↓</div>
+                            <div class="flow-step-detailed">
+                                <span class="step-number">5</span>
+                                <strong>契約成立</strong>
+                                <p>→ データベースに「契約」を記録</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-calculation">
+                        <h4>📈 KPI計算式（具体例付き）</h4>
+                        <div class="kpi-examples">
+                            <div class="kpi-example">
+                                <h5>📍 いいね率 = いいね数 ÷ 表示数</h5>
+                                <p><strong>例:</strong> 100人がCFOリストを見て、15人が「いいね」→ いいね率15%</p>
+                                <p><strong>意味:</strong> CFOのプロフィールがどれくらい魅力的か</p>
+                            </div>
+                            
+                            <div class="kpi-example">
+                                <h5>📧 スカウト率 = スカウト数 ÷ いいね数</h5>
+                                <p><strong>例:</strong> 15人が「いいね」して、5人がスカウト送信 → スカウト率33%</p>
+                                <p><strong>意味:</strong> 「いいね」した人が実際にアクションを起こすか</p>
+                            </div>
+                            
+                            <div class="kpi-example">
+                                <h5>🤝 面談率 = 面談数 ÷ スカウト数</h5>
+                                <p><strong>例:</strong> 5人がスカウト送って、2人が面談OK → 面談率40%</p>
+                                <p><strong>意味:</strong> スカウトメッセージがどれくらい成功するか</p>
+                            </div>
+                            
+                            <div class="kpi-example">
+                                <h5>✅ 契約率 = 契約数 ÷ 面談数</h5>
+                                <p><strong>例:</strong> 2人と面談して、1人と契約 → 契約率50%</p>
+                                <p><strong>意味:</strong> 面談後にどれくらいの人が契約するか</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="process-steps">
+                    <h3>🗄️ データベーステーブル設計</h3>
+                    
+                    <div class="table-design">
+                        <h4>👤 users（ユーザー基本情報）</h4>
+                        <div class="table-structure">
+                            <table class="db-table">
+                                <thead>
+                                    <tr>
+                                        <th>カラム名</th>
+                                        <th>データ型</th>
+                                        <th>説明</th>
+                                        <th>例</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>INTEGER</td>
+                                        <td>ユーザーID（自動採番）</td>
+                                        <td>1, 2, 3...</td>
+                                    </tr>
+                                    <tr>
+                                        <td>email</td>
+                                        <td>VARCHAR(255)</td>
+                                        <td>メールアドレス</td>
+                                        <td>tanaka@example.com</td>
+                                    </tr>
+                                    <tr>
+                                        <td>user_type</td>
+                                        <td>VARCHAR(20)</td>
+                                        <td>ユーザーの種類</td>
+                                        <td>'company' or 'cfo'</td>
+                                    </tr>
+                                    <tr>
+                                        <td>name</td>
+                                        <td>VARCHAR(100)</td>
+                                        <td>名前</td>
+                                        <td>田中太郎</td>
+                                    </tr>
+                                    <tr>
+                                        <td>created_at</td>
+                                        <td>TIMESTAMP</td>
+                                        <td>登録日時</td>
+                                        <td>2024-01-15 10:30:00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-design">
+                        <h4>🏢 company_profiles（企業プロフィール）</h4>
+                        <div class="table-structure">
+                            <table class="db-table">
+                                <thead>
+                                    <tr>
+                                        <th>カラム名</th>
+                                        <th>データ型</th>
+                                        <th>説明</th>
+                                        <th>例</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>user_id</td>
+                                        <td>INTEGER</td>
+                                        <td>ユーザーIDの参照</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>company_name</td>
+                                        <td>VARCHAR(200)</td>
+                                        <td>会社名</td>
+                                        <td>株式会社田中製作所</td>
+                                    </tr>
+                                    <tr>
+                                        <td>location</td>
+                                        <td>VARCHAR(200)</td>
+                                        <td>所在地</td>
+                                        <td>東京都渋谷区</td>
+                                    </tr>
+                                    <tr>
+                                        <td>annual_revenue</td>
+                                        <td>VARCHAR(50)</td>
+                                        <td>推定年商</td>
+                                        <td>'1-10億円'</td>
+                                    </tr>
+                                    <tr>
+                                        <td>financial_challenges</td>
+                                        <td>JSON</td>
+                                        <td>財務課題（複数選択）</td>
+                                        <td>['資金調達', 'IPO準備']</td>
+                                    </tr>
+                                    <tr>
+                                        <td>challenge_background</td>
+                                        <td>TEXT</td>
+                                        <td>課題の背景</td>
+                                        <td>銀行融資を受けたいが...</td>
+                                    </tr>
+                                    <tr>
+                                        <td>requirements</td>
+                                        <td>TEXT</td>
+                                        <td>CFOに求めること</td>
+                                        <td>週1日、月20万円で...</td>
+                                    </tr>
+                                    <tr>
+                                        <td>timeline</td>
+                                        <td>VARCHAR(50)</td>
+                                        <td>希望時期</td>
+                                        <td>'今すぐ'</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-design">
+                        <h4>💼 cfo_profiles（CFOプロフィール）</h4>
+                        <div class="table-structure">
+                            <table class="db-table">
+                                <thead>
+                                    <tr>
+                                        <th>カラム名</th>
+                                        <th>データ型</th>
+                                        <th>説明</th>
+                                        <th>例</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>user_id</td>
+                                        <td>INTEGER</td>
+                                        <td>ユーザーIDの参照</td>
+                                        <td>2</td>
+                                    </tr>
+                                    <tr>
+                                        <td>display_name</td>
+                                        <td>VARCHAR(100)</td>
+                                        <td>表示名</td>
+                                        <td>佐藤CFO</td>
+                                    </tr>
+                                    <tr>
+                                        <td>skills</td>
+                                        <td>JSON</td>
+                                        <td>スキル（階層化）</td>
+                                        <td>{'資金調達': ['銀行融資', 'VC調達']}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>experience</td>
+                                        <td>TEXT</td>
+                                        <td>実績・経歴</td>
+                                        <td>元メガバンク、IPO支援3社...</td>
+                                    </tr>
+                                    <tr>
+                                        <td>certifications</td>
+                                        <td>JSON</td>
+                                        <td>保有資格</td>
+                                        <td>['公認会計士', '中小企業診断士']</td>
+                                    </tr>
+                                    <tr>
+                                        <td>work_style</td>
+                                        <td>JSON</td>
+                                        <td>稼働希望形態</td>
+                                        <td>['週1日', 'リモート対応可']</td>
+                                    </tr>
+                                    <tr>
+                                        <td>fee_range</td>
+                                        <td>VARCHAR(100)</td>
+                                        <td>希望報酬</td>
+                                        <td>月額制希望</td>
+                                    </tr>
+                                    <tr>
+                                        <td>introduction</td>
+                                        <td>TEXT</td>
+                                        <td>自己紹介</td>
+                                        <td>15年の財務経験で...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-design">
+                        <h4>📊 user_actions（KPI測定用の行動ログ）</h4>
+                        <div class="table-structure">
+                            <table class="db-table">
+                                <thead>
+                                    <tr>
+                                        <th>カラム名</th>
+                                        <th>データ型</th>
+                                        <th>説明</th>
+                                        <th>例</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>INTEGER</td>
+                                        <td>アクションID</td>
+                                        <td>1, 2, 3...</td>
+                                    </tr>
+                                    <tr>
+                                        <td>user_id</td>
+                                        <td>INTEGER</td>
+                                        <td>実行したユーザー</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>action_type</td>
+                                        <td>VARCHAR(50)</td>
+                                        <td>行動の種類</td>
+                                        <td>'view', 'like', 'scout', 'meeting', 'contract'</td>
+                                    </tr>
+                                    <tr>
+                                        <td>target_user_id</td>
+                                        <td>INTEGER</td>
+                                        <td>対象ユーザー</td>
+                                        <td>2（CFOのID）</td>
+                                    </tr>
+                                    <tr>
+                                        <td>created_at</td>
+                                        <td>TIMESTAMP</td>
+                                        <td>実行日時</td>
+                                        <td>2024-01-15 14:30:00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p><strong>使い方の例:</strong></p>
+                        <ul>
+                            <li>企業1がCFO2のプロフィールを見た → action_type: 'view'</li>
+                            <li>企業1がCFO2に「いいね」した → action_type: 'like'</li>
+                            <li>企業1がCFO2にスカウト送信 → action_type: 'scout'</li>
+                            <li>企業1とCFO2が面談設定 → action_type: 'meeting'</li>
+                            <li>企業1とCFO2が契約 → action_type: 'contract'</li>
+                        </ul>
+                    </div>
+
+                    <div class="table-design">
+                        <h4>💬 messages（メッセージ）</h4>
+                        <div class="table-structure">
+                            <table class="db-table">
+                                <thead>
+                                    <tr>
+                                        <th>カラム名</th>
+                                        <th>データ型</th>
+                                        <th>説明</th>
+                                        <th>例</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>INTEGER</td>
+                                        <td>メッセージID</td>
+                                        <td>1, 2, 3...</td>
+                                    </tr>
+                                    <tr>
+                                        <td>from_user_id</td>
+                                        <td>INTEGER</td>
+                                        <td>送信者</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>to_user_id</td>
+                                        <td>INTEGER</td>
+                                        <td>受信者</td>
+                                        <td>2</td>
+                                    </tr>
+                                    <tr>
+                                        <td>message_type</td>
+                                        <td>VARCHAR(20)</td>
+                                        <td>メッセージ種類</td>
+                                        <td>'scout', 'reply', 'normal'</td>
+                                    </tr>
+                                    <tr>
+                                        <td>content</td>
+                                        <td>TEXT</td>
+                                        <td>メッセージ内容</td>
+                                        <td>ぜひ一度お話しさせて...</td>
+                                    </tr>
+                                    <tr>
+                                        <td>is_read</td>
+                                        <td>BOOLEAN</td>
+                                        <td>既読フラグ</td>
+                                        <td>true/false</td>
+                                    </tr>
+                                    <tr>
+                                        <td>created_at</td>
+                                        <td>TIMESTAMP</td>
+                                        <td>送信日時</td>
+                                        <td>2024-01-15 15:00:00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-design">
+                        <h4>📅 meetings（面談管理）</h4>
+                        <div class="table-structure">
+                            <table class="db-table">
+                                <thead>
+                                    <tr>
+                                        <th>カラム名</th>
+                                        <th>データ型</th>
+                                        <th>説明</th>
+                                        <th>例</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>INTEGER</td>
+                                        <td>面談ID</td>
+                                        <td>1, 2, 3...</td>
+                                    </tr>
+                                    <tr>
+                                        <td>company_user_id</td>
+                                        <td>INTEGER</td>
+                                        <td>企業のユーザーID</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>cfo_user_id</td>
+                                        <td>INTEGER</td>
+                                        <td>CFOのユーザーID</td>
+                                        <td>2</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meeting_date</td>
+                                        <td>TIMESTAMP</td>
+                                        <td>面談予定日時</td>
+                                        <td>2024-01-20 14:00:00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meeting_type</td>
+                                        <td>VARCHAR(20)</td>
+                                        <td>面談形式</td>
+                                        <td>'online', 'offline'</td>
+                                    </tr>
+                                    <tr>
+                                        <td>status</td>
+                                        <td>VARCHAR(20)</td>
+                                        <td>ステータス</td>
+                                        <td>'scheduled', 'completed', 'cancelled'</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meeting_url</td>
+                                        <td>VARCHAR(500)</td>
+                                        <td>オンライン面談URL</td>
+                                        <td>https://zoom.us/j/123...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-design">
+                        <h4>🤝 contracts（契約管理）</h4>
+                        <div class="table-structure">
+                            <table class="db-table">
+                                <thead>
+                                    <tr>
+                                        <th>カラム名</th>
+                                        <th>データ型</th>
+                                        <th>説明</th>
+                                        <th>例</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>INTEGER</td>
+                                        <td>契約ID</td>
+                                        <td>1, 2, 3...</td>
+                                    </tr>
+                                    <tr>
+                                        <td>company_user_id</td>
+                                        <td>INTEGER</td>
+                                        <td>企業のユーザーID</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>cfo_user_id</td>
+                                        <td>INTEGER</td>
+                                        <td>CFOのユーザーID</td>
+                                        <td>2</td>
+                                    </tr>
+                                    <tr>
+                                        <td>contract_type</td>
+                                        <td>VARCHAR(50)</td>
+                                        <td>契約タイプ</td>
+                                        <td>'monthly', 'success_fee', 'project'</td>
+                                    </tr>
+                                    <tr>
+                                        <td>monthly_fee</td>
+                                        <td>INTEGER</td>
+                                        <td>月額報酬</td>
+                                        <td>200000</td>
+                                    </tr>
+                                    <tr>
+                                        <td>contract_period</td>
+                                        <td>INTEGER</td>
+                                        <td>契約期間（月）</td>
+                                        <td>6</td>
+                                    </tr>
+                                    <tr>
+                                        <td>platform_fee_rate</td>
+                                        <td>DECIMAL(5,2)</td>
+                                        <td>プラットフォーム手数料率</td>
+                                        <td>0.05 (5%)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>status</td>
+                                        <td>VARCHAR(20)</td>
+                                        <td>契約ステータス</td>
+                                        <td>'active', 'completed', 'cancelled'</td>
+                                    </tr>
+                                    <tr>
+                                        <td>start_date</td>
+                                        <td>DATE</td>
+                                        <td>契約開始日</td>
+                                        <td>2024-02-01</td>
+                                    </tr>
+                                    <tr>
+                                        <td>end_date</td>
+                                        <td>DATE</td>
+                                        <td>契約終了日</td>
+                                        <td>2024-08-01</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="process-steps">
+                    <h3>📈 KPI自動計算の仕組み</h3>
+                    
+                    <div class="kpi-automation">
+                        <h4>🔧 実際のSQL例（計算方法）</h4>
+                        
+                        <div class="sql-example">
+                            <h5>いいね率を計算する場合</h5>
+                            <pre><code>-- 今月のいいね率を計算
+SELECT 
+  COUNT(CASE WHEN action_type = 'view' THEN 1 END) as 表示数,
+  COUNT(CASE WHEN action_type = 'like' THEN 1 END) as いいね数,
+  ROUND(
+    COUNT(CASE WHEN action_type = 'like' THEN 1 END) * 100.0 /
+    COUNT(CASE WHEN action_type = 'view' THEN 1 END), 
+    2
+  ) as いいね率
+FROM user_actions 
+WHERE created_at >= '2024-01-01' 
+  AND created_at < '2024-02-01';</code></pre>
+                        </div>
+
+                        <div class="sql-example">
+                            <h5>ユーザー別の成約率を見る場合</h5>
+                            <pre><code>-- CFO別の成約率ランキング
+SELECT 
+  cp.display_name as CFO名,
+  COUNT(CASE WHEN ua.action_type = 'view' THEN 1 END) as 表示回数,
+  COUNT(CASE WHEN ua.action_type = 'like' THEN 1 END) as いいね数,
+  COUNT(CASE WHEN ua.action_type = 'contract' THEN 1 END) as 契約数,
+  ROUND(
+    COUNT(CASE WHEN ua.action_type = 'contract' THEN 1 END) * 100.0 /
+    COUNT(CASE WHEN ua.action_type = 'view' THEN 1 END), 
+    2
+  ) as 総合成約率
+FROM user_actions ua
+JOIN cfo_profiles cp ON ua.target_user_id = cp.user_id
+GROUP BY cp.user_id, cp.display_name
+ORDER BY 総合成約率 DESC;</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-design">
+                        <h4>📊 管理画面ダッシュボードのイメージ</h4>
+                        <div class="dashboard-mockup">
+                            <div class="dashboard-section">
+                                <h5>今月のKPI</h5>
+                                <div class="kpi-cards">
+                                    <div class="kpi-card">
+                                        <div class="kpi-number">1,234</div>
+                                        <div class="kpi-label">プロフィール表示数</div>
+                                    </div>
+                                    <div class="kpi-card">
+                                        <div class="kpi-number">185</div>
+                                        <div class="kpi-label">いいね数 (15%)</div>
+                                    </div>
+                                    <div class="kpi-card">
+                                        <div class="kpi-number">56</div>
+                                        <div class="kpi-label">スカウト数 (30%)</div>
+                                    </div>
+                                    <div class="kpi-card">
+                                        <div class="kpi-number">18</div>
+                                        <div class="kpi-label">面談数 (32%)</div>
+                                    </div>
+                                    <div class="kpi-card">
+                                        <div class="kpi-number">7</div>
+                                        <div class="kpi-label">契約数 (39%)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="process-steps">
+                    <h3>🛠️ 実装時の注意点</h3>
+                    <ul>
+                        <li><strong>データ型の選択:</strong> JSONカラムはPostgreSQL(Supabase)で使用、SQLiteでは使えないので注意</li>
+                        <li><strong>インデックス設定:</strong> user_actions.action_type と created_at にインデックスを設定してKPI計算を高速化</li>
+                        <li><strong>データ保護:</strong> 個人情報は適切に暗号化、GDPR等のプライバシー法規制に準拠</li>
+                        <li><strong>パフォーマンス:</strong> KPI計算は重いので、日次バッチで事前計算して結果をキャッシュテーブルに保存</li>
+                        <li><strong>データクリーニング:</strong> スパムやボットのアクションを除外するフィルター機能を実装</li>
+                    </ul>
+                </div>
+
+                <div class="navigation-buttons">
+                    <button class="btn btn-secondary" onclick="showSection('authentication')">← 前のステップ</button>
                     <button class="btn btn-primary" onclick="showSection('ui-design')">次のステップ →</button>
                 </div>
             </section>
 
             <section id="ui-design" class="content-section">
-                <h2>10. UI/UX詳細設計</h2>
+                <h2>11. UI/UX詳細設計</h2>
                 <p>クラウドワークスを参考にした、プロフェッショナルなCFOマッチングプラットフォームのUI/UX設計を定義します。</p>
                 
                 <div class="process-steps">
@@ -998,6 +2062,26 @@
                                     </ul>
                                 </li>
                             </ul>
+                            
+                            <div class="explanation-box">
+                                <h4>💡 CFO専門用語の解説</h4>
+                                <ul>
+                                    <li><strong>VC・エクイティ調達:</strong> ベンチャーキャピタル（投資会社）からお金を調達すること</li>
+                                    <li><strong>IR資料:</strong> 投資家向けの会社説明資料</li>
+                                    <li><strong>ピッチデック:</strong> 投資家に向けた短時間のプレゼン資料</li>
+                                    <li><strong>財務DD:</strong> Due Diligence = 会社を買う前の財務チェック</li>
+                                    <li><strong>IPO:</strong> 株式上場すること（証券取引所で株を売買できるようになる）</li>
+                                    <li><strong>M&A:</strong> 会社の買収・合併</li>
+                                    <li><strong>バリュエーション:</strong> 会社の価値を計算すること</li>
+                                    <li><strong>PMI:</strong> M&A後に2つの会社をうまく統合する作業</li>
+                                    <li><strong>管理会計:</strong> 社長が経営判断するための会計（税務会計とは別）</li>
+                                    <li><strong>BIツール:</strong> データを分析・可視化するソフト</li>
+                                    <li><strong>ERP:</strong> 会社全体の業務を管理するシステム</li>
+                                    <li><strong>リスケ:</strong> 借金の返済条件を変更してもらうこと</li>
+                                    <li><strong>内部統制:</strong> 会社が不正や間違いを防ぐための仕組み</li>
+                                    <li><strong>IFRS:</strong> 国際的な会計ルール</li>
+                                </ul>
+                            </div>
                         </li>
                         <li><strong>実績・経歴</strong>（自由記入）</li>
                         <li><strong>保有資格</strong>（自由記入）</li>

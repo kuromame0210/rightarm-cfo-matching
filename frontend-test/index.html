@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RightArm - 企業とCFOのマッチングサイト</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">RIGHTARM</h1>
+                <nav class="main-nav">
+                    <a href="#" class="nav-item">サービス概要</a>
+                    <a href="#" class="nav-item">使い方</a>
+                    <a href="#" class="nav-item">FAQ</a>
+                    <a href="#" class="nav-item">お問い合わせ</a>
+                </nav>
+                <div class="auth-buttons">
+                    <button class="btn btn-outline">ログイン</button>
+                    <button class="btn btn-primary">無料登録</button>
+                </div>
+                <button class="hamburger-menu" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+        <div class="mobile-menu">
+            <nav class="mobile-nav">
+                <a href="#" class="mobile-nav-item">サービス概要</a>
+                <a href="#" class="mobile-nav-item">使い方</a>
+                <a href="#" class="mobile-nav-item">FAQ</a>
+                <a href="#" class="mobile-nav-item">お問い合わせ</a>
+            </nav>
+            <div class="mobile-auth-buttons">
+                <button class="btn btn-outline">ログイン</button>
+                <button class="btn btn-primary">無料登録</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- ヒーローセクション -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h2 class="hero-title">RIGHTARM</h2>
+                    <p class="hero-subtitle">— 全国の企業に、"右腕CFO"を届ける —</p>
+                    
+                    <div class="service-blocks">
+                        <!-- 企業向けブロック -->
+                        <div class="service-block">
+                            <div class="service-content">
+                                <h3 class="service-title">企業の方</h3>
+                                <div class="service-features">
+                                    <div class="feature-item">
+                                        <span class="feature-text">週1日から導入可能</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <span class="feature-text">リモートのみでもok</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <span class="feature-text">CFOを低コストで導入</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-large btn-primary" onclick="searchCFO()">CFOを探す</button>
+                            </div>
+                        </div>
+
+                        <!-- CFO向けブロック -->
+                        <div class="service-block">
+                            <div class="service-content">
+                                <h3 class="service-title">CFOの方</h3>
+                                <div class="service-features">
+                                    <div class="feature-item">
+                                        <span class="feature-text">財務知識で企業を支援</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <span class="feature-text">副業として活動可能</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <span class="feature-text">複業で仕事の幅を広げる</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-large btn-outline" onclick="searchCompany()">企業を探す</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>RIGHTARM</h3>
+                    <p>全国の企業に"右腕CFO"を届ける</p>
+                </div>
+                <div class="footer-section">
+                    <h4>サービス</h4>
+                    <ul>
+                        <li><a href="#">CFOを探す</a></li>
+                        <li><a href="#">企業を探す</a></li>
+                        <li><a href="#">料金プラン</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>サポート</h4>
+                    <ul>
+                        <li><a href="#">よくある質問</a></li>
+                        <li><a href="#">お問い合わせ</a></li>
+                        <li><a href="#">利用規約</a></li>
+                        <li><a href="#">プライバシーポリシー</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 RightArm. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
