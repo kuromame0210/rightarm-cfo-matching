@@ -698,6 +698,55 @@ export default function SitemapDebugPage() {
               → 実機操作デモの順序で説明
             </p>
           </div>
+
+          {/* バージョン情報 */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-3">🏷️ バージョン情報</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Version:</span>
+                    <span className="font-medium">v3.0.0</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Build:</span>
+                    <span className="font-medium">2024.06.23</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Commit:</span>
+                    <span className="font-mono text-xs bg-gray-200 px-2 py-1 rounded">c0a046a</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Branch:</span>
+                    <span className="font-medium">main</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-3">🛠️ 技術スタック</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Next.js:</span>
+                    <span className="font-medium">15.3.4</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">TypeScript:</span>
+                    <span className="font-medium">5.x</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tailwind:</span>
+                    <span className="font-medium">3.x</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Deploy:</span>
+                    <span className="font-medium">Vercel</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

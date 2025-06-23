@@ -21,7 +21,8 @@
       "Bash(curl:*)",
       "Bash(pkill:*)",
       "Bash(kill:*)",
-      "Bash(yarn build)"
+      "Bash(yarn build)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }
