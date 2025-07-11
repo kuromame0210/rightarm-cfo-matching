@@ -22,7 +22,19 @@
       "Bash(pkill:*)",
       "Bash(kill:*)",
       "Bash(yarn build)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git mv:*)",
+      "Bash(cat:*)",
+      "Bash(timeout 10 npm run dev)",
+      "Bash(yarn add:*)",
+      "Bash(true)",
+      "Bash(yarn dev)",
+      "Bash(npx tsc:*)",
+      "Bash(sed:*)",
+      "Bash(npm run lint)",
+      "Bash(npx next build:*)",
+      "Bash(node:*)",
+      "Bash(npm run type-check:*)"
     ],
     "deny": []
   }

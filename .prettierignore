@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+dist/
+build/
+
+# Environment files
+.env*
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+
+# Auto-generated files
+*.tsbuildinfo
+
+# Package manager
+yarn.lock
+package-lock.json
+
+# Test outputs
+cypress/videos/
+cypress/screenshots/
+
+# SQL files (preserve specific formatting)
+sql/

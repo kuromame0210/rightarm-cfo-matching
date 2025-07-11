@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run test:realdb:*)",
+      "Bash(pkill:*)",
+      "Bash(curl:*)",
+      "Bash(npx supabase:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run test:ui:*)",
+      "Bash(npx jest:*)",
+      "Bash(node:*)",
+      "Bash(psql:*)",
+      "Bash(ls:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run lint)",
+      "Bash(if [ -f .env.local ])",
+      "Bash(then source .env.local)",
+      "Bash(else echo \".env.localファイルが見つかりません\")",
+      "Bash(fi)",
+      "Bash(rg:*)"
+    ],
+    "deny": []
+  }
+}

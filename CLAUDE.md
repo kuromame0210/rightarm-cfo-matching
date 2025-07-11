@@ -1,0 +1,102 @@
+# Rextrix Project - Claude Code Context
+
+## プロジェクト概要
+CFO・企業マッチングプラットフォーム（旧RightArm）
+- Next.js + TypeScript + Supabase
+- 認証、プロフィール管理、ファイルアップロード機能
+
+## 変更履歴
+
+### 2025-01-10 - ファイルアップロード＆プロフィール更新修正
+**問題:** プロフィール画像アップロードでSupabase RLSエラー
+- エラー: `Bucket not found` → `rextrix-*` プレフィックス付きバケット作成
+- エラー: `RLS policy violation` → セキュアなAPI経由アップロードに変更
+
+**実装変更:**
+- `src/lib/storage.ts` - バケット名にrextrixプレフィックス追加
+- `src/app/api/upload/route.ts` - 新規作成、サーバーサイドアップロード
+- `scripts/setup-storage-buckets.sql` - バケット作成SQL
+- `scripts/fix-storage-rls-policies.sql` - RLSポリシー修正（未使用）
+
+**問題2:** プロフィール更新API認証エラー
+- エラー: `401 Unauthorized` → 複数認証システムの混在
+- 原因: NextAuth.js、テーブルベース認証、Supabase Authが混在
+- 解決: 一時的にSupabase認証対応（統一は今後の課題）
+
+**発見された根本問題（再発）:**
+- **認証統一作業が未完了**: 先週開始したNextAuth.js統一が途中で停止
+- **新機能追加時の回帰**: 新しいAPIで古い認証方式を使用
+- **3つの認証システムが再び混在**: NextAuth.js、独自JWT、Supabase Auth
+- **統一計画は存在**: `read/authrefactrecipe.md`に詳細な移行プランあり
+
+**重要な技術決定:**
+- クライアントサイドでのService Role Key使用を回避
+- サーバーサイドAPI経由でセキュアなアップロード実装
+- 認証統一の必要性を確認（NextAuth.js推奨）
+
+## プロジェクト構造
+```
+src/
+├── app/
+│   ├── api/upload/          # ファイルアップロードAPI
+│   └── profile/             # プロフィール編集画面
+├── lib/
+│   ├── storage.ts           # ストレージ操作
+│   └── supabase.ts          # Supabase設定
+└── components/
+    └── FileUpload.tsx       # ファイルアップロードコンポーネント
+```
+
+## 開発コマンド
+- `npm run dev` - 開発サーバー起動
+- `npm run build` - ビルド
+- `npm run lint` - リント実行
+- `npm run type-check` - 型チェック
+
+## Supabase設定
+- バケット: `rextrix-profile-images`, `rextrix-company-logos`, etc.
+- 認証: Supabase Auth
+- データベース: PostgreSQL with RLS
+
+## 現在の状況
+- ✅ ストレージバケット作成完了
+- ✅ セキュアなAPI経由アップロード実装
+- ✅ ファイルアップロード機能動作確認済み
+- ✅ プロフィール更新API認証エラー修正完了
+
+## TODOと課題
+
+### 2025-07-11 - 認証システム統一状況確認・不要コード削除
+
+**実行内容:**
+1. ✅ 認証システムの調査・分析完了
+2. ✅ 不要なレガシーファイル削除（auth-client.ts、authUtils.ts、replace-demo-tokens.js）
+3. ✅ テストファイル修正（isPublicOnlyRoute関数削除対応）
+4. ✅ ビルド確認完了（エラーなし、警告のみ）
+5. ✅ 認証システムがNextAuth.js統一済みを確認
+
+### 認証統一完了状況
+- ✅ **NextAuth.js統一**: 全APIとフロントエンドでNextAuth.js使用
+- ✅ **レガシーシステム削除**: withAuth HOC、独自JWT、localStorage認証削除
+- ✅ **一貫性確保**: useSession、getServerSession統一使用
+- ✅ **型安全性**: NextAuth.js型定義活用
+
+### 残タスク（優先度低）
+- [ ] より厳密なRLSポリシーの設定
+- [ ] ファイルサイズ制限の実装確認
+- [ ] テストファイルの型エラー修正（jest設定）
+
+## Claude Codeでの作業履歴
+**このファイル（CLAUDE.md）を毎回更新して履歴を残す**
+- 変更理由、技術的決定、トラブルシューティング過程を記録
+- 次回のセッションで即座にコンテキストを把握可能
+
+### 2025-07-11 - 認証システム現状確認
+**調査結果:**
+- 認証システムは既にNextAuth.js統一済み（完全動作）
+- 重複コードの指摘は現在のコードベースと一致せず
+- 不要なレガシーコードを削除し、クリーンな状態に整理完了
+
+## 参考情報
+- Supabase Storage: https://supabase.com/docs/guides/storage
+- Next.js API Routes: https://nextjs.org/docs/app/building-your-application/routing/route-handlers
