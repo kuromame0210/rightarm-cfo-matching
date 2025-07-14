@@ -93,7 +93,7 @@ export default function AppHeader({ userName, userAvatar = '👤' }: AppHeaderPr
     },
     { path: '/scout', label: 'スカウト', icon: '🎯' },
     { path: '/messages', label: 'メッセージ', icon: '💬' },
-    { path: '/meetings', label: '面談予定', icon: '📅' },
+    // { path: '/meetings', label: '面談予定', icon: '📅' }, // ベータリリースで非表示
     { path: '/interested', label: '気になる', icon: '❤️' }
   ]
 
@@ -276,8 +276,8 @@ export default function AppHeader({ userName, userAvatar = '👤' }: AppHeaderPr
                 </div>
               )}
               
-              {/* ヘルプボタン - ログイン時のみ表示 */}
-              {actualIsLoggedIn && (
+              {/* ヘルプボタン - 非表示 */}
+              {false && actualIsLoggedIn && (
                 <div className="relative" ref={helpMenuRef}>
                   <button 
                     onClick={handleHelpMenuClick}

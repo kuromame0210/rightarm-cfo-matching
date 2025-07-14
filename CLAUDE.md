@@ -98,8 +98,8 @@ src/
 
 **実装アプローチ:**
 - **既存テーブル拡張方式を採用** - 新規テーブル作成ではなく、JSONBカラム追加
-- `rextrix_cfos`テーブルにJSONB拡張: work_experiences, detailed_certifications, availability_conditions, compensation_details等
-- `rextrix_user_profiles`テーブルにJSONB拡張: location_details, contact_preferences, international_experience等
+- CFOプロフィールテーブルにJSONB拡張: work_experiences, detailed_certifications, availability_conditions, compensation_details等
+- ユーザープロフィールテーブルにJSONB拡張: location_details, contact_preferences, international_experience等
 
 **技術的決定:**
 - **JSONBフィールド活用**: 複雑な構造化データを柔軟に管理
@@ -134,7 +134,7 @@ src/
 **実装完了内容:**
 - ✅ `cfo_data.md`の佐藤大悟さん・奥田豊さんデータを既存フィールドに完全投入
 - ✅ JSONB型specialties配列対応（佐藤:25項目、奥田:23項目の専門分野）
-- ✅ 既存テーブル活用（`rextrix_cfos`、`rextrix_user_profiles`）
+- ✅ 既存テーブル活用（新アーキテクチャ対応）
 - ✅ 検索機能動作確認（M&A、IPO、フィリピン関連スキル検索）
 
 **技術的実装:**

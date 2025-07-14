@@ -38,9 +38,7 @@ export default function SettingsPage() {
 
   const sections = [
     { id: 'notifications', name: '通知設定', icon: '🔔' },
-    { id: 'privacy', name: 'プライバシー', icon: '🔒' },
-    { id: 'account', name: 'アカウント', icon: '👤' },
-    { id: 'advanced', name: '高度な設定', icon: '⚙️' }
+    { id: 'account', name: 'アカウント', icon: '👤' }
   ]
 
   return (
@@ -135,37 +133,43 @@ export default function SettingsPage() {
                       </label>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900">面談リマインダー</h4>
-                        <p className="text-sm text-gray-500">面談の1時間前にお知らせ</p>
+                    {/* 面談リマインダー - 一時的に非表示 */}
+                    {false && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900">面談リマインダー</h4>
+                          <p className="text-sm text-gray-500">面談の1時間前にお知らせ</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={settings.meetingReminders}
+                            onChange={(e) => handleSettingChange('meetingReminders', e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
+                        </label>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={settings.meetingReminders}
-                          onChange={(e) => handleSettingChange('meetingReminders', e.target.checked)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
-                      </label>
-                    </div>
+                    )}
 
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900">週次ダイジェスト</h4>
-                        <p className="text-sm text-gray-500">週1回の活動サマリー</p>
+                    {/* 週次ダイジェスト - 一時的に非表示 */}
+                    {false && (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900">週次ダイジェスト</h4>
+                          <p className="text-sm text-gray-500">週1回の活動サマリー</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={settings.weeklyDigest}
+                            onChange={(e) => handleSettingChange('weeklyDigest', e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
+                        </label>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={settings.weeklyDigest}
-                          onChange={(e) => handleSettingChange('weeklyDigest', e.target.checked)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
-                      </label>
-                    </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -250,62 +254,10 @@ export default function SettingsPage() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">アカウント設定</h3>
                   
                   <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        言語
-                      </label>
-                      <select
-                        value={settings.language}
-                        onChange={(e) => handleSettingChange('language', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500"
-                      >
-                        <option value="ja">日本語</option>
-                        <option value="en">English</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        タイムゾーン
-                      </label>
-                      <select
-                        value={settings.timezone}
-                        onChange={(e) => handleSettingChange('timezone', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500"
-                      >
-                        <option value="Asia/Tokyo">東京 (UTC+9)</option>
-                        <option value="Asia/Seoul">ソウル (UTC+9)</option>
-                        <option value="America/New_York">ニューヨーク (UTC-5)</option>
-                        <option value="Europe/London">ロンドン (UTC+0)</option>
-                      </select>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900">二段階認証</h4>
-                        <p className="text-sm text-gray-500">セキュリティを強化</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={settings.twoFactorAuth}
-                          onChange={(e) => handleSettingChange('twoFactorAuth', e.target.checked)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
-                      </label>
-                    </div>
-
                     <div className="border-t border-gray-200 pt-4">
                       <div className="space-y-2">
-                        <Link href="/profile" className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">
-                          プロフィールを編集
-                        </Link>
                         <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded">
                           パスワードを変更
-                        </button>
-                        <button className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded">
-                          アカウントを削除
                         </button>
                       </div>
                     </div>
