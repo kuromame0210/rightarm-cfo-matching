@@ -15,11 +15,11 @@ export function useAuth() {
     if (process.env.NODE_ENV === 'development') {
       // 最初の初期化時とステータス変更時のみ
       if (prevStatusRef.current !== status) {
-        console.log(`🔐 Auth: ${status}`, {
-          hasSession: !!session,
-          userEmail: session?.user?.email || 'none',
-          userType: session?.user?.userType || 'none'
-        })
+        // console.log(`🔐 Auth: ${status}`, {
+        //   hasSession: !!session,
+        //   userEmail: session?.user?.email || 'none',
+        //   userType: session?.user?.userType || 'none'
+        // })
         prevStatusRef.current = status
       }
     }

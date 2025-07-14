@@ -23,17 +23,27 @@ export async function GET(_request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(10)
 
-    // 4. 利用可能なテーブル一覧を取得（PostgreSQL固有）
-    const { data: tables, error: tablesError } = await supabaseAdmin
-      .rpc('exec_sql', { 
-        sql: `
-          SELECT table_name 
-          FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name LIKE 'rextrix_%'
-          ORDER BY table_name
-        `
-      })
+    // 4. 利用可能なテーブル一覧を取得（標準的な方法）
+    const { data: allTables, error: tablesError } = await supabaseAdmin
+      .from('information_schema.tables')
+      .select('table_name')
+      .eq('table_schema', 'public')
+      .like('table_name', 'rextrix_%')
+      .order('table_name')
+
+    // 5. rextrix_cfos テーブルの構造確認
+    const { data: cfosStructure, error: cfosStructureError } = await supabaseAdmin
+      .from('information_schema.columns')
+      .select('column_name, data_type, is_nullable')
+      .eq('table_name', 'rextrix_cfos')
+      .order('ordinal_position')
+
+    // 6. rextrix_user_profiles テーブルの構造確認
+    const { data: profilesStructure, error: profilesStructureError } = await supabaseAdmin
+      .from('information_schema.columns')
+      .select('column_name, data_type, is_nullable')
+      .eq('table_name', 'rextrix_user_profiles')
+      .order('ordinal_position')
 
     return NextResponse.json({
       success: true,
@@ -54,8 +64,16 @@ export async function GET(_request: NextRequest) {
           exists: !scoutsError
         },
         tables: {
-          data: tables,
+          data: allTables,
           error: tablesError
+        },
+        cfosStructure: {
+          data: cfosStructure,
+          error: cfosStructureError
+        },
+        profilesStructure: {
+          data: profilesStructure,
+          error: profilesStructureError
         },
         timestamp: new Date().toISOString()
       }

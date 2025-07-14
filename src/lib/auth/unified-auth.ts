@@ -3,6 +3,7 @@
 
 import { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth/next'
+import { cookies } from 'next/headers'
 import { authOptions } from './index'
 
 export interface AuthenticatedUser {
@@ -17,9 +18,17 @@ export interface AuthenticatedUser {
  * 統一認証チェック（API Routes用）
  * NextAuth.jsセッションを使用した認証状態の確認
  */
-export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> {
+export async function getAuthenticatedUser(req?: any, res?: any): Promise<AuthenticatedUser | null> {
   try {
-    const session = await getServerSession(authOptions)
+    console.log('🔍 統一認証: セッション取得開始')
+    // Next.js 13+ App Router では req/res は不要ですが、念のため対応
+    const session = await getServerSession(req && res ? { req, res, ...authOptions } : authOptions)
+    console.log('🔍 統一認証: セッション結果:', {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      userEmail: session?.user?.email,
+      userId: session?.user?.id
+    })
     
     if (!session?.user) {
       console.log('🔐 統一認証: セッションが見つかりません')

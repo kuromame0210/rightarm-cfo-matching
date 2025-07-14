@@ -8,6 +8,8 @@ import AppHeader from '@/components/AppHeader'
 import Loading from '@/components/Loading'
 import { useInterests } from '@/lib/interests-context'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useNetworkStatus } from '@/hooks/useNetworkStatus'
+import { isNetworkError, getNetworkErrorMessage } from '@/utils/api'
 
 // Force dynamic rendering to avoid auth context issues during static generation
 export const dynamic = 'force-dynamic'
@@ -16,6 +18,7 @@ export default function DiscoverCFOsPage() {
   const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
   const { isInterested, toggleInterest } = useInterests()
+  const { isOnline } = useNetworkStatus()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
@@ -56,6 +59,11 @@ export default function DiscoverCFOsPage() {
     try {
       setMasterDataLoading(true)
       
+      if (!isOnline) {
+        showToastMessage('インターネット接続がありません。接続を確認してください。')
+        return
+      }
+      
       // 並列でマスターデータを取得
       const [skillsRes, regionsRes, workStylesRes] = await Promise.all([
         fetch('/api/master/skills?category=finance'),
@@ -89,6 +97,11 @@ export default function DiscoverCFOsPage() {
 
     } catch (error) {
       console.error('Master data fetch error:', error)
+      if (isNetworkError(error)) {
+        showToastMessage(getNetworkErrorMessage(error))
+      } else {
+        showToastMessage('マスターデータの取得に失敗しました')
+      }
     } finally {
       setMasterDataLoading(false)
     }
@@ -134,6 +147,11 @@ export default function DiscoverCFOsPage() {
     try {
       setLoading(true)
       
+      if (!isOnline) {
+        showToastMessage('インターネット接続がありません。接続を確認してください。')
+        return
+      }
+      
       const params = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
@@ -145,6 +163,11 @@ export default function DiscoverCFOsPage() {
       if (selectedWorkStyle) params.append('available', 'true')
       
       const response = await fetch(`/api/cfos?${params}`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const data = await response.json()
       
       if (data.success) {
@@ -152,15 +175,21 @@ export default function DiscoverCFOsPage() {
         setPagination(data.pagination)
       } else {
         console.error('CFOデータの取得に失敗:', data.error)
+        showToastMessage('CFO一覧の取得に失敗しました')
         setCfos([])
       }
     } catch (error) {
-      console.error('CFOデータの取得エラー:', error)
+      console.error('CFOデータの取得に失敗:', error)
+      if (isNetworkError(error)) {
+        showToastMessage(getNetworkErrorMessage(error))
+      } else {
+        showToastMessage('CFO一覧の取得に失敗しました')
+      }
       setCfos([])
     } finally {
       setLoading(false)
     }
-  }, [pagination.page, pagination.limit, selectedSkills, selectedRegion, selectedWorkStyle, searchQuery])
+  }, [pagination.page, pagination.limit, selectedSkills, selectedRegion, selectedWorkStyle, searchQuery, isOnline])
 
   // 検索実行関数
   const handleSearch = useCallback(async () => {

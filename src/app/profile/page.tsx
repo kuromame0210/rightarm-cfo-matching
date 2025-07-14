@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { useProfile, useMasterData } from '@/hooks/useProfile'
 import AppHeader from '@/components/AppHeader'
 import FileUpload from '@/components/FileUpload'
 
@@ -26,101 +28,84 @@ const EMPTY_FORM_DATA = {
 }
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession()
-  const user = session?.user
-  const isAuthenticated = !!session?.user
-  const isLoading = status === 'loading'
+  // 統一フック使用
+  const { user, isAuthenticated, isLoading } = useAuth()
+  const { data: session } = useSession() // デバッグ用に残す
+  const { profile, loading: profileLoading, updateProfile } = useProfile()
+  const { availableSkills, locations, workStyles, loading: masterDataLoading } = useMasterData()
+  
+  // ローカル状態管理（簡略化）
   const [formData, setFormData] = useState(EMPTY_FORM_DATA)
   const [isEditing, setIsEditing] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null)
-  const [userDataLoaded, setUserDataLoaded] = useState(false)
   
-  // マスターデータの状態管理
-  const [availableSkills, setAvailableSkills] = useState<string[]>([])
-  const [locations, setLocations] = useState<any[]>([])
-  const [workStyles, setWorkStyles] = useState<any[]>([])
-  const [experienceLevels, setExperienceLevels] = useState<string[]>([])
-  const [availabilityOptions, setAvailabilityOptions] = useState<string[]>([])
-  const [masterDataLoading, setMasterDataLoading] = useState(true)
+  // 固定マスターデータ
+  const [experienceLevels] = useState([
+    { label: '未経験', value: 0 },
+    { label: '1年未満', value: 1 },
+    { label: '1-3年', value: 2 },
+    { label: '3-5年', value: 4 },
+    { label: '5-10年', value: 7 },
+    { label: '10-15年', value: 12 },
+    { label: '15-20年', value: 17 },
+    { label: '20年以上', value: 25 }
+  ])
+  const [availabilityOptions] = useState([
+    '即座に対応可能',
+    '1ヶ月後',
+    '2-3ヶ月後',
+    '半年後',
+    '1年後',
+    '相談により調整可能'
+  ])
+  
+  // 報酬範囲の選択肢
+  const [compensationOptions] = useState([
+    '〜30万円',
+    '30万円〜50万円', 
+    '50万円〜80万円',
+    '80万円〜100万円',
+    '100万円〜150万円',
+    '150万円〜200万円',
+    '200万円以上',
+    '相談により決定'
+  ])
 
-  // ユーザー情報を初期化
+  // プロフィールデータ初期化（新しいフックから）
   useEffect(() => {
-    if (user && !userDataLoaded) {
-      setFormData({
-        name: user.name || user.email?.split('@')[0] || '',
-        email: user.email || '',
-        phone: '',
-        company: '',
-        position: '',
-        bio: '',
-        skills: [],
-        experience: '',
-        workStyle: '',
-        compensation: '',
-        location: '',
-        availability: ''
-      })
-      setProfileImageUrl(null)
-      setUserDataLoaded(true)
+    if (profile && !profileLoading) {
+      const newFormData = {
+        name: profile.name || user?.name || user?.email?.split('@')[0] || '',
+        email: profile.email || user?.email || '',
+        phone: profile.phoneNumber || profile.phone || '',
+        company: profile.companyName || profile.company || '',
+        position: profile.title || profile.position || '',
+        bio: profile.bio || profile.introduction || '',
+        skills: profile.specialties || profile.skills || [],
+        experience: profile.experience || '',
+        workStyle: profile.availabilityStatus || profile.workStyle || '',
+        compensation: profile.compensation || profile.compensationRange || '',
+        location: profile.address || profile.region || profile.location || '',
+        availability: profile.availability || ''
+      }
+      console.log('🔄 フォーム初期化 - name値:', newFormData.name, '(profile:', profile.name, 'user:', user?.name, ')')
+      setFormData(newFormData)
+      setProfileImageUrl(profile.profileImageUrl || null)
     }
-  }, [user, userDataLoaded])
+  }, [profile, profileLoading, user])
 
-  // マスターデータ取得
-  const fetchMasterData = async () => {
-    try {
-      setMasterDataLoading(true)
-      
-      // 並列でマスターデータを取得
-      const [skillsRes, regionsRes, workStylesRes] = await Promise.all([
-        fetch('/api/master/skills?category=finance'),
-        fetch('/api/master/regions?popular=true'), 
-        fetch('/api/master/work-styles?popular=true')
-      ])
-
-      if (skillsRes.ok) {
-        const skillsData = await skillsRes.json()
-        if (skillsData.success) {
-          // スキル名を抽出
-          const skills = skillsData.data.skills?.map((skill: any) => skill.name) || []
-          setAvailableSkills(skills)
-        }
-      }
-
-      if (regionsRes.ok) {
-        const regionsData = await regionsRes.json()
-        if (regionsData.success) {
-          setLocations(regionsData.data.regions || [])
-        }
-      }
-
-      if (workStylesRes.ok) {
-        const workStylesData = await workStylesRes.json()
-        if (workStylesData.success) {
-          setWorkStyles(workStylesData.data.workStyles || [])
-        }
-      }
-
-      // 固定オプション（将来的にはマスターデータ化）
-      setExperienceLevels(['3年未満', '3-5年', '5-10年', '10-15年', '15年以上'])
-      setAvailabilityOptions(['即座に対応可能', '1ヶ月後', '2-3ヶ月後', '半年後', '相談により調整可能'])
-
-    } catch (error) {
-      console.error('Master data fetch error:', error)
-    } finally {
-      setMasterDataLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    // マスターデータを取得
-    fetchMasterData()
-  }, [])
+  // マスターデータ取得は useMasterData フックで統一処理
 
   const handleInputChange = useCallback((field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    console.log(`📝 INPUT CHANGE: ${field} = "${value}"`)
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value }
+      console.log('📋 更新後のフォームデータ:', newData)
+      return newData
+    })
   }, [])
 
   const handleSkillToggle = useCallback((skill: string) => {
@@ -147,36 +132,47 @@ export default function ProfilePage() {
       setIsSaving(true)
       setError('')
 
-      const response = await fetch('/api/profile/update', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          displayName: formData.name,
-          phoneNumber: formData.phone,
-          company: formData.company,
-          position: formData.position,
-          region: formData.location,
-          bio: formData.bio,
-          skills: formData.skills,
-          experience: formData.experience,
-          workPreference: formData.workStyle,
-          compensationRange: formData.compensation,
-          availability: formData.availability,
-          profileImageUrl: profileImageUrl // 画像URLを追加
-        })
+      console.log('🚀 === PROFILE SAVE: 保存ボタン押下 ===')
+      console.log('📋 現在のフォームデータ:', JSON.stringify(formData, null, 2))
+      console.log('🖼️ プロフィール画像URL:', profileImageUrl)
+      console.log('👤 ユーザー情報:', user)
+      console.log('🚀 === useProfile フック経由で保存開始 ===')
+
+      // 統一されたuseProfileフック使用
+      const result = await updateProfile({
+        // 複数フィールド形式で送信（APIで統一処理）
+        name: formData.name,
+        displayName: formData.name, // 互換性
+        phone: formData.phone,
+        phoneNumber: formData.phone, // 互換性
+        company: formData.company,
+        companyName: formData.company, // 互換性
+        position: formData.position,
+        title: formData.position, // 互換性
+        location: formData.location,
+        region: formData.location, // 互換性
+        address: formData.location, // 互換性
+        bio: formData.bio,
+        introduction: formData.bio, // 互換性
+        skills: formData.skills,
+        specialties: formData.skills, // 互換性
+        experience: formData.experience,
+        workStyle: formData.workStyle,
+        workPreference: formData.workStyle, // 互換性
+        compensation: formData.compensation,
+        compensationRange: formData.compensation, // 互換性
+        availability: formData.availability,
+        profileImageUrl: profileImageUrl || undefined
       })
 
-      const data = await response.json()
-
-      if (data.success) {
+      if (result.success) {
+        console.log('🎉 保存成功 - 画面に反映されるはずです')
         setIsEditing(false)
         setShowToast(true)
         setTimeout(() => setShowToast(false), 3000)
-        // セッション情報は自動更新されるため手動更新不要
       } else {
-        setError(data.error || 'プロフィールの更新に失敗しました')
+        setError(result.error || 'プロフィールの更新に失敗しました')
+        console.error('❌ useProfile 保存失敗:', result.error)
       }
     } catch (error) {
       console.error('Profile update error:', error)
@@ -184,10 +180,10 @@ export default function ProfilePage() {
     } finally {
       setIsSaving(false)
     }
-  }, [formData])
+  }, [formData, profileImageUrl, updateProfile])
 
   // 認証確認
-  if (isLoading) {
+  if (isLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -232,7 +228,7 @@ export default function ProfilePage() {
                   <p><strong>ユーザータイプ:</strong> {user?.userType || 'なし'}</p>
                   <p><strong>メールアドレス:</strong> {user?.email || 'なし'}</p>
                   <p><strong>プロフィール名:</strong> {user?.name || 'なし'}</p>
-                  <p><strong>データロード状態:</strong> {userDataLoaded ? '完了' : '未完了'}</p>
+                  <p><strong>データロード状態:</strong> {(!isLoading && !profileLoading) ? '完了' : '未完了'}</p>
                   <p><strong>認証状態:</strong> {isAuthenticated ? '認証済み' : '未認証'}</p>
                 </div>
               </details>
@@ -288,7 +284,7 @@ export default function ProfilePage() {
           )}
 
           {/* プロフィール未完成の警告 */}
-          {userDataLoaded && !formData.name && !isEditing && (
+          {(!isLoading && !profileLoading) && !formData.name && !isEditing && (
             <div className="mx-6 mt-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
               <div className="flex items-start space-x-2">
                 <span className="text-blue-500">ℹ️</span>
@@ -304,7 +300,11 @@ export default function ProfilePage() {
           <div className="px-6 py-4 border-b border-gray-200 flex justify-end">
             {!isEditing ? (
               <button 
-                onClick={() => setIsEditing(true)}
+                onClick={() => {
+                  console.log('✏️ === EDIT BUTTON CLICKED ===')
+                  console.log('📋 現在のフォームデータ:', formData)
+                  setIsEditing(true)
+                }}
                 className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 text-sm"
               >
                 編集する
@@ -322,7 +322,12 @@ export default function ProfilePage() {
                   キャンセル
                 </button>
                 <button 
-                  onClick={handleSave}
+                  onClick={() => {
+                    console.log('🔥 === SAVE BUTTON CLICKED ===')
+                    console.log('📝 編集中:', isEditing)
+                    console.log('💾 保存中:', isSaving)
+                    handleSave()
+                  }}
                   disabled={isSaving}
                   className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 text-sm disabled:opacity-50"
                 >
@@ -372,6 +377,7 @@ export default function ProfilePage() {
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500"
+                    placeholder="例：080-1234-5678"
                   />
                 ) : (
                   <p className="text-gray-900">{formData.phone || '未設定'}</p>
@@ -489,15 +495,19 @@ export default function ProfilePage() {
                     value={formData.experience}
                     onChange={(e) => handleInputChange('experience', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500"
-                    disabled={masterDataLoading}
                   >
                     <option value="">選択してください</option>
                     {experienceLevels.map((level) => (
-                      <option key={level} value={level}>{level}</option>
+                      <option key={level.value} value={level.value}>{level.label}</option>
                     ))}
                   </select>
                 ) : (
-                  <p className="text-gray-900">{formData.experience || '未設定'}</p>
+                  <p className="text-gray-900">
+                    {formData.experience ? 
+                      experienceLevels.find(level => level.value.toString() === formData.experience.toString())?.label || formData.experience + '年'
+                      : '未設定'
+                    }
+                  </p>
                 )}
               </div>
 
@@ -523,13 +533,16 @@ export default function ProfilePage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">希望報酬</label>
                 {isEditing ? (
-                  <input
-                    type="text"
+                  <select
                     value={formData.compensation}
                     onChange={(e) => handleInputChange('compensation', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500"
-                    placeholder="例：月80万円〜"
-                  />
+                  >
+                    <option value="">選択してください</option>
+                    {compensationOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
                 ) : (
                   <p className="text-gray-900">{formData.compensation || '未設定'}</p>
                 )}

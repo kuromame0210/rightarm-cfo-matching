@@ -26,7 +26,7 @@ export async function GET(_request: NextRequest) {
         target_type,
         created_at
       `)
-      .eq('user_id', user.id)
+      .eq('user_id', user!.id)
       .order('created_at', { ascending: false })
 
     if (dbError) {
@@ -74,12 +74,12 @@ export async function POST(request: NextRequest) {
       }
 
     // 自分自身を気になるに追加しようとしていないかチェック
-    if (targetUserId === user.id) {
+    if (targetUserId === user!.id) {
       return CommonErrors.badRequest('自分自身を気になるに追加することはできません')
     }
 
     console.log('Adding interest:', {
-      user_id: user.id,
+      user_id: user!.id,
       target_user_id: targetUserId,
       target_type: targetType
     })
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     const { data: interest, error: dbError } = await supabaseAdmin
       .from(TABLES.INTERESTS)
       .insert({
-        user_id: user.id,
+        user_id: user!.id,
         target_user_id: targetUserId,
         target_type: targetType
       })
@@ -133,7 +133,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     console.log('Removing interest:', {
-      user_id: user.id,
+      user_id: user!.id,
       target_user_id: targetUserId
     })
 
@@ -141,7 +141,7 @@ export async function DELETE(request: NextRequest) {
     const { error: dbError } = await supabaseAdmin
       .from(TABLES.INTERESTS)
       .delete()
-      .eq('user_id', user.id)
+      .eq('user_id', user!.id)
       .eq('target_user_id', targetUserId)
 
     if (dbError) {

@@ -4,6 +4,7 @@ import NavigationPerformanceLogger from '@/components/NavigationPerformanceLogge
 import DebugMenu from '@/components/DebugMenu'
 import { Providers } from '@/lib/providers'
 import AuthGuard from '@/components/AuthGuard'
+import NetworkStatus from '@/components/NetworkStatus'
 
 export const metadata: Metadata = {
   title: "Rextrix - 企業とCFOのマッチングプラットフォーム",
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className="antialiased">
         <Providers>
           <AuthGuard>
+            <NetworkStatus />
             {/* <NavigationPerformanceLogger /> */}
             {children}
             {/* <DebugMenu /> */}

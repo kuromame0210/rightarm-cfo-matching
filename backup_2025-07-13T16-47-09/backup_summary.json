@@ -1,0 +1,12 @@
+{
+  "backup_date": "2025-07-13T16:47:10.482Z",
+  "tables_backed_up": {
+    "rextrix_users": 14,
+    "rextrix_cfos": 8,
+    "rextrix_user_profiles": 14,
+    "rextrix_companies": 13,
+    "rextrix_messages": 11
+  },
+  "total_records": 60,
+  "backup_directory": "backup_2025-07-13T16-47-09"
+}

@@ -19,9 +19,19 @@ export default withAuth(
       return NextResponse.redirect(new URL(defaultPath, req.url))
     }
 
+    // 未認証ユーザーが保護されたルートにアクセスした場合、ログインページにリダイレクト
+    const isProtected = AUTH_CONFIG.PROTECTED_PATHS.some(path => pathname.startsWith(path))
+    if (isProtected && !isAuthenticated) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🚫 未認証ユーザーを /auth/login にリダイレクト: ${pathname}`)
+      }
+      
+      return NextResponse.redirect(new URL('/auth/login', req.url))
+    }
+
     // 認証状態のログ出力（開発環境のみ）
     if (process.env.NODE_ENV === 'development' && !req.nextauth.token) {
-      console.log(`🚫 未認証アクセス: ${pathname}`)
+      console.log(`🔓 公開アクセス: ${pathname}`)
     }
 
     return NextResponse.next()
@@ -29,36 +39,8 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        const pathname = req.nextUrl.pathname
-
-        // NextAuth.jsのAPIルートは常に許可
-        if (pathname.startsWith('/api/auth/')) {
-          return true
-        }
-
-        // 常に公開のパスは認証不要
-        if (AUTH_CONFIG.PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
-          return true
-        }
-
-        // 保護されたルートは認証とアクティブ状態が必要
-        const isProtected = AUTH_CONFIG.PROTECTED_PATHS.some(path => pathname.startsWith(path))
-        
-        if (isProtected) {
-          const hasValidToken = !!token && token.status === 'active'
-          
-          if (process.env.NODE_ENV === 'development' && !hasValidToken) {
-            console.log(`🚫 保護されたルート ${pathname} へのアクセス拒否:`, {
-              hasToken: !!token,
-              status: token?.status || 'none',
-              userType: token?.userType || 'none'
-            })
-          }
-          
-          return hasValidToken
-        }
-
-        // その他のルートは認証不要
+        // ミドルウェア関数でリダイレクト処理を行っているため、
+        // ここでは常にtrueを返してミドルウェア関数を実行させる
         return true
       },
     },
