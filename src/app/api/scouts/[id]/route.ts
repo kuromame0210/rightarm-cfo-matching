@@ -26,15 +26,12 @@ export async function GET(
     console.log('- Scout ID:', scoutId, 'Type:', typeof scoutId)
     console.log('- User ID:', user.id, 'Type:', typeof user.id)
 
-    // スカウト詳細を取得
+    // 新アーキテクチャ: messages テーブルから msg_type='scout' で取得
     const { data: scout, error } = await supabaseAdmin
-      .from(TABLES.SCOUTS)
-      .select(`
-        *,
-        sender:sender_id(id, email),
-        recipient:recipient_id(id, email)
-      `)
-      .eq('id', scoutId)
+      .from(TABLES.MESSAGES)
+      .select('*')
+      .eq('msg_id', scoutId)
+      .eq('msg_type', 'scout')
       .single()
 
     console.log('- GET Query result:', scout)
@@ -53,7 +50,7 @@ export async function GET(
     }
 
     // アクセス権限をチェック（送信者または受信者のみアクセス可能）
-    if (scout.sender_id !== user.id && scout.recipient_id !== user.id) {
+    if (scout.sender_id !== user.id && scout.receiver_id !== user.id) {
       return createErrorResponse('アクセス権限がありません', { status: 403 })
     }
 
@@ -93,60 +90,71 @@ export async function PATCH(
     console.log('- User ID:', user.id, 'Type:', typeof user.id)
     console.log('- Status:', status)
 
-    // スカウトが存在し、現在のユーザーが受信者であることを確認
-    const { data: scout, error: fetchError } = await supabaseAdmin
-      .from(TABLES.SCOUTS)
+    // 新アーキテクチャ: まずスカウトが存在することを確認
+    const { data: scoutCheck, error: scoutCheckError } = await supabaseAdmin
+      .from(TABLES.MESSAGES)
       .select('*')
-      .eq('id', scoutId)
-      .eq('recipient_id', user.id)
+      .eq('msg_id', scoutId)
+      .eq('msg_type', 'scout')
       .single()
 
-    console.log('- Query result:', scout)
-    console.log('- Query error:', fetchError)
+    console.log('- Scout existence check:', scoutCheck)
+    console.log('- Scout check error:', scoutCheckError)
 
-    if (fetchError || !scout) {
+    if (scoutCheckError || !scoutCheck) {
       return createErrorResponse('スカウトが見つかりません', { 
         status: 404,
         debug: {
           scoutId,
           userId: user.id,
-          fetchError: fetchError?.message
+          scoutCheckError: scoutCheckError?.message
         }
       })
     }
 
-    // ステータスが既に処理済みの場合はエラー
-    if (scout.status !== 'pending') {
-      return createErrorResponse('このスカウトは既に処理済みです', { status: 400 })
+    // 現在のユーザーがスカウトの受信者であることを確認
+    if (scoutCheck.receiver_id !== user.id) {
+      console.log('- Access denied: User is not the receiver')
+      console.log('- Scout sender_id:', scoutCheck.sender_id)
+      console.log('- Scout receiver_id:', scoutCheck.receiver_id)
+      console.log('- Current user_id:', user.id)
+      
+      return createErrorResponse('このスカウトに対する承諾・辞退権限がありません', { 
+        status: 403,
+        debug: {
+          scoutId,
+          userId: user.id,
+          scoutSenderId: scoutCheck.sender_id,
+          scoutReceiverId: scoutCheck.receiver_id,
+          message: '現在のユーザーはスカウトの受信者ではありません'
+        }
+      })
     }
 
-    // スカウトのステータスを更新（楽観的ロック：pending状態のもののみ更新）
-    console.log('📝 Updating scout with:', {
-      status,
-      response_message: response_message || null,
-      updated_at: new Date().toISOString()
-    })
+    const scout = scoutCheck
 
-    const { data: updateResult, error: updateError } = await supabaseAdmin
-      .from(TABLES.SCOUTS)
-      .update({
-        status,
-        responded_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+    // 新アーキテクチャ: スカウトへの返信を新しいメッセージとして送信
+    const responseBody = status === 'accepted' ? 
+      `スカウトを承諾しました。${response_message ? `\n\n${response_message}` : ''}` :
+      `スカウトをお断りしました。${response_message ? `\n\n${response_message}` : ''}`
+
+    const { data: responseMessage, error: responseError } = await supabaseAdmin
+      .from(TABLES.MESSAGES)
+      .insert({
+        sender_id: user.id,
+        receiver_id: scout.sender_id,
+        msg_type: 'chat',
+        body: responseBody
       })
-      .eq('id', scoutId)
-      .eq('status', 'pending') // 楽観的ロック：pending状態のもののみ更新
       .select()
+      .single()
 
-    console.log('📝 Update result:', updateResult)
-    console.log('📝 Update error:', updateError)
-
-    if (updateError) {
-      console.error('スカウト更新エラー:', updateError)
-      return createErrorResponse('スカウトの更新に失敗しました', { 
+    if (responseError) {
+      console.error('返信メッセージ送信エラー:', responseError)
+      return createErrorResponse('返信の送信に失敗しました', { 
         status: 500,
         debug: {
-          updateError: updateError.message,
+          responseError: responseError.message,
           scoutId,
           status,
           response_message
@@ -154,101 +162,14 @@ export async function PATCH(
       })
     }
 
-    // 楽観的ロック：更新されたレコードがない場合は競合状態
-    if (!updateResult || updateResult.length === 0) {
-      return createErrorResponse('このスカウトは既に他のユーザーによって処理されています', { 
-        status: 409,
-        debug: {
-          scoutId,
-          status,
-          message: 'Optimistic lock failed - scout already processed'
-        }
-      })
-    }
-
-    // 返信メッセージがある場合は返信テーブルに記録
-    if (response_message && response_message.trim()) {
-      try {
-        console.log('💬 Recording response message:', response_message)
-        
-        const { data: responseResult, error: responseError } = await supabaseAdmin
-          .from(TABLES.SCOUT_RESPONSES)
-          .insert({
-            scout_id: scoutId,
-            responder_id: user.id,
-            response_type: status === 'accepted' ? 'accept' : 'decline',
-            message: response_message.trim(),
-            created_at: new Date().toISOString()
-          })
-          .select()
-
-        console.log('💬 Response record result:', responseResult)
-        console.log('💬 Response record error:', responseError)
-      } catch (responseError) {
-        console.error('返信記録エラー:', responseError)
-        // 返信記録の失敗はメイン処理を阻害しない
-      }
-    }
-
-    // 承諾時に会話を作成
-    if (status === 'accepted') {
-      try {
-        console.log('💬 Creating conversation between:', scout.sender_id, 'and', user.id)
-        
-        // 既存の会話をチェック
-        const { data: existingConv, error: convCheckError } = await supabaseAdmin
-          .from(TABLES.CONVERSATIONS)
-          .select('id')
-          .or(`and(participant1_id.eq.${scout.sender_id},participant2_id.eq.${user.id}),and(participant1_id.eq.${user.id},participant2_id.eq.${scout.sender_id})`)
-          .single()
-
-        console.log('💬 Existing conversation:', existingConv)
-        console.log('💬 Conversation check error:', convCheckError)
-
-        if (!existingConv) {
-          // 新しい会話を作成
-          const { data: newConv, error: convCreateError } = await supabaseAdmin
-            .from(TABLES.CONVERSATIONS)
-            .insert({
-              participant1_id: scout.sender_id,
-              participant2_id: user.id,
-              last_message_at: new Date().toISOString()
-            })
-            .select()
-
-          console.log('💬 New conversation created:', newConv)
-          console.log('💬 Conversation create error:', convCreateError)
-        }
-      } catch (convError) {
-        console.error('会話作成エラー:', convError)
-        // 会話作成の失敗はスカウト承諾処理を阻害しない
-      }
-    }
-
-    // 活動履歴を記録
-    try {
-      console.log('📊 Recording activity for user:', user.id)
-      
-      const { data: activityResult, error: activityError } = await supabaseAdmin
-        .from(TABLES.ACTIVITIES)
-        .insert({
-          user_id: user.id,
-          activity_type: `scout_${status}`,
-          description: `スカウト${status === 'accepted' ? '承諾' : '辞退'}: ${scout.message?.substring(0, 50)}...`,
-          related_id: scoutId,
-          created_at: new Date().toISOString()
-        })
-        .select()
-
-      console.log('📊 Activity result:', activityResult)
-      console.log('📊 Activity error:', activityError)
-    } catch (activityError) {
-      console.error('活動履歴記録エラー:', activityError)
-      // 活動履歴の失敗はメイン処理を阻害しない
-    }
+    console.log('✅ スカウト返信送信成功:', responseMessage.msg_id)
 
     return createSuccessResponse(
-      { scoutId, status },
+      { 
+        scoutId, 
+        status, 
+        responseMessageId: responseMessage.msg_id 
+      },
       { message: `スカウトを${status === 'accepted' ? '承諾' : '辞退'}しました` }
     )
   } catch (error) {

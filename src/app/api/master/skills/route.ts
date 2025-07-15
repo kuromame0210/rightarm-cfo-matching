@@ -1,116 +1,142 @@
-// マスターデータ: スキル・専門分野 API
-import { NextRequest } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
-import { createSuccessResponse, createErrorResponse } from '@/lib/api-response'
-import { TABLES } from '@/lib/constants'
+// スキルマスターAPI - 新アーキテクチャ対応版（固定リスト提供）
+import { NextRequest, NextResponse } from 'next/server'
 
-// GET: スキル一覧を取得
+// 新アーキテクチャ: マスターテーブル廃止、固定リストで提供
+const FINANCE_SKILLS = [
+  // IPO・上場関連
+  'IPO支援', 'IPO準備', '上場準備', '株式公開', '証券会社対応',
+  
+  // M&A関連  
+  'M&A', 'M&Aアドバイザリー', '企業買収', '企業売却', 'PMI', 'DD（デューデリジェンス）',
+  
+  // 資金調達
+  '資金調達', 'VC対応', '銀行折衝', '債務調整', '資本政策', 'エクイティファイナンス',
+  
+  // 財務戦略
+  '財務戦略', '予算管理', '中期計画', '事業計画', '投資計画', 'キャッシュフロー管理',
+  
+  // 経理・会計
+  '財務会計', '管理会計', '税務', '連結決算', '月次決算', '原価計算', '予実管理',
+  
+  // 内部統制・ガバナンス
+  '内部統制', 'SOX法対応', 'ガバナンス', 'リスク管理', 'コンプライアンス', '監査対応',
+  
+  // IR・開示
+  'IR', '決算説明会', '有価証券報告書', '開示業務', '株主対応',
+  
+  // システム・DX
+  '経理システム', 'ERP導入', 'DX推進', 'BIツール', 'システム導入',
+  
+  // 業界専門
+  'SaaS', 'IT', '製造業', '小売', '不動産', 'ヘルスケア', '金融',
+  
+  // 海外・国際
+  '海外展開', '国際税務', 'IFRS', '海外子会社管理', 'クロスボーダーM&A'
+];
+
+const BUSINESS_ISSUES = [
+  // 資金・資本関連
+  'IPO準備', '資金調達', '資本政策', 'VC対応', '銀行との関係改善',
+  
+  // 財務体制
+  '財務体制強化', '管理会計導入', '予算管理', '経理業務効率化', '月次決算早期化',
+  
+  // 成長・事業拡大  
+  '事業拡大', '新規事業', '海外展開', 'M&A検討', '投資判断',
+  
+  // コスト・収益性
+  'コスト削減', 'コスト最適化', '収益性改善', '原価管理', '損益管理',
+  
+  // 体制・ガバナンス
+  '内部統制', 'ガバナンス強化', 'リスク管理', 'コンプライアンス',
+  
+  // システム・DX
+  '経理システム導入', 'DX推進', 'ERPシステム', 'ペーパーレス化',
+  
+  // 人材・組織
+  '経理人材不足', 'CFO人材確保', '財務チーム強化', '経理教育'
+];
+
 export async function GET(request: NextRequest) {
   try {
+    console.log('🎯 スキルマスターAPI - 新アーキテクチャ版')
+
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
-    const active = searchParams.get('active')
 
-    let query = supabaseAdmin
-      .from(TABLES.SKILL_TAGS)
-      .select('*')
-      .order('name', { ascending: true })
+    let skills: string[] = []
+    let categoryName = ''
 
-    // カテゴリフィルター
-    if (category) {
-      query = query.eq('category', category)
+    // カテゴリ別にスキルを提供
+    switch (category) {
+      case 'finance':
+      case 'cfo':
+        skills = FINANCE_SKILLS
+        categoryName = 'CFOスキル'
+        break
+      case 'business':
+      case 'issues':
+        skills = BUSINESS_ISSUES  
+        categoryName = '企業課題'
+        break
+      default:
+        // 全てのスキルを提供
+        skills = [...FINANCE_SKILLS, ...BUSINESS_ISSUES]
+        categoryName = '全スキル'
     }
 
-    // アクティブフィルター
-    if (active !== null) {
-      query = query.eq('is_active', active === 'true')
-    }
+    // API レスポンス形式に変換
+    const skillsData = skills.map((skill, index) => ({
+      id: index + 1,
+      name: skill,
+      description: `${skill}に関する専門知識・経験`,
+      category: categoryName,
+      isActive: true,
+      displayOrder: index + 1
+    }))
 
-    const { data: skills, error } = await query
-
-    if (error) {
-      console.error('Skills fetch error:', error)
-      return createErrorResponse('スキル一覧の取得に失敗しました', { status: 500 })
-    }
-
-    // カテゴリ別にグループ化
-    const groupedSkills = skills?.reduce((acc: any, skill: any) => {
-      const category = skill.category || 'その他'
-      if (!acc[category]) {
-        acc[category] = []
+    const response = {
+      success: true,
+      data: {
+        skills: skillsData,
+        grouped: {
+          [categoryName]: skillsData
+        },
+        categories: [categoryName],
+        meta: {
+          architecture: 'new',
+          source: 'hardcoded',
+          total: skills.length,
+          category: category || 'all'
+        }
       }
-      acc[category].push({
-        id: skill.id,
-        name: skill.name,
-        description: skill.description,
-        category: skill.category,
-        isActive: skill.is_active,
-        displayOrder: skill.display_order || 999
-      })
-      return acc
-    }, {})
+    }
 
-    return createSuccessResponse({
-      skills: skills?.map((skill: any) => ({
-        id: skill.id,
-        name: skill.name,
-        description: skill.description,
-        category: skill.category,
-        isActive: skill.is_active,
-        displayOrder: skill.display_order || 999
-      })) || [],
-      grouped: groupedSkills || {},
-      categories: Object.keys(groupedSkills || {}).sort()
-    })
+    console.log(`✅ スキル一覧提供: ${skills.length}件 (${categoryName})`)
+
+    return NextResponse.json(response)
 
   } catch (error) {
-    console.error('Skills API error:', error)
-    return createErrorResponse('スキル一覧の取得中にエラーが発生しました', { status: 500 })
+    console.error('🚨 スキルマスターAPI エラー:', error)
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'スキル一覧の取得中にエラーが発生しました',
+        meta: { architecture: 'new', source: 'hardcoded' }
+      },
+      { status: 500 }
+    )
   }
 }
 
-// POST: 新しいスキルを追加（管理者用）
+// POST: 新アーキテクチャでは不要（固定リストのため）
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { name, description, category } = body
-
-    if (!name?.trim()) {
-      return createErrorResponse('スキル名は必須です', { status: 400 })
-    }
-
-    // 重複チェック
-    const { data: existing } = await supabaseAdmin
-      .from(TABLES.SKILL_TAGS)
-      .select('id')
-      .eq('name', name.trim())
-      .single()
-
-    if (existing) {
-      return createErrorResponse('このスキル名は既に存在します', { status: 409 })
-    }
-
-    const { data: skill, error } = await supabaseAdmin
-      .from(TABLES.SKILL_TAGS)
-      .insert({
-        name: name.trim(),
-        description: description?.trim() || null,
-        category: category?.trim() || 'その他',
-        is_active: true,
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Skill creation error:', error)
-      return createErrorResponse('スキルの作成に失敗しました', { status: 500 })
-    }
-
-    return createSuccessResponse(skill, { message: 'スキルを作成しました' })
-
-  } catch (error) {
-    console.error('Skill creation API error:', error)
-    return createErrorResponse('スキル作成中にエラーが発生しました', { status: 500 })
-  }
+  return NextResponse.json(
+    { 
+      success: false, 
+      error: '新アーキテクチャではスキルの動的追加は不要です。固定リストを使用してください。',
+      meta: { architecture: 'new', feature: 'disabled' }
+    },
+    { status: 501 }
+  )
 }

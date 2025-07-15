@@ -20,6 +20,7 @@ export interface ProfileData {
   // CFO固有
   title?: string
   experience?: string
+  rawProfile?: string // API返却データ
   specialties?: string[]
   skills?: string[] // 互換性
   certifications?: string[]
@@ -27,6 +28,13 @@ export interface ProfileData {
   availabilityStatus?: string
   workPreference?: string // 互換性
   workStyle?: string // 互換性
+  feeMin?: number
+  feeMax?: number
+  availableAreas?: string[]
+  weeklyAvailability?: string
+  career?: string
+  monthlyFeeMin?: number | null
+  monthlyFeeMax?: string
   // Company固有
   companyName?: string
   company?: string // 互換性
@@ -39,6 +47,9 @@ export interface ProfileData {
   compensation?: string // 互換性
   compensationRange?: string // 互換性
   availability?: string // 互換性
+  // 会社情報の4項目
+  revenueRange?: string
+  challengeBackground?: string
 }
 
 export function useProfile() {
@@ -73,8 +84,8 @@ export function useProfile() {
         // console.log('✅ useProfile: 取得成功', data)
         
         if (data.success) {
-          console.log('🔍 取得データのname値:', data.data.name, '（空の場合は保存失敗）')
-          setProfile(data.data)
+          console.log('📄 プロフィール取得データ:', data.profile)
+          setProfile(data.profile)
         } else {
           setError(data.error || 'プロフィールの取得に失敗しました')
         }
@@ -94,6 +105,7 @@ export function useProfile() {
   const updateProfile = useCallback(async (profileData: Partial<ProfileData>) => {
     try {
       console.log('🔥 保存処理開始:', profileData.name || profileData.displayName)
+      console.log('📤 送信するデータ:', JSON.stringify(profileData, null, 2))
 
       const response = await fetch('/api/profile', {
         method: 'PUT',
@@ -108,11 +120,13 @@ export function useProfile() {
       console.log('📡 API応答:', result.success ? '成功' : `失敗: ${result.error}`)
 
       if (response.ok && result.success) {
+        console.log('✅ プロフィール更新API成功')
         // 更新成功後にプロフィールを再取得
         await fetchProfile()
         console.log('🔄 データ再取得完了')
         return { success: true, message: result.message }
       } else {
+        console.error('❌ プロフィール更新API失敗:', result.error)
         return { 
           success: false, 
           error: result.error || 'プロフィールの更新に失敗しました' 

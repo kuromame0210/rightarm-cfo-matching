@@ -11,69 +11,53 @@ export interface DatabaseUser {
   updated_at: string
 }
 
+// 新アーキテクチャ準拠: cfo_profilesテーブル
 export interface DatabaseCFOProfile {
-  id: string
-  user_id: string
-  display_name: string
-  bio?: string
-  experience_years: number
-  hourly_rate?: number
-  is_available: boolean
-  region?: string
-  work_style?: 'remote' | 'onsite' | 'hybrid'
+  cfo_user_id: string // PRIMARY KEY, auth.users FK
   avatar_url?: string
+  cfo_name?: string
+  cfo_display_name?: string
+  cfo_location?: string
+  cfo_availability?: string
+  cfo_fee_min?: number
+  cfo_fee_max?: number
+  cfo_skills: string[] // JSONB field
+  cfo_raw_profile: string
   created_at: string
   updated_at: string
 }
 
+// 新アーキテクチャ準拠: biz_profilesテーブル
 export interface DatabaseCompanyProfile {
-  id: string
-  user_id: string
-  company_name: string
-  business_name?: string
-  industry: string
-  employee_count: number
-  description: string
-  website?: string
-  logo_url?: string
-  budget_range?: string
-  work_location?: string
-  company_stage?: 'startup' | 'growing' | 'established'
+  biz_user_id: string // PRIMARY KEY, auth.users FK
+  avatar_url?: string
+  biz_company_name: string
+  biz_location?: string
+  biz_revenue_min?: number
+  biz_revenue_max?: number
+  biz_issues: string[] // JSONB field
+  biz_raw_profile: string
+  // 企業プロフィールの詳細項目（2025-07-15追加）
+  biz_description?: string
+  biz_revenue_range?: string
+  biz_challenge_background?: string
   created_at: string
   updated_at: string
 }
 
-export interface DatabaseConversation {
-  id: string
-  participant1_id: string
-  participant2_id: string
-  last_message_at: string
-  created_at: string
-  updated_at: string
-}
+// 新アーキテクチャ: conversationテーブルは不要（削除）
 
+// 新アーキテクチャ準拠: messagesテーブル
 export interface DatabaseMessage {
-  id: string
-  conversation_id: string
-  sender_id: string
-  content: string
+  msg_id: number // PRIMARY KEY (bigserial)
+  sender_id: string // auth.users FK
+  receiver_id: string // auth.users FK
+  msg_type: 'chat' | 'scout' // ENUM
+  body: string
   sent_at: string
-  is_read: boolean
-  created_at: string
 }
 
-export interface DatabaseScout {
-  id: string
-  sender_id: string
-  recipient_id: string
-  recipient_type: 'cfo' | 'company'
-  message: string
-  status: 'pending' | 'accepted' | 'declined'
-  sent_at: string
-  responded_at?: string
-  created_at: string
-  updated_at: string
-}
+// 新アーキテクチャ: scoutはmessagesテーブルのmsg_type='scout'として統合
 
 export interface DatabaseMeeting {
   id: string
@@ -89,40 +73,12 @@ export interface DatabaseMeeting {
   updated_at: string
 }
 
-export interface DatabaseContract {
-  id: string
-  cfo_id: string
-  company_id: string
-  title: string
-  description: string
-  compensation: number
-  compensation_type: 'hourly' | 'project' | 'monthly'
-  start_date: string
-  end_date?: string
-  status: 'draft' | 'active' | 'completed' | 'cancelled'
-  terms: string
-  created_at: string
-  updated_at: string
-}
+// 契約・請求書機能はベータ版では除外
 
-export interface DatabaseInvoice {
-  id: string
-  contract_id: string
-  amount: number
-  description: string
-  due_date: string
-  status: 'draft' | 'sent' | 'paid' | 'overdue'
-  issued_at: string
-  paid_at?: string
-  created_at: string
-  updated_at: string
-}
-
-export interface DatabaseInterest {
-  id: string
-  user_id: string
-  target_id: string
-  target_type: 'cfo' | 'company'
+// 新アーキテクチャ準拠: likesテーブル（複合主キー）
+export interface DatabaseLike {
+  liker_id: string  // auth.users FK, PRIMARY KEY part 1
+  target_id: string // auth.users FK, PRIMARY KEY part 2
   created_at: string
 }
 
@@ -144,41 +100,24 @@ export interface SupabaseQueryResult<T> {
   statusText: string
 }
 
-// Skill and Service Types
-export interface DatabaseCFOSkill {
-  id: string
-  cfo_profile_id: string
-  skill_name: string
-  proficiency_level: 'beginner' | 'intermediate' | 'advanced' | 'expert'
+// 新アーキテクチャ準拠: reviewsテーブル
+export interface DatabaseReview {
+  review_id: number // PRIMARY KEY (bigserial)
+  reviewer_id: string // auth.users FK
+  target_id: string // auth.users FK
+  rating: number // 1-5 CHECK constraint
+  comment?: string
   created_at: string
 }
 
-export interface DatabaseCFOService {
-  id: string
-  cfo_profile_id: string
-  service_name: string
-  description?: string
-  price?: number
-  created_at: string
-}
-
-export interface DatabaseCFOCertification {
-  id: string
-  cfo_profile_id: string
-  certification_name: string
-  issuing_organization: string
-  issue_date: string
-  expiry_date?: string
-  created_at: string
-}
-
-export interface DatabaseCFOWorkHistory {
-  id: string
-  cfo_profile_id: string
-  company_name: string
-  position: string
-  start_date: string
-  end_date?: string
-  description?: string
+// 新アーキテクチャ準拠: attachmentsテーブル
+export interface DatabaseAttachment {
+  file_id: number // PRIMARY KEY (bigserial)
+  file_url: string
+  file_name?: string
+  msg_id?: number // messages FK (nullable)
+  cfo_user_id?: string // cfo_profiles FK (nullable)
+  biz_user_id?: string // biz_profiles FK (nullable)
+  uploaded_by: string // auth.users FK
   created_at: string
 }

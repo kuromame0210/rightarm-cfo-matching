@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 export const dynamic = 'force-dynamic'
 
 export default function DiscoverCompaniesPage() {
-  const { isAuthenticated } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
@@ -22,6 +22,8 @@ export default function DiscoverCompaniesPage() {
   const [interestedCompanies, setInterestedCompanies] = useState<number[]>([])
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+  const [showScoutModal, setShowScoutModal] = useState(false)
+  const [selectedCompany, setSelectedCompany] = useState<any>(null)
   const [companies, setCompanies] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState({
@@ -135,7 +137,7 @@ export default function DiscoverCompaniesPage() {
       region: company.region || '地域',
       revenue: company.revenue_range || '年商未入力',
       employeeCount: '従業員数未入力',
-      challenges: company.rightarm_company_challenges?.map((c: any) => c.rightarm_challenge_tags?.name).filter((name: any) => Boolean(name)) || [],
+      challenges: company.biz_issues || [],
       challengeBackground: company.description || '課題の背景を記載中',
       cfoRequirements: 'CFOに求めるスキルを記載中',
       expectedTimeline: '2024年〜',
@@ -186,6 +188,54 @@ export default function DiscoverCompaniesPage() {
     } else {
       setInterestedCompanies(prev => [...prev, company.id])
       showToastMessage('気になるに追加しました ❤️')
+    }
+  }
+
+  const handleScout = (company: any) => {
+    setSelectedCompany(company)
+    setShowScoutModal(true)
+  }
+
+  const sendScout = async () => {
+    const messageInput = document.querySelector('textarea')?.value?.trim()
+    
+    if (!messageInput) {
+      showToastMessage('メッセージを入力してください')
+      return
+    }
+
+    if (!isAuthenticated) {
+      showToastMessage('ログインが必要です')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/scouts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          recipientId: selectedCompany.id,
+          recipientType: 'company',
+          senderType: user?.userType || 'cfo',
+          title: `${selectedCompany.companyName}への応募`,
+          message: messageInput
+        })
+      })
+
+      const data = await response.json()
+      
+      if (response.ok && data.success) {
+        showToastMessage(`${selectedCompany.companyName}に応募しました`)
+        setShowScoutModal(false)
+      } else {
+        console.error('スカウト送信API エラー:', response.status, data)
+        showToastMessage(`エラー: ${data.error || 'スカウト送信に失敗しました'}`)
+      }
+    } catch (error) {
+      console.error('スカウト送信エラー:', error)
+      showToastMessage('スカウトの送信に失敗しました')
     }
   }
 
@@ -640,12 +690,12 @@ export default function DiscoverCompaniesPage() {
                       >
                         💬 メッセージ
                       </Link>
-                      <Link 
-                        href={`/company/${company.id}/apply`}
+                      <button 
+                        onClick={() => handleScout(company)}
                         className="flex-1 md:flex-none min-h-[28px] md:min-h-[36px] px-1.5 md:px-3 py-0.5 md:py-1.5 rounded-lg text-xs font-medium transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg flex items-center justify-center whitespace-nowrap bg-gray-900 text-white hover:bg-gray-800 hover:scale-105"
                       >
                         応募
-                      </Link>
+                      </button>
                     </div>
                   </div>
                   
@@ -728,6 +778,68 @@ export default function DiscoverCompaniesPage() {
           </div>
         </div>
       </div>
+
+      {/* Scout Modal */}
+      {showScoutModal && selectedCompany && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all duration-300 scale-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">📝 企業への応募</h3>
+              <button 
+                onClick={() => setShowScoutModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-lg">
+                  🏢
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">{selectedCompany.companyName}</p>
+                  <p className="text-sm text-gray-600">{selectedCompany.businessName}</p>
+                </div>
+              </div>
+              
+              <div className="mb-3">
+                <p className="text-sm text-gray-600 mb-2">財務課題:</p>
+                <div className="flex flex-wrap gap-1">
+                  {selectedCompany.challenges.slice(0, 3).map((challenge: string) => (
+                    <span key={challenge} className="px-2 py-1 bg-red-50 text-red-700 text-xs rounded border border-red-200">
+                      {challenge}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              
+              <p className="text-sm text-gray-600 mb-4">応募メッセージを入力してください:</p>
+              
+              <textarea
+                placeholder="応募の動機や提案したいソリューションを入力してください..."
+                className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+              />
+            </div>
+            
+            <div className="flex space-x-3">
+              <button 
+                onClick={() => setShowScoutModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm"
+              >
+                キャンセル
+              </button>
+              <button 
+                onClick={sendScout}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+              >
+                送信
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       {showToast && (

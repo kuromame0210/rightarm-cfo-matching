@@ -45,350 +45,190 @@ export const supabaseAdmin = (() => {
   })
 })()
 
-// Database型定義（基本型）
+// 新アーキテクチャ対応 Database型定義
 export interface Database {
   public: {
     Tables: {
-      rextrix_users: {
+      cfo_profiles: {
         Row: {
-          id: string
-          supabase_auth_id: string
-          email: string
-          password_hash: string | null
-          user_type: 'company' | 'cfo'
-          status: 'active' | 'inactive' | 'suspended' | 'pending'
-          email_verified: boolean
-          profile_image_url: string | null
-          created_at: string
-          updated_at: string
-          last_login_at: string | null
-        }
-        Insert: {
-          id?: string
-          supabase_auth_id: string
-          email: string
-          password_hash?: string | null
-          user_type: 'company' | 'cfo'
-          status?: 'active' | 'inactive' | 'suspended' | 'pending'
-          email_verified?: boolean
-          profile_image_url?: string | null
-          created_at?: string
-          updated_at?: string
-          last_login_at?: string | null
-        }
-        Update: {
-          id?: string
-          supabase_auth_id?: string
-          email?: string
-          password_hash?: string | null
-          user_type?: 'company' | 'cfo'
-          status?: 'active' | 'inactive' | 'suspended' | 'pending'
-          email_verified?: boolean
-          profile_image_url?: string | null
-          created_at?: string
-          updated_at?: string
-          last_login_at?: string | null
-        }
-      }
-      rextrix_user_profiles: {
-        Row: {
-          id: string
-          user_id: string
-          display_name: string
-          nickname: string | null
-          introduction: string | null
-          phone_number: string | null
-          region: string | null
-          work_preference: string | null
-          compensation_range: string | null
+          cfo_user_id: string        // PK, auth.users(id) FK
+          avatar_url: string | null  // アイコン画像の公開 URL
+          cfo_name: string | null
+          cfo_display_name: string | null
+          cfo_location: string | null      // 例: 千葉県千葉市
+          cfo_availability: string | null  // 稼働メモ
+          cfo_fee_min: number | null       // 想定月額下限(円)
+          cfo_fee_max: number | null       // 想定月額上限(円)
+          cfo_skills: string[]             // ["IPO","M&A"] JSONB配列
+          cfo_raw_profile: string          // 経歴・紹介文を丸ごと貼付
           created_at: string
           updated_at: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          display_name: string
-          nickname?: string | null
-          introduction?: string | null
-          phone_number?: string | null
-          region?: string | null
-          work_preference?: string | null
-          compensation_range?: string | null
+          cfo_user_id: string
+          avatar_url?: string | null
+          cfo_name?: string | null
+          cfo_display_name?: string | null
+          cfo_location?: string | null
+          cfo_availability?: string | null
+          cfo_fee_min?: number | null
+          cfo_fee_max?: number | null
+          cfo_skills?: string[]
+          cfo_raw_profile: string
           created_at?: string
           updated_at?: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          display_name?: string
-          nickname?: string | null
-          introduction?: string | null
-          phone_number?: string | null
-          region?: string | null
-          work_preference?: string | null
-          compensation_range?: string | null
+          cfo_user_id?: string
+          avatar_url?: string | null
+          cfo_name?: string | null
+          cfo_display_name?: string | null
+          cfo_location?: string | null
+          cfo_availability?: string | null
+          cfo_fee_min?: number | null
+          cfo_fee_max?: number | null
+          cfo_skills?: string[]
+          cfo_raw_profile?: string
           created_at?: string
           updated_at?: string
         }
       }
-      rextrix_companies: {
+      biz_profiles: {
         Row: {
-          id: string
-          user_id: string
-          company_name: string
-          business_name: string | null
-          description: string | null
-          industry: string | null
-          region: string | null
-          employee_count: string | null
-          revenue_range: 'under_100m' | '100m_1b' | '1b_10b' | '10b_30b' | 'over_50b' | 'private' | null
-          website_url: string | null
-          established_year: number | null
-          is_recruiting: boolean
-          recruitment_urgency: 'low' | 'medium' | 'high'
-          expected_timeline: string | null
-          work_style: string | null
-          compensation_offer: string | null
-          challenge_background: string | null
-          cfo_requirements: string | null
+          biz_user_id: string        // PK, auth.users(id) FK
+          avatar_url: string | null  // 企業ロゴ / アイコン URL
+          biz_company_name: string
+          biz_location: string | null
+          biz_revenue_min: number | null  // 年商下限(円)
+          biz_revenue_max: number | null  // 年商上限(円)
+          biz_issues: string[]            // ["資金調達","管理会計"] JSONB配列
+          biz_raw_profile: string         // 企業紹介文
           created_at: string
           updated_at: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          company_name: string
-          business_name?: string | null
-          description?: string | null
-          industry?: string | null
-          region?: string | null
-          employee_count?: string | null
-          revenue_range?: 'under_100m' | '100m_1b' | '1b_10b' | '10b_30b' | 'over_50b' | 'private' | null
-          website_url?: string | null
-          established_year?: number | null
-          is_recruiting?: boolean
-          recruitment_urgency?: 'low' | 'medium' | 'high'
-          expected_timeline?: string | null
-          work_style?: string | null
-          compensation_offer?: string | null
-          challenge_background?: string | null
-          cfo_requirements?: string | null
+          biz_user_id: string
+          avatar_url?: string | null
+          biz_company_name: string
+          biz_location?: string | null
+          biz_revenue_min?: number | null
+          biz_revenue_max?: number | null
+          biz_issues?: string[]
+          biz_raw_profile: string
           created_at?: string
           updated_at?: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          company_name?: string
-          business_name?: string | null
-          description?: string | null
-          industry?: string | null
-          region?: string | null
-          employee_count?: string | null
-          revenue_range?: 'under_100m' | '100m_1b' | '1b_10b' | '10b_30b' | 'over_50b' | 'private' | null
-          website_url?: string | null
-          established_year?: number | null
-          is_recruiting?: boolean
-          recruitment_urgency?: 'low' | 'medium' | 'high'
-          expected_timeline?: string | null
-          work_style?: string | null
-          compensation_offer?: string | null
-          challenge_background?: string | null
-          cfo_requirements?: string | null
+          biz_user_id?: string
+          avatar_url?: string | null
+          biz_company_name?: string
+          biz_location?: string | null
+          biz_revenue_min?: number | null
+          biz_revenue_max?: number | null
+          biz_issues?: string[]
+          biz_raw_profile?: string
           created_at?: string
           updated_at?: string
         }
       }
-      rextrix_cfos: {
+      likes: {
         Row: {
-          id: string
-          user_id: string
-          experience_years: number | null
-          experience_summary: string | null
-          achievements: any | null
-          certifications: any | null
-          is_available: boolean
-          max_concurrent_projects: number
+          liker_id: string   // auth.users FK
+          target_id: string  // auth.users FK
+          created_at: string
+        }
+        Insert: {
+          liker_id: string
+          target_id: string
+          created_at?: string
+        }
+        Update: {
+          liker_id?: string
+          target_id?: string
+          created_at?: string
+        }
+      }
+      reviews: {
+        Row: {
+          review_id: number    // bigserial PK
+          reviewer_id: string  // uuid FK→auth.users
+          target_id: string    // uuid FK→auth.users
+          rating: number       // 1-5
+          comment: string | null
+          created_at: string
+        }
+        Insert: {
+          review_id?: number
+          reviewer_id: string
+          target_id: string
           rating: number
-          review_count: number
-          created_at: string
-          updated_at: string
+          comment?: string | null
+          created_at?: string
         }
-        Insert: {
-          id?: string
-          user_id: string
-          experience_years?: number | null
-          experience_summary?: string | null
-          achievements?: any | null
-          certifications?: any | null
-          is_available?: boolean
-          max_concurrent_projects?: number
+        Update: {
+          review_id?: number
+          reviewer_id?: string
+          target_id?: string
           rating?: number
-          review_count?: number
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          experience_years?: number | null
-          experience_summary?: string | null
-          achievements?: any | null
-          certifications?: any | null
-          is_available?: boolean
-          max_concurrent_projects?: number
-          rating?: number
-          review_count?: number
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      rextrix_skill_tags: {
-        Row: {
-          id: string
-          name: string
-          category: string
-          description: string | null
-          usage_count: number
-          is_active: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          category: string
-          description?: string | null
-          usage_count?: number
-          is_active?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          category?: string
-          description?: string | null
-          usage_count?: number
-          is_active?: boolean
+          comment?: string | null
           created_at?: string
         }
       }
-      rextrix_challenge_tags: {
+      messages: {
         Row: {
-          id: string
-          name: string
-          description: string | null
-          usage_count: number
-          is_active: boolean
-          created_at: string
+          msg_id: number           // bigserial PK
+          sender_id: string        // uuid FK→auth.users
+          receiver_id: string      // uuid FK→auth.users
+          msg_type: 'chat' | 'scout' // default 'chat'
+          body: string
+          sent_at: string
         }
         Insert: {
-          id?: string
-          name: string
-          description?: string | null
-          usage_count?: number
-          is_active?: boolean
-          created_at?: string
+          msg_id?: number
+          sender_id: string
+          receiver_id: string
+          msg_type?: 'chat' | 'scout'
+          body: string
+          sent_at?: string
         }
         Update: {
-          id?: string
-          name?: string
-          description?: string | null
-          usage_count?: number
-          is_active?: boolean
-          created_at?: string
+          msg_id?: number
+          sender_id?: string
+          receiver_id?: string
+          msg_type?: 'chat' | 'scout'
+          body?: string
+          sent_at?: string
         }
       }
-      rextrix_contracts: {
+      attachments: {
         Row: {
-          id: string
-          company_id: string
-          cfo_id: string
-          monthly_fee: number
-          contract_period: number
-          work_hours_per_month: number | null
-          start_date: string
-          end_date: string | null
-          status: 'draft' | 'active' | 'completed' | 'terminated'
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          cfo_id: string
-          monthly_fee: number
-          contract_period?: number
-          work_hours_per_month?: number | null
-          start_date: string
-          end_date?: string | null
-          status?: 'draft' | 'active' | 'completed' | 'terminated'
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          cfo_id?: string
-          monthly_fee?: number
-          contract_period?: number
-          work_hours_per_month?: number | null
-          start_date?: string
-          end_date?: string | null
-          status?: 'draft' | 'active' | 'completed' | 'terminated'
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      rextrix_invoices: {
-        Row: {
-          id: string
-          contract_id: string
-          invoice_date: string
-          due_date: string
-          period_start: string
-          period_end: string
-          consulting_fee: number
-          platform_fee_rate: number
-          platform_fee: number
-          total_amount: number
-          status: 'pending' | 'paid' | 'verified' | 'overdue'
-          paid_at: string | null
-          verified_at: string | null
-          payment_proof_urls: any | null
+          file_id: number      // bigserial PK
+          file_url: string     // Storage public URL
+          file_name: string | null
+          msg_id: number | null       // FK→messages
+          cfo_user_id: string | null  // FK→cfo_profiles
+          biz_user_id: string | null  // FK→biz_profiles
+          uploaded_by: string         // FK→auth.users
           created_at: string
         }
         Insert: {
-          id?: string
-          contract_id: string
-          invoice_date: string
-          due_date: string
-          period_start: string
-          period_end: string
-          consulting_fee: number
-          platform_fee_rate?: number
-          platform_fee: number
-          total_amount: number
-          status?: 'pending' | 'paid' | 'verified' | 'overdue'
-          paid_at?: string | null
-          verified_at?: string | null
-          payment_proof_urls?: any | null
+          file_id?: number
+          file_url: string
+          file_name?: string | null
+          msg_id?: number | null
+          cfo_user_id?: string | null
+          biz_user_id?: string | null
+          uploaded_by: string
           created_at?: string
         }
         Update: {
-          id?: string
-          contract_id?: string
-          invoice_date?: string
-          due_date?: string
-          period_start?: string
-          period_end?: string
-          consulting_fee?: number
-          platform_fee_rate?: number
-          platform_fee?: number
-          total_amount?: number
-          status?: 'pending' | 'paid' | 'verified' | 'overdue'
-          paid_at?: string | null
-          verified_at?: string | null
-          payment_proof_urls?: any | null
+          file_id?: number
+          file_url?: string
+          file_name?: string | null
+          msg_id?: number | null
+          cfo_user_id?: string | null
+          biz_user_id?: string | null
+          uploaded_by?: string
           created_at?: string
         }
       }
@@ -412,64 +252,14 @@ export const signOut = async () => {
 }
 
 // テーブル操作ヘルパー
-export const getUserProfile = async (userId: string) => {
-  const { data, error } = await supabase
-    .from(TABLES.USER_PROFILES)
-    .select(`
-      *,
-      ${TABLES.USERS}(*)
-    `)
-    .eq('user_id', userId)
-    .single()
-  
-  return { data, error }
-}
+// この関数は新アーキテクチャでは使用されません
+// プロフィール情報の取得は /api/profile を使用してください
 
-export const getCompanyProfile = async (userId: string) => {
-  const { data, error } = await supabase
-    .from(TABLES.COMPANIES)
-    .select(`
-      *,
-      ${TABLES.USERS}(*),
-      ${TABLES.USER_PROFILES}(*)
-    `)
-    .eq('user_id', userId)
-    .single()
-  
-  return { data, error }
-}
+// この関数は新アーキテクチャでは使用されません
+// プロフィール情報の取得は /api/profile を使用してください
 
-export const getCFOProfile = async (userId: string) => {
-  const { data, error } = await supabase
-    .from(TABLES.CFOS)
-    .select(`
-      *,
-      ${TABLES.USERS}(*),
-      ${TABLES.USER_PROFILES}(*)
-    `)
-    .eq('user_id', userId)
-    .single()
-  
-  return { data, error }
-}
+// この関数は新アーキテクチャでは使用されません
+// プロフィール情報の取得は /api/profile を使用してください
 
-export const getSkillTags = async () => {
-  const { data, error } = await supabase
-    .from(TABLES.SKILL_TAGS)
-    .select('*')
-    .eq('is_active', true)
-    .order('category', { ascending: true })
-    .order('usage_count', { ascending: false })
-  
-  return { data, error }
-}
-
-export const getChallengeTags = async () => {
-  const { data, error } = await supabase
-    .from(TABLES.CHALLENGE_TAGS)
-    .select('*')
-    .eq('is_active', true)
-    .order('usage_count', { ascending: false })
-  
-  return { data, error }
-}
+// これらの関数は新アーキテクチャでは使用されません
+// スキル情報の取得は /api/master/skills を使用してください

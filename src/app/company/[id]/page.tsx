@@ -44,44 +44,46 @@ export default function CompanyDetailPage() {
   
   // 企業データをフォーマット
   const formatCompanyData = (company: any) => {
+    console.log('Format company data:', company) // デバッグ用
     return {
-      id: company.id,
-      companyName: company.company_name || '',
-      businessName: company.business_name || '',
+      id: company.biz_user_id,
+      companyName: company.biz_company_name || '',
+      businessName: company.biz_company_name || '',
       logo: '🏢',
-      industry: company.industry || '',
-      location: company.region || '',
-      founded: '設立年未入力',
-      revenue: company.revenue_range || '',
-      employeeCount: '従業員数未入力',
-      website: '',
-      rating: 4.0,
+      industry: '-',  // 業界情報は提供されていない
+      location: company.biz_location || '-',
+      founded: '-',   // 設立年は提供されていない（創業25年のみ）
+      revenue: company.biz_revenue_min && company.biz_revenue_max ? 
+        `${(company.biz_revenue_min / 100000000).toFixed(0)}〜${(company.biz_revenue_max / 100000000).toFixed(0)}億円` : '-',
+      employeeCount: '-',  // 従業員数は提供されていない
+      website: '-',        // ウェブサイトは提供されていない
+      rating: 0,           // レビューがないので0
       reviewCount: 0,
       
       overview: {
-        vision: company.description || '',
-        business: company.description || '',
-        strengths: [],
-        challenges: company.rightarm_company_challenges?.map((c: any) => c.rightarm_challenge_tags?.name).filter((name: any) => Boolean(name)) || []
+        vision: '',          // ビジョンは提供されていない
+        business: company.biz_raw_profile || '',  // 会社概要のみ
+        strengths: [],       // 強みは明示されていない
+        challenges: company.biz_issues || []
       },
       
       challenges: {
-        primaryChallenges: company.rightarm_company_challenges?.map((c: any) => c.rightarm_challenge_tags?.name).filter((name: any) => Boolean(name)) || [],
-        background: company.description || '',
-        specificNeeds: [],
-        urgency: 'medium',
-        timeline: '2024年〜'
+        primaryChallenges: company.biz_issues || [],
+        background: company.biz_raw_profile || '',
+        specificNeeds: [],   // 具体的なニーズは提供されていない
+        urgency: '-',        // 緊急度は提供されていない
+        timeline: '-'        // タイムラインは提供されていない
       },
       
       conditions: {
-        cfoRequirements: [],
-        workStyle: '相談可能',
-        commitment: '相談可能',
-        duration: '長期',
-        compensation: '相談可能',
-        benefits: [],
-        startDate: '相談可能',
-        reportingLine: 'CEO直轄'
+        cfoRequirements: [], // CFO要件は提供されていない
+        workStyle: '-',      // 勤務形態は提供されていない
+        commitment: '-',     // 稼働頻度は提供されていない
+        duration: '-',       // 契約期間は提供されていない
+        compensation: '-',   // 報酬は提供されていない
+        benefits: [],       // 福利厚生は提供されていない
+        startDate: '-',     // 開始時期は提供されていない
+        reportingLine: '-'  // 報告ラインは提供されていない
       },
       
       reviews: []
@@ -229,27 +231,31 @@ export default function CompanyDetailPage() {
       case 'overview':
         return (
           <div className="space-y-4 md:space-y-6">
-            <div>
-              <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-3">ビジョン・ミッション</h3>
-              <p className="text-sm md:text-base text-gray-700 leading-relaxed">{companyData?.overview?.vision}</p>
-            </div>
+            {companyData?.overview?.vision && (
+              <div>
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-3">ビジョン・ミッション</h3>
+                <p className="text-sm md:text-base text-gray-700 leading-relaxed">{companyData.overview.vision}</p>
+              </div>
+            )}
             
             <div>
               <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-3">事業説明</h3>
               <p className="text-sm md:text-base text-gray-700 leading-relaxed">{companyData.overview.business}</p>
             </div>
             
-            <div>
-              <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-3">強み・特徴</h3>
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-1 md:gap-2">
-                {companyData.overview.strengths.map((strength: string, index: number) => (
-                  <li key={index} className="flex items-center text-sm md:text-base text-gray-700">
-                    <span className="text-green-500 mr-1 md:mr-2">✓</span>
-                    {strength}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {companyData.overview.strengths.length > 0 && (
+              <div>
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-3">強み・特徴</h3>
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-1 md:gap-2">
+                  {companyData.overview.strengths.map((strength: string, index: number) => (
+                    <li key={index} className="flex items-center text-sm md:text-base text-gray-700">
+                      <span className="text-green-500 mr-1 md:mr-2">✓</span>
+                      {strength}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             
             <div>
               <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-3">現在の主な課題</h3>
@@ -284,42 +290,48 @@ export default function CompanyDetailPage() {
               <p className="text-sm md:text-base text-gray-700 leading-relaxed">{companyData.challenges.background}</p>
             </div>
             
-            <div>
-              <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-3">具体的に必要な支援</h3>
-              <ul className="space-y-1 md:space-y-2">
-                {companyData.challenges.specificNeeds.map((need: string, index: number) => (
-                  <li key={index} className="flex items-start text-sm md:text-base text-gray-700">
-                    <span className="text-blue-500 mr-2 md:mr-3 mt-1">‣</span>
-                    {need}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 md:p-4">
-              <div className="flex items-center mb-2">
-                <span className="text-orange-600 text-base md:text-lg mr-2">⚡</span>
-                <h4 className="font-semibold text-orange-900 text-sm md:text-base">緊急度・タイムライン</h4>
+            {companyData.challenges.specificNeeds.length > 0 && (
+              <div>
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-3">具体的に必要な支援</h3>
+                <ul className="space-y-1 md:space-y-2">
+                  {companyData.challenges.specificNeeds.map((need: string, index: number) => (
+                    <li key={index} className="flex items-start text-sm md:text-base text-gray-700">
+                      <span className="text-blue-500 mr-2 md:mr-3 mt-1">‣</span>
+                      {need}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <p className="text-orange-800 text-sm md:text-base">{companyData.challenges.timeline}</p>
-            </div>
+            )}
+            
+            {companyData.challenges.timeline !== '-' && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 md:p-4">
+                <div className="flex items-center mb-2">
+                  <span className="text-orange-600 text-base md:text-lg mr-2">⚡</span>
+                  <h4 className="font-semibold text-orange-900 text-sm md:text-base">緊急度・タイムライン</h4>
+                </div>
+                <p className="text-orange-800 text-sm md:text-base">{companyData.challenges.timeline}</p>
+              </div>
+            )}
           </div>
         )
       
       case 'conditions':
         return (
           <div className="space-y-4 md:space-y-6">
-            <div>
-              <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-3">CFOに求める要件</h3>
-              <ul className="space-y-1 md:space-y-2">
-                {companyData.conditions.cfoRequirements.map((req: string, index: number) => (
-                  <li key={index} className="flex items-start text-sm md:text-base text-gray-700">
-                    <span className="text-blue-500 mr-2 md:mr-3 mt-1">‣</span>
-                    {req}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {companyData.conditions.cfoRequirements.length > 0 && (
+              <div>
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-2 md:mb-3">CFOに求める要件</h3>
+                <ul className="space-y-1 md:space-y-2">
+                  {companyData.conditions.cfoRequirements.map((req: string, index: number) => (
+                    <li key={index} className="flex items-start text-sm md:text-base text-gray-700">
+                      <span className="text-blue-500 mr-2 md:mr-3 mt-1">‣</span>
+                      {req}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <div>
@@ -336,20 +348,26 @@ export default function CompanyDetailPage() {
                 <h4 className="font-semibold text-gray-900 mb-2 text-sm md:text-base">報酬・待遇</h4>
                 <div className="space-y-1 md:space-y-2 text-xs md:text-sm text-gray-700">
                   <div><strong>月額報酬:</strong> {companyData.conditions.compensation}</div>
-                  <div><strong>その他:</strong></div>
-                  <ul className="ml-3 md:ml-4 space-y-1">
-                    {companyData.conditions.benefits.map((benefit: string, index: number) => (
-                      <li key={index}>• {benefit}</li>
-                    ))}
-                  </ul>
+                  {companyData.conditions.benefits.length > 0 && (
+                    <>
+                      <div><strong>その他:</strong></div>
+                      <ul className="ml-3 md:ml-4 space-y-1">
+                        {companyData.conditions.benefits.map((benefit: string, index: number) => (
+                          <li key={index}>• {benefit}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
             
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
-              <h4 className="font-semibold text-blue-900 mb-2 text-sm md:text-base">ポジション</h4>
-              <p className="text-blue-800 text-sm md:text-base">{companyData.conditions.reportingLine}</p>
-            </div>
+            {companyData.conditions.reportingLine !== '-' && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 md:p-4">
+                <h4 className="font-semibold text-blue-900 mb-2 text-sm md:text-base">ポジション</h4>
+                <p className="text-blue-800 text-sm md:text-base">{companyData.conditions.reportingLine}</p>
+              </div>
+            )}
           </div>
         )
       
@@ -358,17 +376,21 @@ export default function CompanyDetailPage() {
           <div className="space-y-4 md:space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-base md:text-lg font-semibold text-gray-900">CFOからのレビュー</h3>
-              <div className="flex items-center space-x-1 md:space-x-2">
-                <div className="flex items-center">
-                  <span className="text-yellow-400 text-sm md:text-lg">★</span>
-                  <span className="font-semibold text-gray-900 ml-1 text-sm md:text-base">{companyData.rating}</span>
+              {companyData.rating > 0 ? (
+                <div className="flex items-center space-x-1 md:space-x-2">
+                  <div className="flex items-center">
+                    <span className="text-yellow-400 text-sm md:text-lg">★</span>
+                    <span className="font-semibold text-gray-900 ml-1 text-sm md:text-base">{companyData.rating}</span>
+                  </div>
+                  <span className="text-gray-500 text-xs md:text-sm">({companyData.reviewCount}件)</span>
                 </div>
-                <span className="text-gray-500 text-xs md:text-sm">({companyData.reviewCount}件)</span>
-              </div>
+              ) : (
+                <span className="text-gray-500 text-xs md:text-sm">レビューなし</span>
+              )}
             </div>
             
             <div className="space-y-4 md:space-y-6">
-              {companyData.reviews.map((review: any) => (
+              {companyData.reviews.length > 0 ? companyData.reviews.map((review: any) => (
                 <div key={review.id} className="border border-gray-200 rounded-lg p-3 md:p-4">
                   <div className="flex items-start justify-between mb-3 md:mb-4">
                     <div>
@@ -419,7 +441,13 @@ export default function CompanyDetailPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 text-4xl mb-4">💬</div>
+                  <p className="text-gray-500">まだレビューはありません</p>
+                  <p className="text-sm text-gray-400 mt-2">この企業で働いたCFOからのレビューがあると表示されます</p>
+                </div>
+              )}
             </div>
           </div>
         )
@@ -444,10 +472,12 @@ export default function CompanyDetailPage() {
               <div className="flex-1">
                 <div className="flex items-center space-x-2 md:space-x-3 mb-1 md:mb-2">
                   <h1 className="text-lg md:text-3xl font-bold text-gray-900">{companyData.companyName}</h1>
-                  <div className="flex items-center">
-                    <span className="text-yellow-400">★</span>
-                    <span className="text-sm md:text-lg font-medium text-gray-900 ml-1">{companyData.rating}</span>
-                  </div>
+                  {companyData.rating > 0 && (
+                    <div className="flex items-center">
+                      <span className="text-yellow-400">★</span>
+                      <span className="text-sm md:text-lg font-medium text-gray-900 ml-1">{companyData.rating}</span>
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm md:text-lg text-gray-600 mb-1 md:mb-2">{companyData.businessName}</p>
                 <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm text-gray-500">

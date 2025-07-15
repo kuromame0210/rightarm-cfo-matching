@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, use } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import AppHeader from '@/components/AppHeader'
 import { FormModal } from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
@@ -12,6 +13,7 @@ export const dynamic = 'force-dynamic'
 export default function ScoutDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const resolvedParams = use(params)
+  const { data: session, status } = useSession()
   const [showAcceptModal, setShowAcceptModal] = useState(false)
   const [showDeclineModal, setShowDeclineModal] = useState(false)
   const [replyMessage, setReplyMessage] = useState('')
@@ -22,15 +24,17 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
 
   // スカウト詳細データを取得
   const fetchScoutDetail = useCallback(async () => {
+    // 認証が完了してからAPIを呼び出す
+    if (status !== 'authenticated' || !session?.user?.id) {
+      return
+    }
+
     try {
       console.log('🔍 フロントエンド Debug Info:')
       console.log('- Fetching scout ID:', resolvedParams.id, 'Type:', typeof resolvedParams.id)
+      console.log('- Current user ID:', session.user.id)
       
-      const response = await fetch(`/api/scouts/${resolvedParams.id}`, {
-        headers: {
-          'Authorization': 'Bearer development-user-token'
-        }
-      })
+      const response = await fetch(`/api/scouts/${resolvedParams.id}`)
       
       console.log('- GET Response status:', response.status)
       const data = await response.json()
@@ -43,13 +47,17 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
         }
       } else {
         console.error('- GET failed:', data)
+        if (response.status === 403) {
+          showToastMessage('このスカウトにアクセスする権限がありません', 'error')
+          router.push('/scout')
+        }
       }
     } catch (error) {
       console.error('スカウト詳細取得エラー:', error)
     } finally {
       setLoading(false)
     }
-  }, [resolvedParams.id])
+  }, [resolvedParams.id, status, session?.user?.id, router])
 
   useEffect(() => {
     fetchScoutDetail()
@@ -85,9 +93,23 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
 
   const displayScout = formatScoutData(scoutData)
 
-  const showToastMessage = (message: string, type: 'success' | 'error' = 'success') => {
+  // 現在のユーザーがスカウトの送信者・受信者のどちらなのかを判定
+  const isCurrentUserReceiver = session?.user?.id && scoutData?.receiver_id === session.user.id
+  const isCurrentUserSender = session?.user?.id && scoutData?.sender_id === session.user.id
+
+  // デバッグ用ログ
+  console.log('🔍 User role check:', {
+    currentUserId: session?.user?.id,
+    scoutSenderId: scoutData?.sender_id,
+    scoutReceiverId: scoutData?.receiver_id,
+    isCurrentUserReceiver,
+    isCurrentUserSender,
+    scoutStatus: displayScout.status
+  })
+
+  const showToastMessage = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     showToast(message, type)
-  }
+  }, [showToast])
 
   // APIエラーメッセージを取得するヘルパー関数
   const getErrorMessage = (data: any, defaultMessage: string): string => {
@@ -127,8 +149,7 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
       const response = await fetch(`/api/scouts/${resolvedParams.id}`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer development-user-token'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           status: 'accepted',
@@ -209,8 +230,7 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
       const response = await fetch(`/api/scouts/${resolvedParams.id}`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer development-user-token'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           status: 'declined',
@@ -262,9 +282,19 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleSendMessage = () => {
-    // スカウト送信者のIDを取得してメッセージページに遷移
-    const senderId = scoutData?.sender_id || 'demo-sender-id'
-    router.push(`/messages?user=${senderId}`)
+    // スカウト送信者と受信者を判定
+    const senderId = scoutData?.sender_id
+    const receiverId = scoutData?.receiver_id
+    const currentUserId = session?.user?.id
+    
+    // 自分が送信者の場合は受信者とメッセージ、自分が受信者の場合は送信者とメッセージ
+    const targetUserId = isCurrentUserSender ? receiverId : senderId
+    
+    if (targetUserId && targetUserId !== currentUserId) {
+      router.push(`/messages?user=${targetUserId}`)
+    } else {
+      console.warn('Invalid message target or trying to message self')
+    }
   }
 
   const getUrgencyColor = (urgency: string) => {
@@ -285,18 +315,27 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
-  if (loading) {
+  // 認証チェック
+  if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
-        <AppHeader isLoggedIn={true} />
+        <AppHeader isLoggedIn={status === 'authenticated'} />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 mb-6 md:mb-0">
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">スカウト詳細を読み込み中...</p>
+            <p className="text-gray-600">
+              {status === 'loading' ? '認証確認中...' : 'スカウト詳細を読み込み中...'}
+            </p>
           </div>
         </div>
       </div>
     )
+  }
+
+  // 未認証の場合はログインページにリダイレクト
+  if (status === 'unauthenticated') {
+    router.push('/auth/login')
+    return null
   }
 
   return (
@@ -401,33 +440,70 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
 
-        {/* アクションボタン */}
-        {displayScout.status === 'pending' && (
+        {/* アクションボタン - 受信者のみ表示 */}
+        {displayScout.status === 'pending' && isCurrentUserReceiver && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">このスカウトへの対応</h3>
-            <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
-              <button 
-                onClick={() => setShowAcceptModal(true)}
-                disabled={isProcessing}
-                className={`flex-1 min-h-[48px] md:min-h-[44px] px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-center text-sm md:text-base flex items-center justify-center ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {isProcessing ? '処理中...' : '✓ 承諾する'}
-              </button>
-              <button 
-                onClick={() => setShowDeclineModal(true)}
-                disabled={isProcessing}
-                className={`flex-1 min-h-[48px] md:min-h-[44px] px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-center text-sm md:text-base flex items-center justify-center ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {isProcessing ? '処理中...' : '✗ 辞退する'}
-              </button>
+            {/* 自分自身へのスカウトでない場合のみアクションボタンを表示 */}
+            {scoutData?.sender_id !== session?.user?.id ? (
+              <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
+                <button 
+                  onClick={() => setShowAcceptModal(true)}
+                  disabled={isProcessing}
+                  className={`flex-1 min-h-[48px] md:min-h-[44px] px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-center text-sm md:text-base flex items-center justify-center ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isProcessing ? '処理中...' : '✓ 承諾する'}
+                </button>
+                <button 
+                  onClick={() => setShowDeclineModal(true)}
+                  disabled={isProcessing}
+                  className={`flex-1 min-h-[48px] md:min-h-[44px] px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-center text-sm md:text-base flex items-center justify-center ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isProcessing ? '処理中...' : '✗ 辞退する'}
+                </button>
+                <button 
+                  onClick={handleSendMessage}
+                  disabled={isProcessing}
+                  className={`flex-1 min-h-[48px] md:min-h-[44px] px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-center text-sm md:text-base flex items-center justify-center ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  💬 質問する
+                </button>
+              </div>
+            ) : (
+              /* 自分自身へのスカウトの場合の説明 */
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  ℹ️ このスカウトは自分自身に送信されたものです。承諾や辞退は必要ありません。
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 送信者（送信済みスカウト）の表示 */}
+        {displayScout.status === 'pending' && isCurrentUserSender && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">送信済みスカウト</h3>
+            <p className="text-gray-600 mb-4">
+              このスカウトは送信済みです。相手からの返答をお待ちください。
+            </p>
+            {/* 自分自身へのスカウトでない場合のみメッセージボタンを表示 */}
+            {scoutData?.receiver_id !== session?.user?.id && (
               <button 
                 onClick={handleSendMessage}
-                disabled={isProcessing}
-                className={`flex-1 min-h-[48px] md:min-h-[44px] px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-center text-sm md:text-base flex items-center justify-center ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className="w-full min-h-[48px] md:min-h-[44px] px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-center text-sm md:text-base flex items-center justify-center"
               >
-                💬 質問する
+                💬 メッセージを送る
               </button>
-            </div>
+            )}
+            {/* 自分自身へのスカウトの場合の説明 */}
+            {scoutData?.receiver_id === session?.user?.id && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  ℹ️ このスカウトは自分自身に送信されたものです。
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -435,13 +511,31 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
         {displayScout.status === 'accepted' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">承諾済みのスカウト</h3>
-            <p className="text-gray-600 mb-4">このスカウトは承諾されています。メッセージでやり取りを続けてください。</p>
-            <button 
-              onClick={handleSendMessage}
-              className="w-full min-h-[48px] md:min-h-[44px] px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-center text-sm md:text-base flex items-center justify-center"
-            >
-              💬 メッセージを送る
-            </button>
+            <p className="text-gray-600 mb-4">
+              {isCurrentUserReceiver 
+                ? 'このスカウトは承諾されています。メッセージでやり取りを続けてください。'
+                : 'このスカウトは承諾されました。メッセージでやり取りを続けてください。'
+              }
+            </p>
+            {/* 自分自身へのスカウトでない場合のみメッセージボタンを表示 */}
+            {((isCurrentUserSender && scoutData?.receiver_id !== session?.user?.id) || 
+              (isCurrentUserReceiver && scoutData?.sender_id !== session?.user?.id)) && (
+              <button 
+                onClick={handleSendMessage}
+                className="w-full min-h-[48px] md:min-h-[44px] px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-center text-sm md:text-base flex items-center justify-center"
+              >
+                💬 メッセージを送る
+              </button>
+            )}
+            {/* 自分自身へのスカウトの場合の説明 */}
+            {((isCurrentUserSender && scoutData?.receiver_id === session?.user?.id) || 
+              (isCurrentUserReceiver && scoutData?.sender_id === session?.user?.id)) && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  ℹ️ このスカウトは自分自身に関連するものです。
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -449,7 +543,12 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
         {displayScout.status === 'declined' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">辞退済みのスカウト</h3>
-            <p className="text-gray-600 mb-4">このスカウトは辞退されています。</p>
+            <p className="text-gray-600 mb-4">
+              {isCurrentUserReceiver 
+                ? 'このスカウトは辞退されています。'
+                : 'このスカウトは辞退されました。'
+              }
+            </p>
             <div className="flex space-x-4">
               <Link 
                 href="/scout"
@@ -466,6 +565,24 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">期限切れのスカウト</h3>
             <p className="text-gray-600 mb-4">このスカウトは期限が切れています。</p>
+            <div className="flex space-x-4">
+              <Link 
+                href="/scout"
+                className="flex-1 min-h-[48px] md:min-h-[44px] px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium text-center text-sm md:text-base flex items-center justify-center"
+              >
+                ← スカウト一覧に戻る
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* アクセス権限がない場合の表示 */}
+        {scoutData && !isCurrentUserReceiver && !isCurrentUserSender && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">アクセス権限なし</h3>
+            <p className="text-gray-600 mb-4">
+              このスカウトにアクセスする権限がありません。
+            </p>
             <div className="flex space-x-4">
               <Link 
                 href="/scout"

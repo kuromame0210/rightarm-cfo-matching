@@ -14,11 +14,11 @@ export async function GET(
 
     console.log('Fetching company details for ID:', companyId)
 
-    // 企業詳細を取得
+    // 新アーキテクチャ: biz_profiles テーブルから企業詳細を取得
     const { data: company, error } = await supabaseAdmin
-      .from(TABLES.COMPANIES)
+      .from(TABLES.BIZ_PROFILES)
       .select('*')
-      .eq('id', companyId)
+      .eq('biz_user_id', companyId)
       .single()
 
     if (error) {

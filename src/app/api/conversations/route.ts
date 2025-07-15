@@ -1,326 +1,222 @@
-// 会話管理 API Route
-import { NextRequest } from 'next/server'
-import { getServerSession } from 'next-auth/next'
+// 会話一覧 API Route - 新アーキテクチャ対応版 (messagesテーブルから会話を導出)
 
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import { supabaseAdmin } from '@/lib/supabase'
-import { authOptions } from '@/lib/auth/index'
-import { createSuccessResponse, createErrorResponse } from '@/lib/api-response'
 import { TABLES } from '@/lib/constants'
+import { authOptions } from '@/lib/auth'
 
-// GET: 会話一覧を取得
+// GET: 会話一覧を取得（新アーキテクチャ: messagesテーブルから導出）
 export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.id) {
-      return createErrorResponse('認証が必要です', { status: 401 })
+      return NextResponse.json(
+        { success: false, error: '認証が必要です' },
+        { status: 401 }
+      )
     }
+
+    console.log('💬 会話一覧API - 新アーキテクチャ版')
 
     const userId = session.user.id
-    console.log('Fetching conversations for user:', userId)
 
-    // 現在のユーザーのタイプを判定
-    const { data: currentUserCfo } = await supabaseAdmin
-      .from(TABLES.CFOS)
-      .select('id')
-      .eq('user_id', userId)
-      .single()
+    // 新アーキテクチャ: messages テーブルから会話を導出
+    const { data: messages, error: dbError } = await supabaseAdmin
+      .from(TABLES.MESSAGES)
+      .select('msg_id, sender_id, receiver_id, msg_type, body, sent_at')
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+      .order('sent_at', { ascending: false })
 
-    const { data: currentUserCompany } = await supabaseAdmin
-      .from(TABLES.COMPANIES)
-      .select('id')
-      .eq('user_id', userId)
-      .single()
-
-    const currentUserType = currentUserCfo ? 'cfo' : (currentUserCompany ? 'company' : 'unknown')
-    console.log('Current user type:', currentUserType)
-
-    // ユーザーの会話一覧を取得（外部キー名を修正）
-    const { data: conversations, error } = await supabaseAdmin
-      .from(TABLES.CONVERSATIONS)
-      .select(`
-        id,
-        participant1_id,
-        participant2_id,
-        last_message_at,
-        created_at
-      `)
-      .or(`participant1_id.eq.${userId},participant2_id.eq.${userId}`)
-      .order('last_message_at', { ascending: false })
-
-    if (error) {
-      console.error('Conversations fetch error:', error)
-      return createErrorResponse('会話一覧の取得に失敗しました', { status: 500 })
+    if (dbError) {
+      console.error('🚨 会話一覧取得エラー:', dbError)
+      return NextResponse.json(
+        { success: false, error: '会話一覧の取得に失敗しました' },
+        { status: 500 }
+      )
     }
 
-    // 会話相手の情報を含めて整形
-    const formattedConversations = await Promise.all(
-      (conversations || []).map(async (conv: any) => {
-        const otherUserId = conv.participant1_id === userId ? conv.participant2_id : conv.participant1_id
-        
-        // 会話相手のユーザー情報を別途取得
-        const { data: otherUser } = await supabaseAdmin
-          .from(TABLES.USERS)
-          .select('id, email')
-          .eq('id', otherUserId)
-          .single()
+    console.log(`✅ メッセージ取得成功: ${messages?.length || 0}件`)
 
-        // プロフィール情報も取得（CFOまたは企業）
-        let profileName = otherUser?.email || '不明なユーザー'
-        let userType: 'cfo' | 'company' | 'unknown' = 'unknown'
-        let profileId: string | null = null
+    // 会話をユーザーペアごとにグループ化
+    const conversationMap = new Map<string, any>()
+    
+    messages?.forEach(message => {
+      // 相手のユーザーIDを特定
+      const otherUserId = message.sender_id === userId ? message.receiver_id : message.sender_id
+      
+      // 会話IDを生成（小さいIDを前に）
+      const conversationId = [userId, otherUserId].sort().join('_')
+      
+      // 既存の会話がない場合、または新しいメッセージの場合
+      if (!conversationMap.has(conversationId) || 
+          new Date(message.sent_at) > new Date(conversationMap.get(conversationId).last_message_at)) {
+        conversationMap.set(conversationId, {
+          id: conversationId,
+          participant1_id: userId,
+          participant2_id: otherUserId,
+          last_message_at: message.sent_at,
+          otherUserId: otherUserId,
+          lastMessage: message.body,
+          lastMessageType: message.msg_type
+        })
+      }
+    })
+
+    // 会話リストを配列に変換
+    const conversations = Array.from(conversationMap.values())
+
+    // 相手のプロフィール情報を取得
+    const enrichedConversations = await Promise.all(
+      conversations.map(async (conversation) => {
+        let otherUserInfo = { name: '不明', type: 'unknown', avatar: '❓' }
         
         // CFOプロフィールを確認
-        const { data: cfoProfile, error: cfoError } = await supabaseAdmin
-          .from(TABLES.CFOS)
-          .select('id, user_id')
-          .eq('user_id', otherUserId)
+        const { data: cfoProfile } = await supabaseAdmin
+          .from(TABLES.CFO_PROFILES)
+          .select('cfo_name, cfo_display_name, avatar_url')
+          .eq('cfo_user_id', conversation.otherUserId)
           .single()
 
-
-        if (cfoProfile && !cfoError) {
-          // ユーザープロフィールから表示名を取得
-          const { data: userProfile } = await supabaseAdmin
-            .from('rextrix_user_profiles')
-            .select('display_name, nickname')
-            .eq('user_id', otherUserId)
-            .single()
-
-          profileName = userProfile?.display_name || userProfile?.nickname || otherUser?.email || 'CFO'
-          userType = 'cfo'
-          profileId = cfoProfile.id
+        if (cfoProfile) {
+          otherUserInfo = {
+            name: cfoProfile.cfo_display_name || cfoProfile.cfo_name || 'CFO',
+            type: 'cfo',
+            avatar: cfoProfile.avatar_url || '👤'
+          }
         } else {
           // 企業プロフィールを確認
-          const { data: companyProfile, error: companyError } = await supabaseAdmin
-            .from(TABLES.COMPANIES)
-            .select('id, company_name')
-            .eq('user_id', otherUserId)
+          const { data: bizProfile } = await supabaseAdmin
+            .from(TABLES.BIZ_PROFILES)
+            .select('biz_company_name, avatar_url')
+            .eq('biz_user_id', conversation.otherUserId)
             .single()
 
-
-          if (companyProfile && !companyError) {
-            profileName = companyProfile.company_name || otherUser?.email || '企業'
-            userType = 'company'
-            profileId = companyProfile.id
+          if (bizProfile) {
+            otherUserInfo = {
+              name: bizProfile.biz_company_name || '企業',
+              type: 'company',
+              avatar: bizProfile.avatar_url || '🏢'
+            }
           }
         }
 
-        // 企業ユーザーの場合、CFOとの会話のみ許可
-        if (currentUserType === 'company' && userType !== 'cfo') {
-          return null // フィルタリングで除外
-        }
-        
-        // CFOユーザーの場合、企業との会話のみ許可
-        if (currentUserType === 'cfo' && userType !== 'company') {
-          return null // フィルタリングで除外
-        }
-        
-        // 最新メッセージを取得
-        const { data: lastMessage } = await supabaseAdmin
-          .from(TABLES.MESSAGES)
-          .select('content, sent_at')
-          .eq('conversation_id', conv.id)
-          .order('sent_at', { ascending: false })
-          .limit(1)
-          .single()
-        
-        // 未読メッセージ数を取得
-        const { count: unreadCount } = await supabaseAdmin
-          .from(TABLES.MESSAGES)
-          .select('id', { count: 'exact' })
-          .eq('conversation_id', conv.id)
-          .neq('sender_id', userId)
-          .eq('is_read', false)
-
         return {
-          id: conv.id,
-          otherUserId: otherUserId,
-          otherUserType: userType,
-          otherProfileId: profileId,
-          name: profileName,
-          lastMessage: lastMessage?.content || 'メッセージがありません',
-          timestamp: lastMessage?.sent_at || conv.created_at,
-          unreadCount: unreadCount || 0,
-          status: '進行中',
-          avatar: ''
+          ...conversation,
+          otherUserName: otherUserInfo.name,
+          otherUserType: otherUserInfo.type,
+          otherUserAvatar: otherUserInfo.avatar,
+          created_at: conversation.last_message_at // 互換性のため
         }
       })
     )
 
-    // nullの要素を除外
-    const filteredConversations = formattedConversations.filter(conv => conv !== null)
-    
-    return createSuccessResponse(filteredConversations, {
-      message: `${filteredConversations.length}件の会話を取得しました`
-    })
+    // 最新メッセージの時刻順にソート
+    enrichedConversations.sort((a, b) => 
+      new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
+    )
+
+    const response = {
+      success: true,
+      data: enrichedConversations,
+      meta: {
+        architecture: 'new',
+        derivedFrom: TABLES.MESSAGES,
+        conversationCount: enrichedConversations.length
+      }
+    }
+
+    console.log(`📊 会話一覧: ${enrichedConversations.length}件`)
+
+    return NextResponse.json(response)
+
   } catch (error) {
-    console.error('Conversations GET error:', error)
-    return createErrorResponse('会話一覧の取得に失敗しました', { status: 500 })
+    console.error('🚨 会話一覧API エラー:', error)
+    return NextResponse.json(
+      { success: false, error: '会話一覧の取得に失敗しました' },
+      { status: 500 }
+    )
   }
 }
 
-// POST: 新しい会話を作成
+// POST: 新しい会話を開始（新アーキテクチャ: 最初のメッセージを送信）
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.id) {
-      return createErrorResponse('認証が必要です', { status: 401 })
+      return NextResponse.json(
+        { success: false, error: '認証が必要です' },
+        { status: 401 }
+      )
     }
 
     const userId = session.user.id
-    let body
+    const body = await request.json()
+    const { receiverId, message } = body
 
-    try {
-      body = await request.json()
-    } catch (error) {
-      // JSON パースエラーの場合
-      if (error instanceof SyntaxError) {
-        return createErrorResponse('Invalid JSON format', { status: 400 })
-      }
-      throw error
+    // バリデーション
+    if (!receiverId || !message) {
+      return NextResponse.json(
+        { success: false, error: '受信者IDとメッセージは必須です' },
+        { status: 400 }
+      )
     }
 
-    const { otherUserId, message, additionalMessage } = body
-
-    if (!otherUserId) {
-      return createErrorResponse('相手のユーザーIDが必要です', { status: 400 })
+    // 自分自身に送信しようとしていないかチェック
+    if (receiverId === userId) {
+      return NextResponse.json(
+        { success: false, error: '自分自身にメッセージを送信することはできません' },
+        { status: 400 }
+      )
     }
 
-    console.log('Creating conversation between:', userId, 'and', otherUserId)
+    console.log('💬 新規会話作成:', { from: userId, to: receiverId })
 
-    // 相手ユーザーが存在するかチェック
-    // まず直接ユーザーテーブルで確認
-    let { data: otherUserExists } = await supabaseAdmin
-      .from(TABLES.USERS)
-      .select('id')
-      .eq('id', otherUserId)
+    // 新アーキテクチャ: messages テーブルに最初のメッセージを追加
+    const { data: newMessage, error: insertError } = await supabaseAdmin
+      .from(TABLES.MESSAGES)
+      .insert({
+        sender_id: userId,
+        receiver_id: receiverId,
+        msg_type: 'chat',
+        body: message
+      })
+      .select('msg_id, sender_id, receiver_id, msg_type, body, sent_at')
       .single()
 
-    let actualUserId = otherUserId
-
-    // 直接見つからない場合、CFOプロフィールテーブルを確認
-    if (!otherUserExists) {
-      const { data: cfoProfile } = await supabaseAdmin
-        .from(TABLES.CFOS)
-        .select('user_id')
-        .eq('id', otherUserId)
-        .single()
-
-      if (cfoProfile?.user_id) {
-        actualUserId = cfoProfile.user_id
-        // 実際のユーザーIDで再確認
-        const { data: actualUser } = await supabaseAdmin
-          .from(TABLES.USERS)
-          .select('id')
-          .eq('id', actualUserId)
-          .single()
-        otherUserExists = actualUser
-      }
+    if (insertError) {
+      console.error('🚨 メッセージ送信エラー:', insertError)
+      return NextResponse.json(
+        { success: false, error: 'メッセージの送信に失敗しました' },
+        { status: 500 }
+      )
     }
 
-    // 企業プロフィールテーブルも確認
-    if (!otherUserExists) {
-      const { data: companyProfile } = await supabaseAdmin
-        .from(TABLES.COMPANIES)
-        .select('user_id')
-        .eq('id', otherUserId)
-        .single()
+    console.log('✅ 新規会話作成成功')
 
-      if (companyProfile?.user_id) {
-        actualUserId = companyProfile.user_id
-        // 実際のユーザーIDで再確認
-        const { data: actualUser } = await supabaseAdmin
-          .from(TABLES.USERS)
-          .select('id')
-          .eq('id', actualUserId)
-          .single()
-        otherUserExists = actualUser
+    // 会話IDを生成
+    const conversationId = [userId, receiverId].sort().join('_')
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        conversationId: conversationId,
+        message: newMessage,
+        created_at: newMessage.sent_at
+      },
+      meta: {
+        architecture: 'new',
+        table: TABLES.MESSAGES
       }
-    }
-
-      if (!otherUserExists) {
-        return createErrorResponse('指定されたユーザーが存在しません', { status: 404 })
-      }
-
-    // 既存の会話があるかチェック（実際のユーザーIDを使用）
-    const { data: existingConv } = await supabaseAdmin
-      .from(TABLES.CONVERSATIONS)
-      .select('id')
-      .or(`and(participant1_id.eq.${userId},participant2_id.eq.${actualUserId}),and(participant1_id.eq.${actualUserId},participant2_id.eq.${userId})`)
-      .single()
-
-    let conversationId = existingConv?.id
-
-    if (!existingConv) {
-      // 新しい会話を作成（実際のユーザーIDを使用）
-      const { data: newConv, error: convError } = await supabaseAdmin
-        .from(TABLES.CONVERSATIONS)
-        .insert({
-          participant1_id: userId,
-          participant2_id: actualUserId,
-          last_message_at: new Date().toISOString()
-        })
-        .select()
-        .single()
-
-        if (convError) {
-          console.error('Conversation creation error:', convError)
-          return createErrorResponse('会話の作成に失敗しました', { status: 500 })
-        }
-
-      conversationId = newConv.id
-    }
-
-    // 初期メッセージがある場合は送信
-    if (message && message.trim()) {
-      const { error: messageError } = await supabaseAdmin
-        .from(TABLES.MESSAGES)
-        .insert({
-          conversation_id: conversationId,
-          sender_id: userId,
-          content: message.trim(),
-          sent_at: new Date().toISOString()
-        })
-
-      if (messageError) {
-        console.error('Initial message creation error:', messageError)
-      }
-
-      // 追加メッセージがある場合は送信
-      if (additionalMessage && additionalMessage.trim()) {
-        const { error: additionalMessageError } = await supabaseAdmin
-          .from(TABLES.MESSAGES)
-          .insert({
-            conversation_id: conversationId,
-            sender_id: userId,
-            content: additionalMessage.trim(),
-            sent_at: new Date(Date.now() + 1000).toISOString() // 1秒後のタイムスタンプ
-          })
-
-        if (additionalMessageError) {
-          console.error('Additional message creation error:', additionalMessageError)
-        }
-      }
-
-      // 会話の最終メッセージ時刻を更新
-      await supabaseAdmin
-        .from(TABLES.CONVERSATIONS)
-        .update({ last_message_at: new Date().toISOString() })
-        .eq('id', conversationId)
-    }
-
-    return createSuccessResponse(
-      { conversationId },
-      { message: '会話を作成しました' }
-    )
+    })
 
   } catch (error) {
-    console.error('Conversation POST error:', error)
-    
-    return createErrorResponse('会話の作成に失敗しました', { 
-      status: 500,
-      details: error instanceof Error ? error.message : String(error) 
-    })
+    console.error('🚨 新規会話作成API エラー:', error)
+    return NextResponse.json(
+      { success: false, error: '新規会話の作成に失敗しました' },
+      { status: 500 }
+    )
   }
 }

@@ -79,14 +79,14 @@ export default function UserDropdown({
               <span className="mr-3">⚙️</span>
               設定
             </Link>
-            <Link 
+            {/* <Link 
               href="/activity" 
               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               onClick={onCloseUserMenu}
             >
               <span className="mr-3">📊</span>
               アクティビティ
-            </Link>
+            </Link> */}
           </div>
           <div className="py-2 border-t border-gray-200">
             <button 

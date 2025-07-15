@@ -4,12 +4,15 @@ import { memo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Message {
-  id: number
-  senderId: string
-  content: string
-  timestamp: string
-  isFile: boolean
-  fileName?: string
+  msg_id?: number
+  id?: number | string
+  sender_id: string
+  receiver_id: string
+  msg_type?: 'chat' | 'scout'
+  body: string
+  content?: string
+  sent_at: string
+  sentAt?: string
 }
 
 interface MessageAreaProps {
@@ -34,6 +37,8 @@ const MessageArea = memo(({ messages, messageInput, onMessageInputChange, onSend
 
   // デバッグ用：選択された会話の情報をログ出力
   console.log('MessageArea selectedChat:', selectedChat)
+  console.log('MessageArea messages:', messages)
+  console.log('MessageArea messages sample:', messages?.[0])
 
   const showToastMessage = (message: string) => {
     console.log('トースト表示:', message)
@@ -200,34 +205,31 @@ const MessageArea = memo(({ messages, messageInput, onMessageInputChange, onSend
 
       {/* メッセージ履歴 */}
       <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4">
-        {messages.map((message) => (
+        {Array.isArray(messages) ? messages.map((message, index) => (
           <div
-            key={message.id}
-            className={`flex ${message.senderId === 'me' ? 'justify-end' : 'justify-start'}`}
+            key={message.msg_id || message.id || `message-${index}-${message.sent_at}`}
+            className={`flex ${message.sender_id === 'me' ? 'justify-end' : 'justify-start'}`}
           >
             <div
               className={`max-w-xs md:max-w-sm lg:max-w-md px-3 md:px-4 py-2 rounded-lg ${
-                message.senderId === 'me'
+                message.sender_id === 'me'
                   ? 'bg-gray-900 text-white'
                   : 'bg-gray-200 text-gray-900'
               }`}
             >
-              {message.isFile ? (
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm">📎</span>
-                  <span className="text-xs md:text-sm">{message.fileName}</span>
-                </div>
-              ) : (
-                <p className="text-xs md:text-sm">{message.content}</p>
-              )}
+              <p className="text-xs md:text-sm">{message.body || message.content || ''}</p>
               <p className={`text-xs mt-1 ${
-                message.senderId === 'me' ? 'text-gray-300' : 'text-gray-500'
+                message.sender_id === 'me' ? 'text-gray-300' : 'text-gray-500'
               }`}>
-                {message.timestamp}
+                {new Date(message.sent_at || message.sentAt || '').toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
           </div>
-        ))}
+        )) : (
+          <div className="text-center text-gray-500 py-8">
+            <p>メッセージを読み込み中...</p>
+          </div>
+        )}
       </div>
 
       {/* メッセージ入力フォーム */}
