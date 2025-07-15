@@ -170,11 +170,11 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
         // 成功メッセージを表示
         showToastMessage('スカウトを承諾しました！ メッセージページでやりとりを続けてください。', 'success')
         
-        // メッセージページに移動
+        // メッセージページに移動（スカウトIDを含める）
         setTimeout(() => {
           const senderId = scoutData?.sender_id
           if (senderId) {
-            router.push(`/messages?user=${senderId}`)
+            router.push(`/messages?user=${senderId}&scoutId=${resolvedParams.id}`)
           } else {
             router.push('/messages')
           }
@@ -291,7 +291,7 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
     const targetUserId = isCurrentUserSender ? receiverId : senderId
     
     if (targetUserId && targetUserId !== currentUserId) {
-      router.push(`/messages?user=${targetUserId}`)
+      router.push(`/messages?user=${targetUserId}&scoutId=${resolvedParams.id}`)
     } else {
       console.warn('Invalid message target or trying to message self')
     }

@@ -68,8 +68,16 @@ const ChatList = memo(({ chatList, selectedChat, onSelectChat, loading = false }
             className={getItemClassName(chat)}
           >
             <div className="flex items-start space-x-2 md:space-x-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-sm md:text-lg">{chat.avatar}</span>
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {chat.avatar && chat.avatar.startsWith('http') ? (
+                  <img 
+                    src={chat.avatar} 
+                    alt={`${chat.name}のプロフィール画像`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm md:text-lg">{chat.avatar || '👤'}</span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start mb-1">

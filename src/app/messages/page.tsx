@@ -100,6 +100,13 @@ function MessagesContent() {
 
   // 特定の会話のメッセージを取得
   const fetchMessages = useCallback(async (conversationId: string) => {
+    // 一時的な会話IDの場合はメッセージを空にする
+    if (conversationId.startsWith('temp_')) {
+      console.log('一時的な会話IDのため、メッセージを空に設定:', conversationId)
+      setMessages([])
+      return
+    }
+    
     try {
       console.log('メッセージを取得中:', conversationId)
       const response = await fetch(`/api/messages?conversationId=${conversationId}`)
@@ -129,10 +136,73 @@ function MessagesContent() {
 
   // メッセージ送信
   const sendMessage = async () => {
-    if (!messageInput.trim()) return
+    // スカウトメッセージがある場合は、メッセージ入力なしでも送信可能
+    const hasScoutMessage = scoutId && !scoutProcessed
+    if (!messageInput.trim() && !hasScoutMessage) return
 
+    // 一時的な会話ID（temp_で始まる）の場合は新しい会話を作成
+    if (selectedChatId && selectedChatId.startsWith('temp_')) {
+      const targetUserId = selectedChatId.replace('temp_', '')
+      try {
+        // スカウトIDがある場合は、スカウトメッセージを最初のメッセージとして送信
+        let initialMessage = messageInput.trim()
+        
+        if (scoutId && !scoutProcessed) {
+          try {
+            console.log('スカウトメッセージを取得中:', scoutId)
+            const scoutResponse = await fetch(`/api/scouts/${scoutId}`)
+            
+            if (scoutResponse.ok) {
+              const scoutData = await scoutResponse.json()
+              if (scoutData.success) {
+                const scout = scoutData.data
+                const scoutMessageText = `【スカウト】${scout.title || 'スカウト'}\n\n${scout.message || ''}`
+                initialMessage = scoutMessageText
+                console.log('スカウトメッセージを最初のメッセージとして設定:', scoutMessageText)
+              }
+            }
+          } catch (scoutError) {
+            console.error('スカウトメッセージ取得エラー:', scoutError)
+          }
+        }
+        
+        console.log('新規会話でメッセージ送信中:', initialMessage)
+        const response = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            receiverId: targetUserId,
+            message: initialMessage
+          })
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          console.log('新規会話作成とメッセージ送信成功:', data)
+          if (data.success) {
+            setMessageInput('')
+            if (scoutId && !scoutProcessed) {
+              setScoutProcessed(true)
+            }
+            // 会話一覧を再取得して新しい会話を選択
+            await fetchConversations(false)
+            // 新しく作成された会話を自動選択
+            const newConversationId = data.data.conversationId
+            if (newConversationId) {
+              setSelectedChatId(newConversationId)
+            }
+          }
+        } else {
+          console.error('新規会話作成に失敗しました')
+        }
+      } catch (error) {
+        console.error('新規会話作成エラー:', error)
+      }
+    }
     // 既存の会話がある場合は通常のメッセージ送信
-    if (selectedChatId) {
+    else if (selectedChatId) {
       try {
         console.log('メッセージ送信中:', messageInput)
         const response = await fetch('/api/messages', {
@@ -164,15 +234,14 @@ function MessagesContent() {
         console.error('メッセージの送信エラー:', error)
       }
     } 
-    // 新規会話の場合は会話を作成してからメッセージ送信
+    // targetUserIdがある場合は一時的な会話を作成
     else if (targetUserId) {
-      await createConversation(targetUserId, messageInput.trim())
-      setMessageInput('')
+      await createConversation(targetUserId)
     }
   }
 
-  // 新しい会話を作成
-  const createConversation = useCallback(async (userId?: string, initialMessage?: string) => {
+  // 新しい会話を作成（メッセージなし）
+  const createConversation = useCallback(async (userId?: string) => {
     const userIdToUse = userId || targetUserId
     if (!userIdToUse || creatingConversation) return
 
@@ -184,57 +253,33 @@ function MessagesContent() {
       return
     }
 
+    // 会話作成フラグを設定して、チャット画面を表示
     setCreatingConversation(true)
     try {
-      console.log('新しい会話を作成中:', userIdToUse)
-      const response = await fetch('/api/conversations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          receiverId: userIdToUse,
-          message: initialMessage || 'こんにちは'
-        })
-      })
+      console.log('新しい会話を準備中:', userIdToUse)
       
-      if (response.ok) {
-        const data = await response.json()
-        console.log('会話作成成功:', data)
-        if (data.success) {
-          // 会話一覧を再取得して新しい会話を選択
-          await fetchConversations(false)
-          // 新しく作成された会話を自動選択
-          const newConversationId = data.data.conversationId
-          if (newConversationId) {
-            setSelectedChatId(newConversationId)
-            setShowChatList(false) // モバイルでチャット画面を表示
-          }
-        }
-      } else if (response.status === 404) {
-        // 指定されたユーザーが存在しない場合はエラーを表示せず、静かに処理
-        console.log('指定されたユーザーが存在しません:', userIdToUse)
-        if (userId) {
-          alert('指定されたユーザーが存在しません')
-        }
-      } else {
-        const errorData = await response.json()
-        console.error('会話の作成に失敗しました:', errorData.error)
-        // 実際のエラーの場合のみアラート表示
-        if (response.status !== 404) {
-          alert(`会話の作成に失敗しました: ${errorData.error}`)
-        }
-      }
+      // 一時的な会話IDを生成（実際のメッセージが送信されるまで使用）
+      const tempConversationId = `temp_${userIdToUse}`
+      setSelectedChatId(tempConversationId)
+      setShowChatList(false) // モバイルでチャット画面を表示
+      
+      console.log('新しい会話準備完了 - ユーザーからのメッセージを待機中')
     } catch (error) {
-      console.error('会話の作成エラー:', error)
+      console.error('会話の準備エラー:', error)
     } finally {
       setCreatingConversation(false)
     }
-  }, [targetUserId, creatingConversation, chatList, fetchConversations])
+  }, [targetUserId, creatingConversation, chatList])
 
   // スカウト内容を会話に追加する関数
   const addScoutMessageToConversation = useCallback(async (conversationId: string) => {
     if (!scoutId || scoutProcessed) return
+
+    // 一時的な会話IDの場合は処理しない（実際のメッセージ送信時に一緒に処理される）
+    if (conversationId.startsWith('temp_')) {
+      console.log('一時的な会話IDのため、スカウトメッセージの追加をスキップ:', conversationId)
+      return
+    }
 
     try {
       // スカウト詳細を取得
@@ -268,7 +313,7 @@ function MessagesContent() {
     } catch (error) {
       console.error('スカウトメッセージ追加エラー:', error)
     }
-  }, [scoutId, scoutProcessed, fetchMessages, targetUserId])
+  }, [scoutId, scoutProcessed, fetchMessages])
 
   // ターゲットユーザーの詳細情報を取得
   const fetchTargetUserInfo = async (userId: string) => {
@@ -359,7 +404,7 @@ function MessagesContent() {
         setConversationInitialized(true)
       } else if (chatList.length > 0 && !chatList.some(chat => chat.otherUserId === targetUserId)) {
         // 会話リストが読み込まれていて、対象ユーザーとの会話がない場合のみ新規作成
-        createConversation(targetUserId, '')
+        createConversation(targetUserId)
         setConversationInitialized(true)
       }
     }
@@ -437,6 +482,7 @@ function MessagesContent() {
                   messageInput={messageInput} 
                   onMessageInputChange={setMessageInput}
                   onSendMessage={sendMessage}
+                  currentUserId={user?.id}
                   selectedChat={selectedChat}
                 />
               </div>
@@ -465,6 +511,7 @@ function MessagesContent() {
                 messageInput={messageInput} 
                 onMessageInputChange={setMessageInput}
                 onSendMessage={sendMessage}
+                currentUserId={user?.id}
                 selectedChat={selectedChat}
               />
             ) : (
