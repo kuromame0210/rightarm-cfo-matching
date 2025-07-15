@@ -1,404 +1,267 @@
-// プロフィール管理 API Route - 統一認証システム
+// プロフィール管理 API Route - 新アーキテクチャ対応版
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { TABLES } from '@/lib/constants'
-import { requireAuth } from '@/lib/auth/unified-auth'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 // GET: ユーザープロフィールを取得
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 === API GET /profile: リクエスト開始 ===')
     console.log('🕐 タイムスタンプ:', new Date().toISOString())
-    console.log('🍪 クッキー情報:', request.headers.get('cookie'))
     
-    const { user, error: authError } = await requireAuth()
-    if (authError || !user) {
+    // NextAuth.js セッションで認証確認
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
       console.log('❌ API GET /profile: 認証失敗')
-      return authError || NextResponse.json(
+      return NextResponse.json(
         { success: false, error: '認証が必要です' },
         { status: 401 }
       )
     }
     
-    console.log('✅ API GET /profile: 認証成功', { userId: user.id, email: user.email })
+    console.log('✅ API GET /profile: 認証成功', { 
+      userId: session.user.id, 
+      email: session.user.email,
+      userType: session.user.userType 
+    })
 
-    console.log('Fetching profile for user:', user.id)
+    const userId = session.user.id
 
-    // ユーザーの基本情報を取得
-    const { data: userProfile, error: userError } = await supabaseAdmin
-      .from(TABLES.USERS)
-      .select('*')
-      .eq('id', user.id)
-      .single()
+    // ユーザータイプに応じてプロフィールを取得
+    let profile = null
+    let profileError = null
 
-    if (userError) {
-      console.error('User profile fetch error:', userError)
+    if (session.user.userType === 'cfo') {
+      // CFOプロフィールを取得
+      const { data, error } = await supabaseAdmin
+        .from(TABLES.CFO_PROFILES)
+        .select('*')
+        .eq('cfo_user_id', userId)
+        .single()
+      
+      if (data) {
+        profile = {
+          id: userId,
+          email: session.user.email,
+          userType: 'cfo',
+          name: data.cfo_display_name || data.cfo_name || session.user.email?.split('@')[0] || 'CFOユーザー',
+          location: data.cfo_location || '',
+          availability: data.cfo_availability || '',
+          feeMin: data.cfo_fee_min ? Math.floor(data.cfo_fee_min / 10000) : null, // 円を万円に変換
+          feeMax: data.cfo_fee_max ? Math.floor(data.cfo_fee_max / 10000) : null,
+          skills: data.cfo_skills || [],
+          rawProfile: data.cfo_raw_profile || '',
+          // 新しいカラムから直接データを取得
+          compensation: data.cfo_compensation || '',
+          possibleTasks: data.cfo_possible_tasks || '',
+          certifications: data.cfo_certifications || '',
+          workingAreas: data.cfo_working_areas || '',
+          introduction: data.cfo_introduction || '',
+          avatarUrl: data.avatar_url || '',
+          createdAt: data.created_at,
+          updatedAt: data.updated_at
+        }
+      }
+      profileError = error
+    } else if (session.user.userType === 'company') {
+      // 企業プロフィールを取得
+      const { data, error } = await supabaseAdmin
+        .from(TABLES.BIZ_PROFILES)
+        .select('*')
+        .eq('biz_user_id', userId)
+        .single()
+      
+      if (data) {
+        profile = {
+          id: userId,
+          email: session.user.email,
+          userType: 'company',
+          name: data.biz_company_name || session.user.email?.split('@')[0] || '企業ユーザー',
+          companyName: data.biz_company_name || '',
+          location: data.biz_location || '',
+          revenueMin: data.biz_revenue_min,
+          revenueMax: data.biz_revenue_max,
+          issues: data.biz_issues || [],
+          // 企業の4項目に対応（カラムが存在しない場合は既存データから生成）
+          description: data.biz_description || data.biz_raw_profile?.substring(0, 500) || '',
+          revenueRange: data.biz_revenue_range || (data.biz_revenue_min && data.biz_revenue_max ? 
+            `${data.biz_revenue_min}円 〜 ${data.biz_revenue_max}円` : ''),
+          challengeBackground: data.biz_challenge_background || (data.biz_issues && Array.isArray(data.biz_issues) && data.biz_issues.length > 0 ? 
+            `主要課題: ${data.biz_issues.join(', ')}` : ''),
+          rawProfile: data.biz_raw_profile || '',
+          avatarUrl: data.avatar_url || '',
+          createdAt: data.created_at,
+          updatedAt: data.updated_at
+        }
+      }
+      profileError = error
+    }
+
+    if (profileError) {
+      console.error('Profile fetch error:', profileError)
       return NextResponse.json(
-        { success: false, error: 'ユーザー情報の取得に失敗しました' },
+        { success: false, error: 'プロフィール情報の取得に失敗しました' },
         { status: 500 }
       )
     }
 
-    // ユーザープロフィール情報を取得（ユニーク制約により単一レコード保証）
-    const { data: profileData, error: profileDataError } = await supabaseAdmin
-      .from(TABLES.USER_PROFILES)
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
-
-    // ユーザータイプに応じて詳細プロフィールを取得
-    let detailedProfile = null
-    let profileError = null
-
-    if (userProfile.user_type === 'cfo') {
-      const { data, error } = await supabaseAdmin
-        .from(TABLES.CFOS)
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-      detailedProfile = data
-      profileError = error
-    } else if (userProfile.user_type === 'company') {
-      const { data, error } = await supabaseAdmin
-        .from(TABLES.COMPANIES)
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-      detailedProfile = data
-      profileError = error
+    if (!profile) {
+      console.log('Profile not found, returning default profile')
+      // プロフィールが存在しない場合のデフォルト値
+      profile = {
+        id: userId,
+        email: session.user.email,
+        userType: session.user.userType,
+        name: session.user.email?.split('@')[0] || 'ユーザー',
+        hasProfile: false
+      }
+    } else {
+      (profile as any).hasProfile = true
     }
 
-    
-    // プロフィールデータを統合
-    const profile = {
-      id: userProfile.id,
-      email: userProfile.email,
-      userType: userProfile.user_type,
-      name: profileData?.display_name || '',
-      phoneNumber: profileData?.phone_number || '',
-      address: profileData?.region || '',
-      introduction: profileData?.introduction || '',
-      profileImageUrl: userProfile.profile_image_url,
-      status: userProfile.status,
-      createdAt: userProfile.created_at,
-      // CFO固有フィールドのマッピング
-      ...(userProfile.user_type === 'cfo' && detailedProfile ? {
-        title: detailedProfile.title || '',
-        bio: detailedProfile.experience_summary || '',
-        experience: detailedProfile.experience_years || null,
-        specialties: detailedProfile.specialties || [],
-        certifications: detailedProfile.certifications || [],
-        hourlyRate: detailedProfile.hourly_rate || null,
-        availabilityStatus: detailedProfile.is_available ? 'available' : 'unavailable'
-      } : {}),
-      // Company固有フィールドのマッピング
-      ...(userProfile.user_type === 'company' && detailedProfile ? {
-        companyName: detailedProfile.company_name || '',
-        industry: detailedProfile.industry || '',
-        employeeCount: detailedProfile.employee_count || null,
-        foundedYear: detailedProfile.founded_year || null,
-        website: detailedProfile.website || '',
-        description: detailedProfile.description || ''
-      } : {})
-    }
+    console.log('✅ API GET /profile: プロフィール取得成功', {
+      userId: profile.id,
+      userType: profile.userType,
+      hasProfile: profile.hasProfile
+    })
 
     return NextResponse.json({
       success: true,
-      data: profile
+      profile
     })
 
   } catch (error) {
-    console.error('Profile GET error:', error)
+    console.error('❌ API GET /profile: 予期しないエラー', error)
     return NextResponse.json(
-      { success: false, error: 'プロフィールの取得に失敗しました' },
+      { success: false, error: 'サーバーエラーが発生しました' },
       { status: 500 }
     )
   }
 }
 
-// PUT: ユーザープロフィールを更新
+// PUT: プロフィールを更新
 export async function PUT(request: NextRequest) {
   try {
-    console.log('🔍 === API PUT /profile: リクエスト開始 ===')
-    console.log('🕐 タイムスタンプ:', new Date().toISOString())
-    console.log('🌐 リクエストURL:', request.url)
-    console.log('📋 リクエストヘッダー:', Object.fromEntries(request.headers.entries()))
-    console.log('🍪 クッキー情報:', request.headers.get('cookie'))
+    console.log('🔄 === API PUT /profile: 更新リクエスト開始 ===')
     
-    const { user, error: authError } = await requireAuth()
-    if (authError || !user) {
+    // NextAuth.js セッションで認証確認
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
       console.log('❌ API PUT /profile: 認証失敗')
-      console.log('🚨 認証エラー詳細:', authError)
-      return authError || NextResponse.json(
+      return NextResponse.json(
         { success: false, error: '認証が必要です' },
         { status: 401 }
       )
     }
+
+    const userId = session.user.id
+    const body = await request.json()
     
-    console.log('✅ API PUT /profile: 認証成功', { userId: user.id, email: user.email })
+    console.log('📝 プロフィール更新データ:', body)
+    console.log('🔍 avatar_url value:', body.avatarUrl)
 
-    let body
-    try {
-      body = await request.json()
-    } catch (error) {
-      return NextResponse.json(
-        { success: false, error: 'リクエストボディの形式が正しくありません' },
-        { status: 400 }
-      )
-    }
-    const { 
-      name,
-      displayName, // page.tsxからの互換性
-      phoneNumber,
-      phone, // page.tsxからの互換性
-      address,
-      region, // 互換性
-      location, // page.tsxからの互換性
-      profileImageUrl,
-      // CFO固有フィールド
-      title,
-      bio,
-      introduction, // 互換性
-      experience,
-      specialties,
-      certifications,
-      education,
-      languages,
-      hourlyRate,
-      availabilityStatus,
-      preferredWorkStyle,
-      workPreference, // page.tsxからの互換性
-      // Company固有フィールド
-      companyName,
-      company, // 互換性
-      industry,
-      employeeCount,
-      foundedYear,
-      website,
-      description,
-      businessModel,
-      fundingStage,
-      challenges,
-      // その他の互換性フィールド
-      skills,
-      workStyle,
-      compensation,
-      compensationRange,
-      availability,
-      position
-    } = body
+    let updateResult = null
+    let updateError = null
 
-    console.log('🔄 === プロフィール更新開始 ===')
-    console.log('👤 更新対象ユーザー:', user.id, user.email, user.userType)
-    console.log('📝 受信データ:', JSON.stringify(body, null, 2))
-    
-    // フィールドマッピングの詳細ログ
-    console.log('🗺️ フィールドマッピング詳細:')
-    console.log('  - name:', name, '→ display_name')
-    console.log('  - phoneNumber:', phoneNumber, '→ phone_number') 
-    console.log('  - address:', address, '→ region')
-    console.log('  - bio:', bio, '→ introduction')
-    console.log('  - profileImageUrl:', profileImageUrl, '→ profile_image_url')
-
-    // フィールドマッピング統一処理
-    console.log('🔀 フィールドマッピング統一処理開始')
-    const finalName = name || displayName || 'ユーザー'
-    const finalPhone = phoneNumber || phone || null
-    const finalRegion = address || region || location || null
-    const finalBio = bio || introduction || null
-    const finalCompany = companyName || company || null
-    const finalWorkPreference = workPreference || workStyle || null
-    const finalCompensation = compensationRange || compensation || null
-    
-    // experience の年数処理（選択肢からの数値変換）
-    const experienceYears = experience ? parseInt(experience.toString()) : null
-
-    console.log('🗺️ 統一されたフィールド:')
-    console.log('  - 名前:', finalName)
-    console.log('  - 電話:', finalPhone)
-    console.log('  - 地域:', finalRegion)
-    console.log('  - 自己紹介:', finalBio)
-    console.log('  - 会社:', finalCompany)
-    console.log('  - 働き方:', finalWorkPreference)
-    console.log('  - 報酬:', finalCompensation)
-    console.log('  - 経験年数:', `"${experience}" → ${experienceYears}年`)
-
-    // ユーザープロフィール情報を更新（display_nameが必須なので、nameが空の場合はデフォルト値を設定）
-    console.log('💾 Step 1: rextrix_user_profiles テーブル更新開始')
-    const userProfileData = {
-      user_id: user.id,
-      display_name: finalName,
-      phone_number: finalPhone,
-      region: finalRegion,
-      introduction: finalBio,
-      work_preference: finalWorkPreference,
-      compensation_range: finalCompensation,
-      company: finalCompany,
-      position: position || null,
-      experience: experienceYears,
-      availability: availability || null,
-      updated_at: new Date().toISOString()
-    }
-    console.log('📊 保存データ:', userProfileData)
-    
-    // upsert（user_idユニーク制約対応）
-    const { error: profileUpdateError } = await supabaseAdmin
-      .from(TABLES.USER_PROFILES)
-      .upsert(userProfileData, {
-        onConflict: 'user_id'
-      })
-
-    if (profileUpdateError) {
-      console.error('❌ Step 1 失敗: rextrix_user_profiles 更新エラー:', profileUpdateError)
-      return NextResponse.json(
-        { success: false, error: 'プロフィール情報の更新に失敗しました', details: profileUpdateError },
-        { status: 500 }
-      )
-    } else {
-      console.log('✅ Step 1 成功: rextrix_user_profiles 更新完了')
-    }
-
-    // ユーザーの基本情報を更新（プロフィール画像のみ）
-    console.log('💾 Step 2: rextrix_users テーブル更新開始')
-    const userUpdateData = {
-      profile_image_url: profileImageUrl,
-      updated_at: new Date().toISOString()
-    }
-    console.log('📊 保存データ:', userUpdateData)
-    
-    const { error: userUpdateError } = await supabaseAdmin
-      .from(TABLES.USERS)
-      .update(userUpdateData)
-      .eq('id', user.id)
-
-    if (userUpdateError) {
-      console.error('❌ Step 2 失敗: rextrix_users 更新エラー:', userUpdateError)
-      return NextResponse.json(
-        { success: false, error: 'ユーザー情報の更新に失敗しました', details: userUpdateError },
-        { status: 500 }
-      )
-    } else {
-      console.log('✅ Step 2 成功: rextrix_users 更新完了')
-    }
-
-    // ユーザータイプを取得
-    console.log('🔍 ユーザータイプ確認中...')
-    const { data: userData } = await supabaseAdmin
-      .from(TABLES.USERS)
-      .select('user_type')
-      .eq('id', user.id)
-      .single()
-    
-    console.log('👥 ユーザータイプ:', userData?.user_type)
-
-    // タイプ別の詳細プロフィールを更新
-    if (userData?.user_type === 'cfo') {
-      console.log('💾 Step 3: rextrix_cfos テーブル更新開始')
-      // CFO specialties統一処理
-      const finalSpecialties = specialties || skills || []
-      console.log('🎯 CFO専用フィールド統一:')
-      console.log('  - specialties/skills:', finalSpecialties)
-      console.log('  - title:', title)
-      console.log('  - bio → experience_summary:', finalBio)
-
-      const cfoUpdateData = {
-        user_id: user.id,
-        title: title || null,
-        experience_years: experience || null,
-        experience_summary: finalBio,
-        specialties: finalSpecialties,
-        certifications: certifications || [],
-        hourly_rate: hourlyRate || null,
-        is_available: availabilityStatus === 'available' || availabilityStatus !== 'unavailable',
+    if (session.user.userType === 'cfo') {
+      // CFOプロフィールの更新（新しいカラム構造対応）
+      const updateData = {
+        cfo_name: body.name,
+        cfo_display_name: body.name,
+        cfo_location: body.location,
+        cfo_availability: body.weeklyAvailability || body.availability,
+        cfo_fee_min: body.monthlyFeeMin ? parseInt(body.monthlyFeeMin) * 10000 : null, // 万円を円に変換
+        cfo_fee_max: body.monthlyFeeMax === '成果報酬応相談' ? null : (body.monthlyFeeMax && !isNaN(parseInt(body.monthlyFeeMax)) ? parseInt(body.monthlyFeeMax) * 10000 : null),
+        cfo_skills: body.skills || [],
+        cfo_raw_profile: body.career || body.rawProfile || '',
+        // 新しいカラムに直接保存
+        cfo_compensation: body.compensation || '',
+        cfo_possible_tasks: body.possibleTasks || '',
+        cfo_certifications: body.certifications || '',
+        cfo_working_areas: body.workingAreas || '',
+        cfo_introduction: body.introduction || '',
+        avatar_url: body.avatarUrl,
         updated_at: new Date().toISOString()
       }
-      console.log('📊 CFO保存データ:', cfoUpdateData)
-      console.log('🗺️ CFOフィールドマッピング:')
-      console.log('  - title:', title, '→ title')
-      console.log('  - bio:', bio, '→ experience_summary (重要!)')
-      console.log('  - experience:', experience, '→ experience_years')
-      console.log('  - hourlyRate:', hourlyRate, '→ hourly_rate')
-      console.log('  - availabilityStatus:', availabilityStatus, '→ is_available')
-      
-      const { error: cfoUpdateError } = await supabaseAdmin
-        .from(TABLES.CFOS)
-        .upsert(cfoUpdateData)
 
-      if (cfoUpdateError) {
-        console.error('❌ Step 3 失敗: rextrix_cfos 更新エラー:', cfoUpdateError)
-        return NextResponse.json(
-          { success: false, error: 'CFOプロフィールの更新に失敗しました', details: cfoUpdateError },
-          { status: 500 }
-        )
-      } else {
-        console.log('✅ Step 3 成功: rextrix_cfos 更新完了')
+      console.log('💾 データベース書き込み用データ:', updateData)
+
+      const { data, error } = await supabaseAdmin
+        .from(TABLES.CFO_PROFILES)
+        .upsert({
+          cfo_user_id: userId,
+          ...updateData
+        })
+        .select()
+        .single()
+
+      updateResult = data
+      updateError = error
+      
+      console.log('💾 データベース書き込み結果:', { data, error })
+
+    } else if (session.user.userType === 'company') {
+      // 企業プロフィールの更新
+      
+      // 企業の4項目データを biz_raw_profile に JSON 形式で保存
+      const businessData = {
+        businessName: body.companyName || body.name,
+        displayName: body.companyName || body.name,
+        description: body.description || '',
+        revenueRange: body.revenueRange || '',
+        financialChallengesDetail: body.challengeBackground || ''
       }
-    } else if (userData?.user_type === 'company') {
-      console.log('💾 Step 3: rextrix_companies テーブル更新開始')
-      const companyUpdateData = {
-        user_id: user.id,
-        company_name: companyName,
-        industry,
-        employee_count: employeeCount,
-        founded_year: foundedYear,
-        website,
-        description,
-        business_model: businessModel,
-        funding_stage: fundingStage,
-        challenges,
+      
+      const updateData = {
+        biz_company_name: body.companyName || body.name,
+        biz_location: body.location,
+        biz_revenue_min: body.revenueMin ? parseInt(body.revenueMin) : null,
+        biz_revenue_max: body.revenueMax ? parseInt(body.revenueMax) : null,
+        biz_issues: body.issues || [],
+        // 企業の4項目を JSON として biz_raw_profile に保存
+        biz_raw_profile: JSON.stringify(businessData),
+        avatar_url: body.avatarUrl,
         updated_at: new Date().toISOString()
       }
-      console.log('📊 Company保存データ:', companyUpdateData)
-      console.log('🗺️ Companyフィールドマッピング:')
-      console.log('  - companyName:', companyName, '→ company_name')
-      console.log('  - description:', description, '→ description')
-      console.log('  - industry:', industry, '→ industry')
-      
-      const { error: companyUpdateError } = await supabaseAdmin
-        .from(TABLES.COMPANIES)
-        .upsert(companyUpdateData)
 
-      if (companyUpdateError) {
-        console.error('❌ Step 3 失敗: rextrix_companies 更新エラー:', companyUpdateError)
-        return NextResponse.json(
-          { success: false, error: '企業プロフィールの更新に失敗しました', details: companyUpdateError },
-          { status: 500 }
-        )
-      } else {
-        console.log('✅ Step 3 成功: rextrix_companies 更新完了')
-      }
-    } else {
-      console.log('⚠️ Step 3 スキップ: 不明なユーザータイプまたはCFO/Company以外')
+      const { data, error } = await supabaseAdmin
+        .from(TABLES.BIZ_PROFILES)
+        .upsert({
+          biz_user_id: userId,
+          ...updateData
+        })
+        .select()
+        .single()
+
+      updateResult = data
+      updateError = error
     }
 
-    // 活動履歴に記録
-    await supabaseAdmin
-      .from(TABLES.ACTIVITIES)
-      .insert({
-        user_id: user.id,
-        activity_type: 'profile_updated',
-        title: 'プロフィールを更新しました',
-        description: 'プロフィール情報を最新の内容に更新しました',
-        metadata: { 
-          updated_fields: Object.keys(body),
-          user_type: userData?.user_type 
-        }
-      })
+    if (updateError) {
+      console.error('Profile update error:', updateError)
+      return NextResponse.json(
+        { success: false, error: 'プロフィール更新に失敗しました' },
+        { status: 500 }
+      )
+    }
 
-    console.log('🎉 === プロフィール更新完了 ===')
-    console.log('✅ 全ての更新処理が正常に完了しました')
-    console.log('📝 更新されたフィールド:', Object.keys(body))
-    console.log('🔍 最終保存データ確認 - display_name:', finalName)
-    
+    console.log('✅ API PUT /profile: プロフィール更新成功', {
+      userId,
+      userType: session.user.userType
+    })
+
     return NextResponse.json({
       success: true,
-      message: 'プロフィールを更新しました'
+      message: 'プロフィールが更新されました',
+      profile: updateResult
     })
 
   } catch (error) {
-    console.error('Profile PUT error:', error)
+    console.error('❌ API PUT /profile: 予期しないエラー', error)
     return NextResponse.json(
-      { success: false, error: 'プロフィールの更新に失敗しました' },
+      { success: false, error: 'サーバーエラーが発生しました' },
       { status: 500 }
     )
   }
