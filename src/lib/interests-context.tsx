@@ -5,19 +5,26 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useAuth } from './hooks/useAuth'
-import { api, isSuccessResponse, ApiError } from './api-client'
+import { api, isSuccessResponse, ApiError, apiClient } from './api-client'
+import { useSession } from 'next-auth/react'
 
-// お気に入りアイテムの型定義
-export interface InterestItem {
-  id: string
-  target_user_id: string
-  target_type: 'cfo' | 'company'
-  created_at: string
+// 設計書準拠: Likesテーブルの型定義
+export interface LikeItem {
+  likerId: string      // liker_id
+  targetId: string     // target_id
+  targetName: string   // 表示用: 相手の名前
+  targetType: 'cfo' | 'company'  // 表示用: 相手のタイプ
+  targetAvatar: string // 表示用: 相手のアバター
+  createdAt: string
+  meta: {
+    architecture: string
+    table: string
+  }
 }
 
 // コンテキストの型定義
 interface InterestsContextType {
-  interests: InterestItem[]
+  interests: LikeItem[]
   loading: boolean
   error: string | null
   
@@ -49,13 +56,21 @@ interface InterestsProviderProps {
 
 export function InterestsProvider({ children }: InterestsProviderProps) {
   const { user, isAuthenticated } = useAuth()
-  const [interests, setInterests] = useState<InterestItem[]>([])
+  const { data: session } = useSession()
+  const [interests, setInterests] = useState<LikeItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // セッション情報をAPIクライアントに更新
+  useEffect(() => {
+    if (session) {
+      apiClient.updateSession(session)
+    }
+  }, [session])
+
   // APIからお気に入りリストを取得
   const fetchInterests = useCallback(async () => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !user || !session) {
       setInterests([])
       setLoading(false)
       return
@@ -65,10 +80,27 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
       setLoading(true)
       setError(null)
 
+      // セッション情報を確実にAPIクライアントに設定
+      apiClient.updateSession(session)
+
       const response = await api.interests.list()
       
       if (isSuccessResponse(response)) {
-        setInterests(response.data)
+        // 新アーキテクチャ: response.dataから取得
+        const interestsData = response.data || []
+        
+        // データ形式の確認と変換
+        let processedData: LikeItem[] = []
+        if (Array.isArray(interestsData)) {
+          processedData = interestsData
+        } else if (interestsData.likes && Array.isArray(interestsData.likes)) {
+          processedData = interestsData.likes
+        } else {
+          console.warn('API response.data is not in expected format:', interestsData)
+          processedData = []
+        }
+        
+        setInterests(processedData)
       } else {
         throw new Error(response.error?.message || '気になるリストの取得に失敗しました')
       }
@@ -92,7 +124,7 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user, session])
 
   // 初期データ読み込み（認証完了後のみ）
   useEffect(() => {
@@ -107,7 +139,11 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
 
   // お気に入りかどうかをチェック
   const isInterested = useCallback((targetUserId: string): boolean => {
-    return interests.some(interest => interest.target_user_id === targetUserId)
+    if (!Array.isArray(interests)) {
+      console.warn('interests is not an array:', interests)
+      return false
+    }
+    return interests.some(interest => interest.targetId === targetUserId)
   }, [interests])
 
   // お気に入りに追加
@@ -115,7 +151,7 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
     targetUserId: string, 
     targetType: 'cfo' | 'company'
   ): Promise<boolean> => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !user || !session) {
       setError('認証が必要です')
       return false
     }
@@ -129,21 +165,34 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
     try {
       setError(null)
 
+      // セッション情報を確実にAPIクライアントに設定
+      apiClient.updateSession(session)
+
       const response = await api.interests.add(targetUserId, targetType)
 
       if (isSuccessResponse(response)) {
-        // ローカル状態を更新
-        const newInterest: InterestItem = {
-          id: response.data.id,
-          target_user_id: targetUserId,
-          target_type: targetType,
-          created_at: response.data.created_at
+        // ローカル状態を更新（新アーキテクチャ準拠）
+        const newLike: LikeItem = {
+          likerId: response.data.likerId || session.user.id,
+          targetId: response.data.targetId || targetUserId,
+          targetName: 'Unknown', // 実際の実装では詳細情報を取得
+          targetType: targetType,
+          targetAvatar: '',
+          createdAt: response.data.createdAt || new Date().toISOString(),
+          meta: {
+            architecture: 'new',
+            table: 'likes'
+          }
         }
-        setInterests(prev => [...prev, newInterest])
+        setInterests(prev => {
+          if (!Array.isArray(prev)) {
+            console.warn('Previous interests is not an array, resetting:', prev)
+            return [newLike]
+          }
+          return [...prev, newLike]
+        })
         
-        // ローカル状態を更新
-        
-        console.log('Interest added:', newInterest)
+        console.log('Like added:', newLike)
         return true
       } else {
         throw new Error(response.error?.message || 'お気に入りの追加に失敗しました')
@@ -158,11 +207,11 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
       }
       return false
     }
-  }, [isAuthenticated, user, isInterested])
+  }, [isAuthenticated, user, session, isInterested])
 
   // お気に入りから削除
   const removeInterest = useCallback(async (targetUserId: string): Promise<boolean> => {
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !user || !session) {
       setError('認証が必要です')
       return false
     }
@@ -170,15 +219,22 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
     try {
       setError(null)
 
+      // セッション情報を確実にAPIクライアントに設定
+      apiClient.updateSession(session)
+
       const response = await api.interests.remove(targetUserId)
 
       if (isSuccessResponse(response)) {
-        // ローカル状態を更新
-        setInterests(prev => prev.filter(interest => interest.target_user_id !== targetUserId))
+        // ローカル状態を更新（新アーキテクチャ準拠）
+        setInterests(prev => {
+          if (!Array.isArray(prev)) {
+            console.warn('Previous interests is not an array, resetting:', prev)
+            return []
+          }
+          return prev.filter(interest => interest.targetId !== targetUserId)
+        })
         
-        // ローカル状態を更新
-        
-        console.log('Interest removed:', targetUserId)
+        console.log('Like removed:', targetUserId)
         return true
       } else {
         throw new Error(response.error?.message || 'お気に入りの削除に失敗しました')
@@ -193,7 +249,7 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
       }
       return false
     }
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user, session])
 
   // お気に入りのトグル
   const toggleInterest = useCallback(async (
@@ -209,8 +265,8 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
 
   // 統計情報を取得
   const getInterestStats = useCallback(() => {
-    const cfoCount = interests.filter(i => i.target_type === 'cfo').length
-    const companyCount = interests.filter(i => i.target_type === 'company').length
+    const cfoCount = interests.filter(i => i.targetType === 'cfo').length
+    const companyCount = interests.filter(i => i.targetType === 'company').length
     
     return {
       totalCount: interests.length,

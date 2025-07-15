@@ -222,7 +222,7 @@ export default function AppHeader({ userName, userAvatar = '👤' }: AppHeaderPr
             {/* 右側アイコン */}
             <div className="flex items-center space-x-1 md:space-x-2 lg:space-x-4">
               {/* 通知ボタン - ログイン時のみ表示 */}
-              {actualIsLoggedIn && (
+              {false && actualIsLoggedIn && (
                 <div className="relative">
                   <button 
                     onClick={handleNotificationClick}

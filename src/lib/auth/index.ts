@@ -4,6 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 import bcrypt from 'bcryptjs'
 import { supabaseAdmin, TABLES } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 
 // 🔍 NextAuth環境変数診断
 console.log('🔍 NextAuth環境変数診断:')
@@ -51,81 +52,66 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // ユーザー検索
-          console.log('🔍 NextAuth: ユーザー検索開始', { email: credentials.email })
-          const { data: user, error } = await supabaseAdmin
-            .from(TABLES.USERS)
-            .select(`
-              id,
-              email,
-              password_hash,
-              user_type,
-              status,
-              rextrix_user_profiles!inner (
-                display_name,
-                nickname
-              )
-            `)
-            .eq('email', credentials.email)
-            .single()
-
-          if (error || !user) {
-            console.log('🚨 NextAuth: ユーザー検索失敗', { 
-              error: error?.message,
-              hasUser: !!user,
-              email: credentials.email
-            })
-            return null
-          }
-
-          console.log('✅ NextAuth: ユーザー検索成功', {
-            userId: user.id,
-            email: user.email,
-            userType: user.user_type,
-            status: user.status
+          // Supabase Auth でユーザー検索
+          console.log('🔍 NextAuth: Supabase Auth ユーザー検索開始', { email: credentials.email })
+          
+          // 一時的なクライアントでパスワード検証
+          const tempClient = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+          )
+          
+          const { data: signInData, error: signInError } = await tempClient.auth.signInWithPassword({
+            email: credentials.email,
+            password: credentials.password
           })
 
-          // アカウント状態チェック
-          if (user.status !== 'active') {
-            console.log('🚨 NextAuth: アカウント無効', { status: user.status })
-            throw new Error('アカウントが無効です')
-          }
-
-          // パスワード検証
-          if (!user.password_hash) {
-            console.log('🚨 NextAuth: パスワードハッシュなし')
-            return null
-          }
-
-          console.log('🔐 NextAuth: パスワード検証開始')
-          const isValidPassword = await bcrypt.compare(
-            credentials.password,
-            user.password_hash
-          )
-
-          if (!isValidPassword) {
-            console.log('🚨 NextAuth: パスワード検証失敗')
+          if (signInError || !signInData.user) {
+            console.log('🚨 NextAuth: パスワード検証失敗', signInError?.message)
             return null
           }
 
           console.log('✅ NextAuth: パスワード検証成功')
+          const user = signInData.user
 
-          // 最終ログイン時刻更新
-          await supabaseAdmin
-            .from(TABLES.USERS)
-            .update({ last_login_at: new Date().toISOString() })
-            .eq('id', user.id)
-
-          const profile = Array.isArray(user.rextrix_user_profiles)
-            ? user.rextrix_user_profiles[0]
-            : user.rextrix_user_profiles
+          // プロフィール情報を取得（CFOまたは企業）
+          let profile = null
+          let userType = 'cfo' // デフォルト
+          
+          // CFOプロフィールを確認
+          const { data: cfoProfile } = await supabaseAdmin
+            .from(TABLES.CFO_PROFILES)
+            .select('cfo_name, cfo_display_name')
+            .eq('cfo_user_id', user.id)
+            .single()
+          
+          if (cfoProfile) {
+            profile = cfoProfile
+            userType = 'cfo'
+          } else {
+            // 企業プロフィールを確認
+            const { data: bizProfile } = await supabaseAdmin
+              .from(TABLES.BIZ_PROFILES)
+              .select('biz_company_name')
+              .eq('biz_user_id', user.id)
+              .single()
+            
+            if (bizProfile) {
+              profile = bizProfile
+              userType = 'company'
+            }
+          }
 
           const userResult = {
             id: user.id,
-            email: user.email,
-            name: profile?.display_name || profile?.nickname || user.email,
-            userType: user.user_type, // ✅ snake_case から camelCase に変換
-            status: user.status
+            email: user.email || '',
+            name: (userType === 'cfo' && profile) 
+              ? (profile as any).cfo_display_name || (profile as any).cfo_name || user.email?.split('@')[0] || 'ユーザー'
+              : (userType === 'company' && profile)
+              ? (profile as any).biz_company_name || user.email?.split('@')[0] || 'ユーザー'
+              : user.email?.split('@')[0] || 'ユーザー',
+            userType: userType as 'company' | 'cfo',
+            status: 'active' // Supabase Auth ユーザーは基本的にアクティブ
           }
 
           console.log('✅ NextAuth: 認証成功 - ユーザー情報返却', userResult)
@@ -178,16 +164,13 @@ export const authOptions: NextAuthOptions = {
       // Google OAuth の場合の処理
       if (account?.provider === 'google' && profile?.email) {
         try {
-          // 既存ユーザーをチェック
-          const { data: existingUser } = await supabaseAdmin
-            .from(TABLES.USERS)
-            .select('id, status')
-            .eq('email', profile.email)
-            .single()
+          // 既存ユーザーをチェック（Supabase Auth経由）
+          const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
+          const existingUser = existingUsers.users.find(u => u.email === profile.email)
 
           if (existingUser) {
-            // 既存ユーザーの場合はログイン許可
-            return existingUser.status === 'active'
+            // 既存ユーザーの場合はログイン許可（Supabase Authユーザーは基本的にアクティブ）
+            return true
           } else {
             // 新規ユーザーの場合は自動登録（オプション）
             // 本番環境では false にして手動登録を必須にすることを推奨

@@ -208,13 +208,17 @@ export default function ScoutPage() {
                   <ScoutCard 
                     key={scout.id} 
                     scout={scout} 
-                    type="received" 
+                    type={scout.isReceived ? "received" : "sent"} 
                     onStatusUpdate={handleStatusUpdate}
                   />
                 ))
               ) : (
                 sentScouts.map((scout) => (
-                  <ScoutCard key={scout.id} scout={scout} type="sent" />
+                  <ScoutCard 
+                    key={scout.id} 
+                    scout={scout} 
+                    type={scout.isSent ? "sent" : "received"} 
+                  />
                 ))
               )}
             </div>

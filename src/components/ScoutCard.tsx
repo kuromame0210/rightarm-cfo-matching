@@ -129,8 +129,30 @@ const ScoutCard = memo(({ scout, type, onStatusUpdate }: ScoutCardProps) => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer">
       <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-4">
         <div className="flex items-start space-x-3">
-          <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center">
-            <span className="text-lg md:text-2xl">{scout.avatar}</span>
+          <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden">
+            {scout.avatar && (scout.avatar.startsWith('http') || scout.avatar.startsWith('/')) ? (
+              <img 
+                src={scout.avatar} 
+                alt={displayName || 'Avatar'} 
+                className="w-full h-full object-cover rounded-full"
+                onError={(e) => {
+                  // 画像読み込みエラー時のフォールバック
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                  if (target.nextElementSibling) {
+                    (target.nextElementSibling as HTMLElement).style.display = 'block'
+                  }
+                }}
+              />
+            ) : null}
+            <span 
+              className={`text-lg md:text-2xl ${(scout.avatar && (scout.avatar.startsWith('http') || scout.avatar.startsWith('/'))) ? 'hidden' : 'block'}`}
+            >
+              {(!scout.avatar || (!scout.avatar.startsWith('http') && !scout.avatar.startsWith('/'))) 
+                ? (scout.avatar || '👤') 
+                : '👤'
+              }
+            </span>
           </div>
           <div className="flex-1 md:hidden">
             <div className="flex items-center gap-2 mb-1">

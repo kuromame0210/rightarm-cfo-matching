@@ -84,7 +84,7 @@ export default function CFODetailPage() {
       fetchCFOData()
     }
   }, [cfoId, fetchCFOData])
-  const [activeSection, setActiveSection] = useState('overview')
+  const [activeSection, setActiveSection] = useState('basic')
   
   if (loading) {
     return (
@@ -169,9 +169,8 @@ export default function CFODetailPage() {
 
 
   const sections = [
-    { id: 'overview', label: '概要', icon: '📊' },
-    { id: 'experience', label: '経歴・実績', icon: '💼' },
-    { id: 'projects', label: '過去の案件', icon: '🎯' },
+    { id: 'basic', label: '基本情報', icon: '📊' },
+    { id: 'experience', label: '経歴・業務', icon: '💼' },
     { id: 'conditions', label: '稼働条件', icon: '⚙️' }
   ]
 
@@ -226,14 +225,24 @@ export default function CFODetailPage() {
             {/* CFOヘッダー */}
             <div className="bg-white rounded-lg shadow-sm border p-4 md:p-6 mb-4 md:mb-6">
               <div className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl md:text-3xl">👤</span>
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {cfoData.avatarUrl ? (
+                    <img 
+                      src={cfoData.avatarUrl} 
+                      alt={`${cfoData.name}のプロフィール画像`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl md:text-3xl">👤</span>
+                  )}
                 </div>
                 <div className="flex-1">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 md:mb-4">
                     <div>
                       <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 md:mb-2">{cfoData.name}</h1>
-                      <p className="text-sm md:text-base text-gray-600 mb-2 md:mb-3">{cfoData.experience}</p>
+                      <p className="text-sm md:text-base text-gray-600 mb-2 md:mb-3">
+                        {cfoData.location && `所在地: ${cfoData.location}`}
+                      </p>
                       <div className="flex flex-wrap gap-1 md:gap-2">
                         {cfoData.skills.map((skill: string) => (
                           <span key={skill} className="px-2 py-1 md:px-3 bg-blue-100 text-blue-800 text-xs md:text-sm rounded-full">
@@ -243,7 +252,7 @@ export default function CFODetailPage() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-sm md:text-base text-gray-700">{cfoData.introduction}</p>
+                  <p className="text-sm md:text-base text-gray-700 whitespace-pre-wrap">{cfoData.introduction || '紹介文なし'}</p>
                 </div>
               </div>
             </div>
@@ -265,9 +274,8 @@ export default function CFODetailPage() {
                     <span className="mr-1 md:mr-2">{section.icon}</span>
                     <span className="hidden sm:inline">{section.label}</span>
                     <span className="sm:hidden">
-                      {section.label === '概要' ? '概要' : 
-                       section.label === '経歴・実績' ? '経歴' :
-                       section.label === '過去の案件' ? '案件' :
+                      {section.label === '基本情報' ? '基本' : 
+                       section.label === '経歴・業務' ? '経歴' :
                        section.label === '稼働条件' ? '条件' : section.label}
                     </span>
                   </button>
@@ -277,36 +285,35 @@ export default function CFODetailPage() {
 
             {/* セクションコンテンツ */}
             <div className="bg-white rounded-lg shadow-sm border p-4 md:p-6">
-              {activeSection === 'overview' && (
+              {activeSection === 'basic' && (
                 <div>
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">専門分野</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-6 md:mb-8">
-                    {cfoData.specialties.map((specialty: any, index: number) => (
-                      <div key={index} className="border border-gray-200 rounded-lg p-3 md:p-4">
-                        <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">{specialty.area}</h4>
-                        <p className="text-sm md:text-base text-gray-600">{specialty.detail}</p>
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">専門スキル</h3>
+                  <div className="mb-6 md:mb-8">
+                    {cfoData.skills.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {cfoData.skills.map((skill: string, index: number) => (
+                          <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                            {skill}
+                          </span>
+                        ))}
                       </div>
-                    ))}
+                    ) : (
+                      <p className="text-sm md:text-base text-gray-500">スキル情報なし</p>
+                    )}
                   </div>
 
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">学歴・資格</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2 text-sm md:text-base">学歴</h4>
-                      <ul className="space-y-1 md:space-y-2">
-                        {cfoData.education.map((edu: string, index: number) => (
-                          <li key={index} className="text-sm md:text-base text-gray-600">• {edu}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2 text-sm md:text-base">資格</h4>
-                      <ul className="space-y-1 md:space-y-2">
-                        {cfoData.certifications.map((cert: string, index: number) => (
-                          <li key={index} className="text-sm md:text-base text-gray-600">• {cert}</li>
-                        ))}
-                      </ul>
-                    </div>
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">保有資格</h3>
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6 md:mb-8">
+                    <p className="text-sm md:text-base text-gray-700 whitespace-pre-wrap">
+                      {cfoData.certifications || '資格情報なし'}
+                    </p>
+                  </div>
+
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">紹介文</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm md:text-base text-gray-700 whitespace-pre-wrap">
+                      {cfoData.introduction || '紹介文なし'}
+                    </p>
                   </div>
                 </div>
               )}
@@ -314,52 +321,28 @@ export default function CFODetailPage() {
               {activeSection === 'experience' && (
                 <div>
                   <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">詳細経歴</h3>
-                  <ul className="space-y-2 md:space-y-3">
-                    {cfoData.detailedExperience.map((exp: any, index: number) => (
-                      <li key={index} className="flex items-start">
-                        <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full mt-1.5 md:mt-2 mr-2 md:mr-3 flex-shrink-0"></span>
-                        <span className="text-sm md:text-base text-gray-700">{exp}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6 md:mb-8">
+                    <p className="text-sm md:text-base text-gray-700 whitespace-pre-wrap">
+                      {cfoData.rawProfile || '詳細経歴情報がありません'}
+                    </p>
+                  </div>
 
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4 mt-6 md:mt-8">言語スキル</h3>
-                  <div className="flex flex-wrap gap-1 md:gap-2">
-                    {cfoData.languages.map((lang: any, index: number) => (
-                      <span key={index} className="px-2 py-1 md:px-3 bg-gray-100 text-gray-800 text-sm md:text-base rounded">
-                        {lang}
-                      </span>
-                    ))}
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">可能な業務</h3>
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6 md:mb-8">
+                    <p className="text-sm md:text-base text-gray-700 whitespace-pre-wrap">
+                      {cfoData.possibleTasks || '業務内容情報がありません'}
+                    </p>
+                  </div>
+
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">対応可能エリア</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm md:text-base text-gray-700 whitespace-pre-wrap">
+                      {cfoData.workingAreas || '対応エリア情報がありません'}
+                    </p>
                   </div>
                 </div>
               )}
 
-              {activeSection === 'projects' && (
-                <div>
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">過去の主要案件</h3>
-                  <div className="space-y-4 md:space-y-6">
-                    {cfoData.pastProjects.map((project: any, index: number) => (
-                      <div key={index} className="border border-gray-200 rounded-lg p-3 md:p-4">
-                        <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-2 md:mb-3">
-                          <h4 className="font-medium text-gray-900 text-sm md:text-base">{project.company}</h4>
-                          <span className="text-sm md:text-base text-gray-500 mt-1 md:mt-0">{project.period}</span>
-                        </div>
-                        <p className="text-sm md:text-base text-gray-700 mb-2 md:mb-3">{project.description}</p>
-                        <div>
-                          <h5 className="text-sm md:text-base font-medium text-gray-900 mb-1 md:mb-2">主な成果</h5>
-                          <ul className="space-y-1 md:space-y-2">
-                            {project.results.map((result: string, resultIndex: number) => (
-                              <li key={resultIndex} className="text-sm md:text-base text-gray-600">
-                                • {result}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {activeSection === 'conditions' && (
                 <div>
@@ -368,37 +351,21 @@ export default function CFODetailPage() {
                     <div className="space-y-3 md:space-y-4">
                       <div>
                         <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">勤務地</h4>
-                        <div className="flex flex-wrap gap-1 md:gap-2">
-                          {cfoData.workPreferences.location.map((loc: string, index: number) => (
-                            <span key={index} className="px-2 py-1 bg-green-100 text-green-800 text-sm md:text-base rounded">
-                              {loc}
-                            </span>
-                          ))}
-                        </div>
+                        <p className="text-sm md:text-base text-gray-700">{cfoData.location || '勤務地情報なし'}</p>
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">稼働スケジュール</h4>
-                        <p className="text-sm md:text-base text-gray-700">{cfoData.workPreferences.schedule}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">契約期間</h4>
-                        <p className="text-sm md:text-base text-gray-700">{cfoData.workPreferences.duration}</p>
+                        <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">稼働条件</h4>
+                        <p className="text-sm md:text-base text-gray-700">{cfoData.availability || '稼働条件情報なし'}</p>
                       </div>
                     </div>
                     <div className="space-y-3 md:space-y-4">
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">開始可能時期</h4>
-                        <p className="text-sm md:text-base text-gray-700">{cfoData.workPreferences.startDate}</p>
-                      </div>
-                      <div>
                         <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">報酬</h4>
-                        <p className="text-sm md:text-base text-gray-700 font-semibold">{cfoData.compensation}</p>
+                        <p className="text-sm md:text-base text-gray-700 font-semibold">{cfoData.compensation || '報酬情報なし'}</p>
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">ステータス</h4>
-                        <span className="px-2 py-1 md:px-3 bg-green-100 text-green-800 text-sm md:text-base rounded-full">
-                          {cfoData.availability}
-                        </span>
+                        <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">対応エリア</h4>
+                        <p className="text-sm md:text-base text-gray-700">{cfoData.workingAreas || '対応エリア情報なし'}</p>
                       </div>
                     </div>
                   </div>
@@ -446,8 +413,8 @@ export default function CFODetailPage() {
                     <p className="text-gray-900">{cfoData.lastLogin}</p>
                   </div>
                   <div>
-                    <span className="text-gray-600">稼働形態</span>
-                    <p className="text-gray-900">{cfoData.workStyle}</p>
+                    <span className="text-gray-600">稼働条件</span>
+                    <p className="text-gray-900">{cfoData.availability || '稼働条件情報なし'}</p>
                   </div>
                   <div>
                     <span className="text-gray-600">報酬目安</span>
@@ -476,12 +443,22 @@ export default function CFODetailPage() {
             
             <div className="mb-3 md:mb-4">
               <div className="flex items-center space-x-2 md:space-x-3 mb-2 md:mb-3">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-base md:text-lg">👤</span>
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                  {cfoData.avatarUrl ? (
+                    <img 
+                      src={cfoData.avatarUrl} 
+                      alt={`${cfoData.name}のプロフィール画像`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-base md:text-lg">👤</span>
+                  )}
                 </div>
                 <div>
                   <p className="font-medium text-gray-900 text-sm md:text-base">{cfoData.name}</p>
-                  <p className="text-xs md:text-sm text-gray-600">{cfoData.experience}</p>
+                  <p className="text-xs md:text-sm text-gray-600">
+                    {cfoData.introduction || '経験豊富なCFOです'}
+                  </p>
                 </div>
               </div>
               

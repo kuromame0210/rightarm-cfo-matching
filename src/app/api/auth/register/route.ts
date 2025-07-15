@@ -33,6 +33,9 @@ const registerSchema = z.object({
   challengeTags: z.array(z.string())
     .max(10, '財務課題は10個まで選択できます')
     .optional(),
+  financialChallengesDetail: z.string()
+    .max(2000, '財務課題の詳細は2000文字以内で入力してください')
+    .optional(),
 
   // CFO固有情報（全て任意）
   nickname: z.string()
@@ -46,12 +49,35 @@ const registerSchema = z.object({
       return totalSkills <= 30
     }, 'スキルは30個まで選択できます'),
   experience: z.string()
-    .max(2000, '実績・経歴は2000文字以内で入力してください')
+    .max(5000, '経歴は5000文字以内で入力してください')
     .optional(),
   workPreference: z.enum(['weekly', 'monthly', 'project', 'flexible'])
     .optional(),
   compensationRange: z.string()
     .max(200, '希望報酬は200文字以内で入力してください')
+    .optional(),
+  
+  // 新しいCFOフィールド
+  location: z.string()
+    .max(100, '居住地は100文字以内で入力してください')
+    .optional(),
+  workingHours: z.string()
+    .max(200, '週の稼働可能時間は200文字以内で入力してください')
+    .optional(),
+  possibleTasks: z.string()
+    .max(2000, '可能な業務は2000文字以内で入力してください')
+    .optional(),
+  certifications: z.string()
+    .max(1000, '保有資格は1000文字以内で入力してください')
+    .optional(),
+  monthlyCompensation: z.string()
+    .max(500, '想定月額報酬は500文字以内で入力してください')
+    .optional(),
+  workingArea: z.string()
+    .max(500, '対応可能エリアは500文字以内で入力してください')
+    .optional(),
+  introduction: z.string()
+    .max(2000, '紹介文は2000文字以内で入力してください')
     .optional(),
 
   // プロフィール画像（任意）
@@ -91,7 +117,7 @@ async function handleProfileImageUpload(
     const file = new File([blob], fileName, { type: mimeType })
     
     formData.append('file', file)
-    formData.append('fileType', userType === 'company' ? 'company-logo' : 'profile-image')
+    formData.append('fileType', userType === 'company' ? 'COMPANY_LOGO' : 'PROFILE_IMAGE')
     formData.append('userId', userId)
 
     // 内部API呼び出し（同じサーバー内）
@@ -113,7 +139,6 @@ async function handleProfileImageUpload(
     return null
   }
 }
-})
 
 // 年商レンジをmin/maxに変換
 function getRevenueRange(revenueRange: string): { min: number | null, max: number | null } {
@@ -197,7 +222,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // 重複チェック（複数の方法で確認）
+    // 重複チェック（未認証ユーザーは削除して再登録可能）
     console.log('🔍 詳細重複チェック開始')
     
     // 1. Supabase Authでのメール重複チェック
@@ -205,11 +230,32 @@ export async function POST(request: NextRequest) {
     const existingAuthUser = existingUsers.users.find(u => u.email?.toLowerCase() === data.email.toLowerCase())
 
     if (existingAuthUser) {
-      console.log('❌ メールアドレス重複（Auth）:', data.email?.replace(/(.{3}).*(@.*)/, '$1***$2'))
-      return NextResponse.json({
-        success: false,
-        error: 'このメールアドレスは既に登録されています'
-      }, { status: 409 })
+      // メール認証済みユーザーの場合は重複エラー
+      if (existingAuthUser.email_confirmed_at) {
+        console.log('❌ 認証済みユーザーの重複:', data.email?.replace(/(.{3}).*(@.*)/, '$1***$2'))
+        return NextResponse.json({
+          success: false,
+          error: 'このメールアドレスは既に登録されています'
+        }, { status: 409 })
+      }
+      
+      // 未認証ユーザーの場合は削除して再登録を許可
+      console.log('🔄 未認証ユーザーを削除して再登録:', data.email?.replace(/(.{3}).*(@.*)/, '$1***$2'))
+      try {
+        // 関連プロフィールデータも削除
+        if (data.userType === 'company') {
+          await supabaseAdmin.from(TABLES.BIZ_PROFILES).delete().eq('biz_user_id', existingAuthUser.id)
+        } else {
+          await supabaseAdmin.from(TABLES.CFO_PROFILES).delete().eq('cfo_user_id', existingAuthUser.id)
+        }
+        
+        // Authユーザー削除
+        await supabaseAdmin.auth.admin.deleteUser(existingAuthUser.id)
+        console.log('✅ 未認証ユーザー削除完了')
+      } catch (deleteError) {
+        console.error('⚠️ 未認証ユーザー削除エラー:', deleteError)
+        // エラーでも継続（新規作成を試行）
+      }
     }
 
     // 2. 企業名重複チェック（企業登録の場合）
@@ -228,10 +274,12 @@ export async function POST(request: NextRequest) {
 
     // Supabase Auth でユーザー作成
     console.log('👤 Supabase Authユーザー作成開始')
+    const isDevelopment = process.env.NODE_ENV === 'development' || data.email.includes('@example.com')
+    
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
-      email_confirm: false // メール認証必須
+      email_confirm: isDevelopment // 開発環境またはテストメールは自動認証
     })
 
     if (authError || !authUser.user) {
@@ -247,7 +295,17 @@ export async function POST(request: NextRequest) {
     // プロフィール画像のアップロード処理
     let avatarUrl: string | null = null
     if (data.profileImage) {
+      console.log('📸 プロフィール画像データ確認:', {
+        hasData: !!data.profileImage,
+        dataType: typeof data.profileImage,
+        startsWithData: data.profileImage.startsWith('data:'),
+        length: data.profileImage.length,
+        preview: data.profileImage.substring(0, 50) + '...'
+      })
       avatarUrl = await handleProfileImageUpload(data.profileImage, authUser.user.id, data.userType)
+      console.log('📸 アップロード結果:', { avatarUrl })
+    } else {
+      console.log('📸 プロフィール画像なし')
     }
 
     // プロフィール作成
@@ -269,7 +327,8 @@ export async function POST(request: NextRequest) {
             businessName: data.businessName,
             description: data.description,
             displayName: data.displayName,
-            revenueRange: data.revenueRange
+            revenueRange: data.revenueRange,
+            financialChallengesDetail: data.financialChallengesDetail
           })
         })
 
@@ -295,17 +354,19 @@ export async function POST(request: NextRequest) {
           avatar_url: avatarUrl,
           cfo_name: data.displayName,
           cfo_display_name: data.nickname || data.displayName,
-          cfo_location: '', // 今後実装
-          cfo_availability: data.workPreference || '',
+          cfo_location: data.location || '',
+          cfo_availability: data.workingHours || data.workPreference || '',
           cfo_fee_min: null, // 今後実装
           cfo_fee_max: null, // 今後実装
           cfo_skills: data.skills ? Object.values(data.skills).flat() : [],
-          cfo_raw_profile: JSON.stringify({
-            experience: data.experience,
-            workPreference: data.workPreference,
-            compensationRange: data.compensationRange,
-            skills: data.skills
-          })
+          // 新しいカラム構造に直接保存
+          cfo_compensation: data.monthlyCompensation || '',
+          cfo_possible_tasks: data.possibleTasks || '',
+          cfo_certifications: data.certifications || '',
+          cfo_working_areas: data.workingArea || '',
+          cfo_introduction: data.introduction || '',
+          // Raw Profileは経歴のみに簡素化
+          cfo_raw_profile: data.experience || ''
         })
 
       if (profileError) {
@@ -328,14 +389,18 @@ export async function POST(request: NextRequest) {
       email: data.email?.replace(/(.{3}).*(@.*)/, '$1***$2')
     })
 
+    const message = isDevelopment 
+      ? '登録が完了しました。開発環境のため、メール認証をスキップしました。すぐにログインできます。'
+      : '登録が完了しました。メールアドレスに送信された認証リンクをクリックして、アカウントを有効化してください。'
+
     return NextResponse.json({
       success: true,
-      message: '登録が完了しました。メールアドレスに送信された認証リンクをクリックして、アカウントを有効化してください。',
+      message,
       data: {
         userId: authUser.user.id,
         email: authUser.user.email,
         userType: data.userType,
-        emailVerificationRequired: true
+        emailVerificationRequired: !isDevelopment
       }
     })
 

@@ -15,7 +15,7 @@ import { isNetworkError, getNetworkErrorMessage } from '@/utils/api'
 export const dynamic = 'force-dynamic'
 
 export default function DiscoverCFOsPage() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
   const { isInterested, toggleInterest } = useInterests()
   const { isOnline } = useNetworkStatus()
@@ -211,6 +211,13 @@ export default function DiscoverCFOsPage() {
 
   const handleInterested = async (cfo: any) => {
     try {
+      console.log('🔄 お気に入り操作開始:', {
+        cfoId: cfo.id,
+        cfoName: cfo.name,
+        isAuthenticated,
+        userType: user?.userType
+      })
+      
       const success = await toggleInterest(cfo.id, 'cfo')
       
       if (success) {
@@ -219,12 +226,24 @@ export default function DiscoverCFOsPage() {
           ? '気になるに追加しました ❤️' 
           : '気になるから削除しました'
         showToastMessage(message)
+        
+        console.log('✅ お気に入り操作成功:', {
+          cfoId: cfo.id,
+          action: currentlyInterested ? 'added' : 'removed'
+        })
       } else {
+        console.warn('❌ お気に入り操作失敗:', cfo.id)
         showToastMessage('操作に失敗しました。もう一度お試しください。')
       }
     } catch (error) {
-      console.error('気になる機能エラー:', error)
-      showToastMessage('エラーが発生しました')
+      console.error('❌ 気になる機能エラー:', error)
+      
+      // エラーの詳細を表示
+      if (error instanceof Error) {
+        showToastMessage(`エラー: ${error.message}`)
+      } else {
+        showToastMessage('予期しないエラーが発生しました')
+      }
     }
   }
 
@@ -669,21 +688,9 @@ export default function DiscoverCFOsPage() {
                         <h3 className="text-base md:text-lg font-semibold text-gray-900">
                           {cfo.name || '名前未設定'}
                         </h3>
-                        <div className="flex items-center">
-                          <span className="text-yellow-400">★</span>
-                          <span className="text-gray-900 ml-1">{cfo.rating}</span>
-                          <span className="text-sm text-gray-500 ml-1">({cfo.reviewCount}件)</span>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs border ${
-                          cfo.available 
-                            ? 'bg-green-50 text-green-700 border-green-200' 
-                            : 'bg-gray-50 text-gray-600 border-gray-200'
-                        }`}>
-                          {cfo.available ? '対応可能' : '満員'}
-                        </span>
                       </div>
                       <p className="text-gray-600 text-sm ml-11 md:ml-13">
-                        ニックネーム: {cfo.nickname || '(なし)'}
+                        📍 {cfo.location || '居住地未設定'}
                       </p>
                     </div>
                     <div className="flex gap-2 flex-wrap md:flex-nowrap">
@@ -711,14 +718,9 @@ export default function DiscoverCFOsPage() {
                       </Link>
                       <button 
                         onClick={() => handleScout(cfo)}
-                        disabled={!cfo.available}
-                        className={`flex-1 md:flex-none min-h-[40px] px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg flex items-center justify-center whitespace-nowrap ${
-                          !cfo.available
-                            ? 'bg-gray-400 text-white cursor-not-allowed'
-                            : 'bg-gray-900 text-white hover:bg-gray-800 hover:scale-105'
-                        }`}
+                        className="flex-1 md:flex-none min-h-[40px] px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg flex items-center justify-center whitespace-nowrap bg-gray-900 text-white hover:bg-gray-800 hover:scale-105"
                       >
-                        {!cfo.available ? '対応不可' : 'スカウト'}
+                        スカウト
                       </button>
                     </div>
                   </div>
@@ -735,33 +737,24 @@ export default function DiscoverCFOsPage() {
                     </div>
                   </div>
                   
-                  {/* 実績・経歴 */}
-                  <div className="mb-3">
-                    <p className="text-xs text-gray-500 mb-1">実績・経歴:</p>
-                    <p className="text-gray-600 text-sm line-clamp-2">{cfo.achievements}</p>
-                  </div>
 
                   {/* 保有資格 */}
                   <div className="mb-3">
                     <p className="text-xs text-gray-500 mb-1">保有資格:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {cfo.certifications.map((cert: string) => (
-                        <span key={cert} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                          {cert}
-                        </span>
-                      ))}
-                    </div>
+                    <p className="text-gray-600 text-sm">
+                      {cfo.certifications || '未設定'}
+                    </p>
                   </div>
 
-                  {/* 稼働希望形態・希望報酬イメージ */}
+                  {/* 対応エリア・報酬 */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 text-sm text-gray-600 mb-3">
                     <div>
-                      <span className="text-xs text-gray-500">稼働希望形態:</span>
-                      <p className="font-medium">{cfo.workPreference}</p>
+                      <span className="text-xs text-gray-500">対応エリア:</span>
+                      <p className="font-medium">{cfo.workingAreas || '未設定'}</p>
                     </div>
                     <div>
-                      <span className="text-xs text-gray-500">希望報酬:</span>
-                      <p className="font-medium">{cfo.compensationRange}</p>
+                      <span className="text-xs text-gray-500">報酬:</span>
+                      <p className="font-medium">{cfo.compensation || '応相談'}</p>
                     </div>
                   </div>
                   

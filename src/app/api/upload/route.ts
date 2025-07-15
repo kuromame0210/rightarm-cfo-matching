@@ -4,12 +4,23 @@ import { validateFile, generateFilePath, FILE_CONFIGS, type FileType } from '@/l
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('📁 ファイルアップロードAPI開始')
+    
     const formData = await request.formData()
     const file = formData.get('file') as File
     const fileType = formData.get('fileType') as FileType
     const userId = formData.get('userId') as string
 
+    console.log('📋 アップロードパラメータ:', {
+      hasFile: !!file,
+      fileName: file?.name,
+      fileSize: file?.size,
+      fileType,
+      userId: userId?.substring(0, 8) + '...'
+    })
+
     if (!file || !fileType || !userId) {
+      console.error('❌ 必須パラメータ不足')
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -41,17 +52,21 @@ export async function POST(request: NextRequest) {
       })
 
     if (error) {
-      console.error('Storage upload error:', error)
+      console.error('❌ ストレージアップロードエラー:', error)
       return NextResponse.json(
         { error: 'ファイルのアップロードに失敗しました' },
         { status: 500 }
       )
     }
 
+    console.log('✅ ストレージアップロード成功:', { path: data.path })
+
     // Get public URL
     const { data: urlData } = supabaseAdmin.storage
       .from(config.bucket)
       .getPublicUrl(filePath)
+
+    console.log('🔗 公開URL生成:', { url: urlData.publicUrl })
 
     return NextResponse.json({
       success: true,

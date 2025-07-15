@@ -27,19 +27,21 @@ function MessagesContent() {
   const [showChatList, setShowChatList] = useState(true)
   const [scoutProcessed, setScoutProcessed] = useState(false)
   const [targetUserName, setTargetUserName] = useState<string | null>(null)
+  const [targetUserType, setTargetUserType] = useState<'cfo' | 'company' | undefined>(undefined)
+  const [targetUserAvatar, setTargetUserAvatar] = useState<string>('👤')
   
   const selectedChat = chatList.find(chat => chat.id === selectedChatId) || 
     (targetUserId ? {
       id: 0,
       name: targetUserName || '読み込み中...',
       otherUserId: targetUserId,
-      otherUserType: undefined,
-      otherProfileId: undefined,
+      otherUserType: targetUserType,
+      otherProfileId: targetUserId,
       lastMessage: '',
       timestamp: '',
       unreadCount: 0,
       status: '新規',
-      avatar: '👤'
+      avatar: targetUserAvatar
     } : null)
 
   // 会話一覧を取得
@@ -108,7 +110,7 @@ function MessagesContent() {
         const data = await response.json()
         console.log('メッセージ:', data)
         if (data.success) {
-          setMessages(data.data)
+          setMessages(data.data.messages || [])
         } else {
           console.error('メッセージAPI success=false:', data)
           setMessages([])
@@ -140,7 +142,7 @@ function MessagesContent() {
           },
           body: JSON.stringify({
             conversationId: selectedChatId,
-            content: messageInput.trim()
+            message: messageInput.trim()
           })
         })
         
@@ -191,8 +193,8 @@ function MessagesContent() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          otherUserId: userIdToUse,
-          message: initialMessage || ''
+          receiverId: userIdToUse,
+          message: initialMessage || 'こんにちは'
         })
       })
       
@@ -252,7 +254,7 @@ function MessagesContent() {
             },
             body: JSON.stringify({
               conversationId,
-              content: scoutMessageText
+              message: scoutMessageText
             })
           })
           
@@ -268,15 +270,17 @@ function MessagesContent() {
     }
   }, [scoutId, scoutProcessed, fetchMessages, targetUserId])
 
-  // ターゲットユーザーの名前を取得
-  const fetchTargetUserName = async (userId: string) => {
+  // ターゲットユーザーの詳細情報を取得
+  const fetchTargetUserInfo = async (userId: string) => {
     try {
       // CFOプロフィールを確認
       const cfoResponse = await fetch(`/api/cfos/${userId}`)
       if (cfoResponse.ok) {
         const cfoData = await cfoResponse.json()
         if (cfoData.success) {
-          setTargetUserName(cfoData.data.name)
+          setTargetUserName(cfoData.data.name || cfoData.data.cfo_name || cfoData.data.cfo_display_name)
+          setTargetUserType('cfo')
+          setTargetUserAvatar('👤')
           return
         }
       }
@@ -286,16 +290,22 @@ function MessagesContent() {
       if (companyResponse.ok) {
         const companyData = await companyResponse.json()
         if (companyData.success) {
-          setTargetUserName(companyData.data.company_name)
+          setTargetUserName(companyData.data.company_name || companyData.data.biz_company_name)
+          setTargetUserType('company')
+          setTargetUserAvatar('🏢')
           return
         }
       }
 
-      // どちらでもない場合はメールアドレスを取得
+      // どちらでもない場合はデフォルト値
       setTargetUserName('ユーザー')
+      setTargetUserType(undefined)
+      setTargetUserAvatar('👤')
     } catch (error) {
-      console.error('ユーザー名取得エラー:', error)
+      console.error('ユーザー情報取得エラー:', error)
       setTargetUserName('ユーザー')
+      setTargetUserType(undefined)
+      setTargetUserAvatar('👤')
     }
   }
 
@@ -315,8 +325,10 @@ function MessagesContent() {
   useEffect(() => {
     setConversationInitialized(false)
     if (targetUserId) {
-      setTargetUserName(null) // 名前をリセット
-      fetchTargetUserName(targetUserId) // 新しい名前を取得
+      setTargetUserName(null) // 情報をリセット
+      setTargetUserType(undefined)
+      setTargetUserAvatar('👤')
+      fetchTargetUserInfo(targetUserId) // 新しい情報を取得
     }
   }, [targetUserId])
 

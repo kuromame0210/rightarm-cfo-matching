@@ -26,7 +26,7 @@ export default function InterestedPage() {
         const data = await response.json()
         console.log('API気になるリスト:', data)
         if (data.success) {
-          const profileIds = data.data.map((item: any) => item.target_user_id)
+          const profileIds = data.data.likes.map((item: any) => item.targetId)
           setInterestedProfiles(profileIds)
           console.log('API気になるリスト設定完了:', profileIds)
           return profileIds
@@ -35,7 +35,7 @@ export default function InterestedPage() {
         // APIが失敗した場合はローカルストレージからフォールバック
         console.log('APIが失敗、ローカルストレージからフォールバック')
         if (typeof window !== 'undefined') {
-          const stored = localStorage.getItem('rextrix_interested_profiles')
+          const stored = localStorage.getItem('interested_profiles')
           if (stored) {
             const profileIds = JSON.parse(stored)
             setInterestedProfiles(profileIds)
@@ -49,7 +49,7 @@ export default function InterestedPage() {
       console.error('気になるリストの取得エラー:', error)
       // エラーが発生した場合はローカルストレージからフォールバック
       if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('rextrix_interested_profiles')
+        const stored = localStorage.getItem('interested_profiles')
         if (stored) {
           const profileIds = JSON.parse(stored)
           setInterestedProfiles(profileIds)
@@ -120,7 +120,7 @@ export default function InterestedPage() {
         
         // ローカルストレージも更新（フォールバック）
         if (typeof window !== 'undefined') {
-          localStorage.setItem('rextrix_interested_profiles', JSON.stringify(newList))
+          localStorage.setItem('interested_profiles', JSON.stringify(newList))
         }
         
         // 表示リストも更新

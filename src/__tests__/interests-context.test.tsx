@@ -279,7 +279,7 @@ describe('InterestsProvider', () => {
   test('ネットワークエラー時にローカルストレージからフォールバックする', async () => {
     // ローカルストレージにデータを設定
     const localInterests = ['user-1', 'user-2']
-    window.localStorage.setItem('rextrix_interested_profiles', JSON.stringify(localInterests))
+    window.localStorage.setItem('interested_profiles', JSON.stringify(localInterests))
 
     // API エラーをシミュレート
     mockFetch.mockRejectedValueOnce(new Error('Network Error'))
