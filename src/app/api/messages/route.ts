@@ -381,8 +381,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        messageId: newMessage.msg_id,
-        message: 'メッセージを送信しました'
+        id: newMessage.msg_id,
+        msg_id: newMessage.msg_id,
+        sender_id: newMessage.sender_id,
+        receiver_id: newMessage.receiver_id,
+        body: newMessage.body,
+        content: newMessage.body,
+        sent_at: newMessage.sent_at,
+        sentAt: newMessage.sent_at,
+        msg_type: newMessage.msg_type,
+        isFromMe: true
       },
       meta: {
         architecture: 'new',

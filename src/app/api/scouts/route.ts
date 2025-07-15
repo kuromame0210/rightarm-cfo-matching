@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
           if (cfoProfile) {
             senderInfo = {
-              name: cfoProfile.cfo_display_name || cfoProfile.cfo_name || 'CFO',
+              name: cfoProfile.cfo_name || cfoProfile.cfo_display_name || 'CFO',
               type: 'cfo',
               avatar: cfoProfile.avatar_url || '👤'
             }
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
 
           if (cfoProfile) {
             receiverInfo = {
-              name: cfoProfile.cfo_display_name || cfoProfile.cfo_name || 'CFO',
+              name: cfoProfile.cfo_name || cfoProfile.cfo_display_name || 'CFO',
               type: 'cfo',
               avatar: cfoProfile.avatar_url || '👤'
             }
@@ -182,6 +182,7 @@ export async function GET(request: NextRequest) {
           
           // UIで必要な追加フィールド
           receivedAt: isReceived ? scout.sent_at : null,
+          sentAt: !isReceived ? scout.sent_at : null,
           avatar: isReceived ? senderInfo?.avatar || '❓' : receiverInfo?.avatar || '❓',
           
           // 新アーキテクチャメタ情報

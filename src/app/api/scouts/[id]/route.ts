@@ -54,7 +54,116 @@ export async function GET(
       return createErrorResponse('アクセス権限がありません', { status: 403 })
     }
 
-    return createSuccessResponse(scout)
+    // 送信者情報を取得
+    let senderInfo = null
+    if (scout.sender_id) {
+      // CFOプロフィールを確認
+      const { data: cfoProfile } = await supabaseAdmin
+        .from(TABLES.CFO_PROFILES)
+        .select('cfo_name, cfo_display_name, avatar_url')
+        .eq('cfo_user_id', scout.sender_id)
+        .single()
+
+      if (cfoProfile) {
+        senderInfo = {
+          name: cfoProfile.cfo_name || cfoProfile.cfo_display_name || 'CFO',
+          type: 'cfo',
+          avatar: cfoProfile.avatar_url || '👤'
+        }
+      } else {
+        // 企業プロフィールを確認
+        const { data: bizProfile } = await supabaseAdmin
+          .from(TABLES.BIZ_PROFILES)
+          .select('biz_company_name, avatar_url')
+          .eq('biz_user_id', scout.sender_id)
+          .single()
+
+        if (bizProfile) {
+          senderInfo = {
+            name: bizProfile.biz_company_name || '企業',
+            type: 'company',
+            avatar: bizProfile.avatar_url || '🏢'
+          }
+        }
+      }
+    }
+
+    // 受信者情報を取得
+    let receiverInfo = null
+    if (scout.receiver_id) {
+      // CFOプロフィールを確認
+      const { data: cfoProfile } = await supabaseAdmin
+        .from(TABLES.CFO_PROFILES)
+        .select('cfo_name, cfo_display_name, avatar_url')
+        .eq('cfo_user_id', scout.receiver_id)
+        .single()
+
+      if (cfoProfile) {
+        receiverInfo = {
+          name: cfoProfile.cfo_name || cfoProfile.cfo_display_name || 'CFO',
+          type: 'cfo',
+          avatar: cfoProfile.avatar_url || '👤'
+        }
+      } else {
+        // 企業プロフィールを確認  
+        const { data: bizProfile } = await supabaseAdmin
+          .from(TABLES.BIZ_PROFILES)
+          .select('biz_company_name, avatar_url')
+          .eq('biz_user_id', scout.receiver_id)
+          .single()
+
+        if (bizProfile) {
+          receiverInfo = {
+            name: bizProfile.biz_company_name || '企業',
+            type: 'company',
+            avatar: bizProfile.avatar_url || '🏢'
+          }
+        }
+      }
+    }
+
+    // スカウト後の返信を確認してステータスを判断
+    let status = 'pending'
+    const { data: responses } = await supabaseAdmin
+      .from(TABLES.MESSAGES)
+      .select('body, sent_at')
+      .eq('sender_id', scout.receiver_id)
+      .eq('receiver_id', scout.sender_id)
+      .eq('msg_type', 'chat')
+      .gt('sent_at', scout.sent_at)
+      .order('sent_at', { ascending: false })
+      .limit(1)
+    
+    if (responses && responses.length > 0) {
+      const response = responses[0]
+      if (response.body.includes('スカウトを承諾しました')) {
+        status = 'accepted'
+      } else if (response.body.includes('スカウトをお断りしました')) {
+        status = 'declined'
+      }
+    }
+
+    // 整形されたデータを返す
+    const enrichedScout = {
+      ...scout,
+      // 送信者情報
+      sender_name: senderInfo?.name || 'スカウト送信者',
+      sender_type: senderInfo?.type || 'unknown',
+      sender_avatar: senderInfo?.avatar || '❓',
+      // 受信者情報
+      receiver_name: receiverInfo?.name || 'スカウト受信者',
+      receiver_type: receiverInfo?.type || 'unknown',
+      receiver_avatar: receiverInfo?.avatar || '❓',
+      // 企業名（後方互換性のため）
+      company_name: senderInfo?.type === 'company' ? senderInfo.name : receiverInfo?.type === 'company' ? receiverInfo.name : '企業',
+      // ステータス
+      status: status,
+      // 表示用フィールド
+      title: scout.body?.split('\n')[0] || 'スカウト',
+      message: scout.body || 'メッセージがありません'
+    }
+
+    return createSuccessResponse(enrichedScout)
   } catch (error) {
     console.error('API Error:', error)
     return createErrorResponse('サーバーエラーが発生しました', { status: 500 })

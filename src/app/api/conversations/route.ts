@@ -81,7 +81,7 @@ export async function GET(_request: NextRequest) {
 
         if (cfoProfile) {
           otherUserInfo = {
-            name: cfoProfile.cfo_display_name || cfoProfile.cfo_name || 'CFO',
+            name: cfoProfile.cfo_name || cfoProfile.cfo_display_name || 'CFO',
             type: 'cfo',
             avatar: cfoProfile.avatar_url || '👤'
           }
@@ -104,10 +104,23 @@ export async function GET(_request: NextRequest) {
 
         return {
           ...conversation,
+          // フロントエンド互換性のため
+          name: otherUserInfo.name,
+          avatar: otherUserInfo.avatar,
+          // 詳細情報（API用）
           otherUserName: otherUserInfo.name,
           otherUserType: otherUserInfo.type,
           otherUserAvatar: otherUserInfo.avatar,
-          created_at: conversation.last_message_at // 互換性のため
+          created_at: conversation.last_message_at,
+          // ChatListコンポーネントで必要な追加フィールド
+          timestamp: new Date(conversation.last_message_at).toLocaleString('ja-JP', {
+            month: 'numeric',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          unreadCount: 0, // 未読数は将来実装
+          status: conversation.lastMessageType === 'scout' ? 'スカウト' : 'チャット'
         }
       })
     )
