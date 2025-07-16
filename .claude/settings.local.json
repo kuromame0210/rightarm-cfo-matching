@@ -35,7 +35,9 @@
       "Bash(npx next build:*)",
       "Bash(node:*)",
       "Bash(npm run type-check:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git gc:*)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --index-filter \"\ngit rm --cached --ignore-unmatch check-cfo-profile-data.js check-extracted-fields.js check-scout-messages.js fix-cfo-raw-profile.js 2>/dev/null || true\n\" --prune-empty -- --all)"
     ],
     "deny": []
   }
