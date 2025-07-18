@@ -472,14 +472,20 @@ export default function CompanyDetailPage() {
               <div className="flex-1">
                 <div className="flex items-center space-x-2 md:space-x-3 mb-1 md:mb-2">
                   <h1 className="text-lg md:text-3xl font-bold text-gray-900">{companyData.companyName}</h1>
+<<<<<<< HEAD
                   {/* レビュー機能未実装のため一時的に非表示
+=======
+>>>>>>> ed6ed74a201219527e46fcfeb432044fa94a148f
                   {companyData.rating > 0 && (
                     <div className="flex items-center">
                       <span className="text-yellow-400">★</span>
                       <span className="text-sm md:text-lg font-medium text-gray-900 ml-1">{companyData.rating}</span>
                     </div>
                   )}
+<<<<<<< HEAD
                   */}
+=======
+>>>>>>> ed6ed74a201219527e46fcfeb432044fa94a148f
                 </div>
                 <p className="text-sm md:text-lg text-gray-600 mb-1 md:mb-2">{companyData.businessName}</p>
                 <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm text-gray-500">

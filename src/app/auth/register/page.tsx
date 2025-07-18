@@ -162,6 +162,7 @@ function RegisterPageContent() {
         // CFO固有フィールド
         ...(registrationData.userType === 'cfo' && {
           cfoFields: {
+<<<<<<< HEAD
             location: (registrationData as any).location,
             workingHours: (registrationData as any).workingHours,
             possibleTasks: (registrationData as any).possibleTasks?.length + '文字',
@@ -171,6 +172,17 @@ function RegisterPageContent() {
             introduction: (registrationData as any).introduction?.length + '文字',
             experience: (registrationData as any).experience?.length + '文字',
             skills: (registrationData as any).skills
+=======
+            location: registrationData.location,
+            workingHours: registrationData.workingHours,
+            possibleTasks: registrationData.possibleTasks?.length + '文字',
+            certifications: registrationData.certifications?.length + '文字',
+            monthlyCompensation: registrationData.monthlyCompensation?.length + '文字',
+            workingArea: registrationData.workingArea?.length + '文字',
+            introduction: registrationData.introduction?.length + '文字',
+            experience: registrationData.experience?.length + '文字',
+            skills: registrationData.skills
+>>>>>>> ed6ed74a201219527e46fcfeb432044fa94a148f
           }
         })
       })

@@ -32,8 +32,12 @@ export interface ProfileData {
   workStyle?: string // 互換性
   feeMin?: number
   feeMax?: number
+<<<<<<< HEAD
   availableAreas?: string[] | string
   workingAreas?: string
+=======
+  availableAreas?: string[]
+>>>>>>> ed6ed74a201219527e46fcfeb432044fa94a148f
   weeklyAvailability?: string
   career?: string
   monthlyFeeMin?: number | null
