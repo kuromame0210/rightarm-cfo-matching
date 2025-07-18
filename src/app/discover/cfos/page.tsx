@@ -50,7 +50,7 @@ export default function DiscoverCFOsPage() {
   const sortOptions = [
     { value: 'newest', label: '新着順' },
     { value: 'compensation_high', label: '報酬高順' },
-    { value: 'rating', label: '評価順' },
+    // { value: 'rating', label: '評価順' }, // レビュー機能未実装のため一時的に非表示
     { value: 'experience', label: '経験順' }
   ]
 
@@ -330,8 +330,8 @@ export default function DiscoverCFOsPage() {
         const aComp = parseInt(a.compensationRange.replace(/[^\d]/g, ''))
         const bComp = parseInt(b.compensationRange.replace(/[^\d]/g, ''))
         return bComp - aComp
-      case 'rating':
-        return b.rating - a.rating
+      // case 'rating':
+      //   return b.rating - a.rating // レビュー機能未実装のため一時的に非表示
       case 'experience':
         // 実績の長さを経験の指標として使用
         return b.achievements.length - a.achievements.length

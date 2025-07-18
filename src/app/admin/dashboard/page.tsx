@@ -35,7 +35,7 @@ export default function AdminDashboardPage() {
       dailyActiveUsers: 0,
       messagesExchanged: 0,
       meetingsScheduled: 0,
-      reviewsPosted: 0
+      // reviewsPosted: 0 // レビュー機能未実装のため一時的に非表示
     }
   }
 
@@ -43,14 +43,14 @@ export default function AdminDashboardPage() {
   const recentActivity: any[] = []
 
   // 承認待ちレビュー（実際のアプリではAPIから取得）
-  const pendingReviews: any[] = []
+  const pendingReviews: any[] = [] // レビュー機能未実装のため一時的に非表示
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
         return 'bg-green-100 text-green-800 border-green-200'
       case 'pending':
-      case 'pending_review':
+      // case 'pending_review': // レビュー機能未実装のため一時的に非表示
         return 'bg-yellow-100 text-yellow-800 border-yellow-200'
       case 'verified':
         return 'bg-blue-100 text-blue-800 border-blue-200'
@@ -199,8 +199,10 @@ export default function AdminDashboardPage() {
                 <span className="font-medium">{stats.activity.meetingsScheduled}</span>
               </div>
               <div className="flex justify-between text-sm">
+                {/* レビュー機能未実装のため一時的に非表示
                 <span className="text-gray-600">レビュー投稿</span>
                 <span className="font-medium">{stats.activity.reviewsPosted}</span>
+                */}
               </div>
             </div>
           </div>
@@ -225,7 +227,7 @@ export default function AdminDashboardPage() {
                           <span className="text-xs text-gray-500">{activity.timestamp}</span>
                           <span className={`px-2 py-1 rounded-full text-xs border ${getStatusBadge(activity.status)}`}>
                             {activity.status === 'completed' && '完了'}
-                            {activity.status === 'pending_review' && '審査待ち'}
+                            {/* {activity.status === 'pending_review' && '審査待ち'} レビュー機能未実装のため一時的に非表示 */}
                             {activity.status === 'verified' && '確認済み'}
                             {activity.status === 'open' && '対応中'}
                           </span>
@@ -253,6 +255,7 @@ export default function AdminDashboardPage() {
                 <h3 className="text-lg font-semibold text-gray-900">⏳ 承認待ち</h3>
               </div>
               <div className="divide-y divide-gray-200">
+                {/* レビュー機能未実装のため一時的に非表示
                 {pendingReviews.map((review: any) => (
                   <div key={review.id} className="p-4">
                     <div className="flex items-center justify-between">
@@ -272,6 +275,10 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
                 ))}
+                */}
+                <div className="p-4 text-center text-gray-500">
+                  承認待ちのレビューはありません
+                </div>
               </div>
             </div>
 

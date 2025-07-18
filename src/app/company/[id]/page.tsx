@@ -99,8 +99,8 @@ export default function CompanyDetailPage() {
   const tabs = [
     { id: 'overview', label: '概要', icon: '📋' },
     { id: 'challenges', label: '課題', icon: '🎯' },
-    { id: 'conditions', label: '条件', icon: '📄' },
-    { id: 'reviews', label: 'レビュー', icon: '⭐' }
+    { id: 'conditions', label: '条件', icon: '📄' }
+    // { id: 'reviews', label: 'レビュー', icon: '⭐' } // レビュー機能未実装のため一時的に非表示
   ]
 
   const showToastMessage = (message: string) => {
@@ -472,12 +472,14 @@ export default function CompanyDetailPage() {
               <div className="flex-1">
                 <div className="flex items-center space-x-2 md:space-x-3 mb-1 md:mb-2">
                   <h1 className="text-lg md:text-3xl font-bold text-gray-900">{companyData.companyName}</h1>
+                  {/* レビュー機能未実装のため一時的に非表示
                   {companyData.rating > 0 && (
                     <div className="flex items-center">
                       <span className="text-yellow-400">★</span>
                       <span className="text-sm md:text-lg font-medium text-gray-900 ml-1">{companyData.rating}</span>
                     </div>
                   )}
+                  */}
                 </div>
                 <p className="text-sm md:text-lg text-gray-600 mb-1 md:mb-2">{companyData.businessName}</p>
                 <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm text-gray-500">
@@ -567,6 +569,7 @@ export default function CompanyDetailPage() {
                 </div>
               </div>
               
+              {/* レビュー機能未実装のため一時的に非表示
               <div className="mt-3 md:mt-6 pt-3 md:pt-6 border-t border-gray-200">
                 <div className="flex items-center justify-between mb-1 md:mb-2">
                   <span className="text-xs md:text-sm font-medium text-gray-700">レビュー評価</span>
@@ -577,7 +580,7 @@ export default function CompanyDetailPage() {
                   </div>
                 </div>
                 
-                {/* 評価分布（簡易版） */}
+                評価分布（簡易版）
                 <div className="space-y-0.5 md:space-y-1">
                   {[5, 4, 3, 2, 1].map((rating: number) => (
                     <div key={rating} className="flex items-center text-xs">
@@ -596,6 +599,7 @@ export default function CompanyDetailPage() {
                   ))}
                 </div>
               </div>
+              */}
             </div>
           </div>
         </div>

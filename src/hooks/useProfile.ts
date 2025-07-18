@@ -17,20 +17,23 @@ export interface ProfileData {
   introduction?: string
   bio?: string // 互換性
   profileImageUrl?: string
+  avatarUrl?: string
   // CFO固有
   title?: string
   experience?: string
   rawProfile?: string // API返却データ
   specialties?: string[]
   skills?: string[] // 互換性
-  certifications?: string[]
+  certifications?: string[] | string
+  possibleTasks?: string
   hourlyRate?: number
   availabilityStatus?: string
   workPreference?: string // 互換性
   workStyle?: string // 互換性
   feeMin?: number
   feeMax?: number
-  availableAreas?: string[]
+  availableAreas?: string[] | string
+  workingAreas?: string
   weeklyAvailability?: string
   career?: string
   monthlyFeeMin?: number | null

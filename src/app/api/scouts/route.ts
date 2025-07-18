@@ -182,7 +182,6 @@ export async function GET(request: NextRequest) {
           
           // UIで必要な追加フィールド
           receivedAt: isReceived ? scout.sent_at : null,
-          sentAt: !isReceived ? scout.sent_at : null,
           avatar: isReceived ? senderInfo?.avatar || '❓' : receiverInfo?.avatar || '❓',
           
           // 新アーキテクチャメタ情報

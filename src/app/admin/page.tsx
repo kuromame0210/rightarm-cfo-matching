@@ -46,13 +46,14 @@ export default function AdminPage() {
       icon: '📄',
       color: 'bg-orange-500'
     },
-    {
-      title: 'レビュー管理',
-      description: '投稿レビューの監視・管理',
-      href: '/admin/reviews',
-      icon: '💬',
-      color: 'bg-purple-500'
-    },
+    // レビュー機能未実装のため一時的に非表示
+    // {
+    //   title: 'レビュー管理',
+    //   description: '投稿レビューの監視・管理',
+    //   href: '/admin/reviews',
+    //   icon: '💬',
+    //   color: 'bg-purple-500'
+    // },
     {
       title: '売上分析',
       description: '収益・成長率の詳細分析',

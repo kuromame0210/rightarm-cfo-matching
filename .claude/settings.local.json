@@ -37,7 +37,9 @@
       "Bash(npm run type-check:*)",
       "Bash(git rm:*)",
       "Bash(git gc:*)",
-      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --index-filter \"\ngit rm --cached --ignore-unmatch check-cfo-profile-data.js check-extracted-fields.js check-scout-messages.js fix-cfo-raw-profile.js 2>/dev/null || true\n\" --prune-empty -- --all)"
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --index-filter \"\ngit rm --cached --ignore-unmatch check-cfo-profile-data.js check-extracted-fields.js check-scout-messages.js fix-cfo-raw-profile.js 2>/dev/null || true\n\" --prune-empty -- --all)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --tree-filter \"\nif [ -f src/app/api/__tests__/interests/route.simple.test.ts ]; then\n  sed -i ''s/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwb3Zva2lkaHlob2pqcWhhbndqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjQ2OTE3MywiZXhwIjoyMDY4MDQ1MTczfQ\\.RyEKSSsLjip0TQht-Flu4fox0jIUaizsEK1ew9oH7Kk/***REMOVED_JWT***/g'' src/app/api/__tests__/interests/route.simple.test.ts\nfi\n\" --prune-empty -- --all)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }

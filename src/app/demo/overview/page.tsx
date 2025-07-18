@@ -86,14 +86,15 @@ export default function DemoOverviewPage() {
         status: '完了',
         demo: '振込先表示、ファイルアップロード、支払いフロー'
       },
-      {
-        id: 'review_system',
-        title: 'レビューシステム',
-        description: '5段階評価、詳細項目別評価、双方向レビュー',
-        path: '/contracts/1/review',
-        status: '完了',
-        demo: '総合・項目別評価、コメント投稿、公開設定'
-      },
+      // レビュー機能未実装のため一時的に非表示
+      // {
+      //   id: 'review_system',
+      //   title: 'レビューシステム',
+      //   description: '5段階評価、詳細項目別評価、双方向レビュー',
+      //   path: '/contracts/1/review',
+      //   status: '完了',
+      //   demo: '総合・項目別評価、コメント投稿、公開設定'
+      // },
       {
         id: 'meeting_management',
         title: '面談予定管理',
@@ -175,13 +176,6 @@ export default function DemoOverviewPage() {
       path: '/messages',
       icon: '📊'
     },
-    {
-      step: 7,
-      title: 'レビュー・評価',
-      description: 'サービス終了後、CFOを評価・レビュー',
-      path: '/contracts/1/review',
-      icon: '⭐'
-    }
   ]
 
   // ユーザージャーニー（CFO視点）
@@ -228,13 +222,6 @@ export default function DemoOverviewPage() {
       path: '/messages',
       icon: '⚡'
     },
-    {
-      step: 7,
-      title: 'レビュー・評価',
-      description: 'サービス終了後、企業を評価・レビュー',
-      path: '/contracts/1/review',
-      icon: '🏆'
-    }
   ]
 
   const getCurrentJourney = () => {

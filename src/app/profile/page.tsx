@@ -85,18 +85,20 @@ export default function ProfilePage() {
             }
             
             // オブジェクトの場合はexperienceフィールドを取得
-            if (typeof profile.rawProfile === 'object' && profile.rawProfile.experience) {
-              return profile.rawProfile.experience;
+            if (typeof profile.rawProfile === 'object' && (profile.rawProfile as any).experience) {
+              return (profile.rawProfile as any).experience;
             }
             
             // その他の場合は空文字列
             return '';
           })(),
           skills: profile.skills || [],
-          possibleTasksDetail: profile.possibleTasks || '', // 新カラムから取得
-          certifications: profile.certifications ? profile.certifications.split('\n').filter(c => c.trim()) : [],
+          possibleTasksDetail: (profile as any).possibleTasks || '', // 新カラムから取得
+          certifications: profile.certifications ? 
+            (typeof profile.certifications === 'string' ? (profile.certifications as string).split('\n').filter((c: string) => c.trim()) : profile.certifications) : 
+            [],
           compensation: profile.compensation || '', // 想定報酬（テキスト形式）
-          availableAreas: profile.workingAreas ? profile.workingAreas.split('\n').filter(a => a.trim()) : [],
+          availableAreas: (profile as any).workingAreas ? (profile as any).workingAreas.split('\n').filter((a: string) => a.trim()) : [],
           introduction: profile.introduction || '',
           // 企業情報（使用しない）
           companyName: '',
@@ -129,7 +131,9 @@ export default function ProfilePage() {
           weeklyAvailability: '',
           career: '',
           skills: [],
+          possibleTasksDetail: '',
           certifications: [],
+          compensation: '',
           monthlyFeeMin: '',
           monthlyFeeMax: '',
           availableAreas: [],
@@ -142,7 +146,7 @@ export default function ProfilePage() {
         }
         setFormData(newFormData)
       }
-      setProfileImageUrl(profile.avatarUrl || profile.profileImageUrl || null)
+      setProfileImageUrl(profile.profileImageUrl || null)
     }
   }, [profile, profileLoading, user])
 
@@ -199,8 +203,8 @@ export default function ProfilePage() {
         // 新しいカラム構造に対応
         compensation: formData.compensation || '', // 想定報酬（テキスト形式）
         possibleTasks: formData.possibleTasksDetail || '', // 詳細業務テキストを保存
-        certifications: formData.certifications.join('\n'),
-        workingAreas: formData.availableAreas.join('\n'),
+        certifications: Array.isArray(formData.certifications) ? formData.certifications.join('\n') : formData.certifications || '',
+        workingAreas: Array.isArray(formData.availableAreas) ? formData.availableAreas.join('\n') : formData.availableAreas || '',
         introduction: formData.introduction,
         avatarUrl: profileImageUrl || undefined,
         // 会社情報の4項目（企業ユーザー用）
