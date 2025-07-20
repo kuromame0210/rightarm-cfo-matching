@@ -14,23 +14,37 @@ export function useAuth() {
   // プロフィール作成状況をチェック
   useEffect(() => {
     async function checkProfileSetup() {
+      console.log('🔍 useAuth: checkProfileSetup start', {
+        hasSession: !!session?.user,
+        status,
+        userEmail: session?.user?.email,
+        userType: session?.user?.userType
+      })
+
       if (!session?.user || status !== 'authenticated') {
+        console.log('⏭️ useAuth: Skipping profile check - not authenticated')
         setProfileSetupRequired(null)
         return
       }
 
       try {
+        console.log('📡 useAuth: Calling /api/profile for profile setup check')
         const response = await fetch('/api/profile')
+        console.log('📡 useAuth: Profile check response:', response.status)
+        
         if (response.ok) {
           const data = await response.json()
+          console.log('✅ useAuth: Profile exists, setup not required')
           setProfileSetupRequired(false) // プロフィール存在
         } else if (response.status === 404) {
+          console.log('❌ useAuth: Profile not found, setup required')
           setProfileSetupRequired(true) // プロフィール未作成
         } else {
+          console.log('⚠️ useAuth: Profile check error status:', response.status)
           setProfileSetupRequired(null) // エラー状態
         }
       } catch (error) {
-        console.error('Profile check error:', error)
+        console.error('❌ useAuth: Profile check error:', error)
         setProfileSetupRequired(null)
       }
     }
@@ -38,21 +52,20 @@ export function useAuth() {
     checkProfileSetup()
   }, [session, status])
 
-  // 認証状態の変化をログ出力（開発環境のみ）
+  // 認証状態の変化をログ出力（デバッグ用）
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      // 最初の初期化時とステータス変更時のみ
-      if (prevStatusRef.current !== status) {
-        // console.log(`🔐 Auth: ${status}`, {
-        //   hasSession: !!session,
-        //   userEmail: session?.user?.email || 'none',
-        //   userType: session?.user?.userType || 'none',
-        //   profileSetupRequired: profileSetupRequired
-        // })
-        prevStatusRef.current = status
-      }
+    // 最初の初期化時とステータス変更時のみ
+    if (prevStatusRef.current !== status) {
+      console.log(`🔐 useAuth: Status changed to ${status}`, {
+        hasSession: !!session,
+        userEmail: session?.user?.email || 'none',
+        userType: session?.user?.userType || 'none',
+        profileSetupRequired: profileSetupRequired,
+        timestamp: new Date().toISOString()
+      })
+      prevStatusRef.current = status
     }
-  }, [status, profileSetupRequired]) // statusとprofileSetupRequiredの変化を追跡
+  }, [status, profileSetupRequired, session]) // statusとprofileSetupRequiredの変化を追跡
 
   const login = useCallback(async (email: string, password: string) => {
     try {

@@ -7,21 +7,34 @@ import { authOptions } from '@/lib/auth'
 
 // GET: ユーザープロフィールを取得
 export async function GET(request: NextRequest) {
+  const requestId = Math.random().toString(36).substr(2, 9)
   try {
-    console.log('🔍 === API GET /profile: リクエスト開始 ===')
-    console.log('🕐 タイムスタンプ:', new Date().toISOString())
+    console.log(`🔍 === API[${requestId}] GET /profile: リクエスト開始 ===`)
+    console.log(`🕐 API[${requestId}] タイムスタンプ:`, new Date().toISOString())
+    console.log(`🔗 API[${requestId}] Request URL:`, request.url)
+    console.log(`🍪 API[${requestId}] Cookies:`, request.headers.get('cookie') ? 'Present' : 'None')
     
     // NextAuth.js セッションで認証確認
+    console.log(`🔐 API[${requestId}] Checking session...`)
     const session = await getServerSession(authOptions)
+    
+    console.log(`🔐 API[${requestId}] Session result:`, {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      hasUserId: !!session?.user?.id,
+      userEmail: session?.user?.email || 'none',
+      userType: session?.user?.userType || 'none'
+    })
+    
     if (!session?.user?.id) {
-      console.log('❌ API GET /profile: 認証失敗')
+      console.log(`❌ API[${requestId}] GET /profile: 認証失敗 - セッションまたはユーザーIDなし`)
       return NextResponse.json(
         { success: false, error: '認証が必要です' },
         { status: 401 }
       )
     }
     
-    console.log('✅ API GET /profile: 認証成功', { 
+    console.log(`✅ API[${requestId}] GET /profile: 認証成功`, { 
       userId: session.user.id, 
       email: session.user.email,
       userType: session.user.userType 
@@ -33,13 +46,22 @@ export async function GET(request: NextRequest) {
     let profile = null
     let profileError = null
 
+    console.log(`📊 API[${requestId}] Starting database query for userType: ${session.user.userType}`)
+
     if (session.user.userType === 'cfo') {
       // CFOプロフィールを取得
+      console.log(`🔍 API[${requestId}] Querying CFO profile for userId: ${userId}`)
       const { data, error } = await supabaseAdmin
         .from(TABLES.CFO_PROFILES)
         .select('*')
         .eq('cfo_user_id', userId)
         .single()
+      
+      console.log(`📊 API[${requestId}] CFO query result:`, {
+        hasData: !!data,
+        hasError: !!error,
+        errorMessage: error?.message || 'none'
+      })
       
       if (data) {
         profile = {
@@ -75,11 +97,18 @@ export async function GET(request: NextRequest) {
       profileError = error
     } else if (session.user.userType === 'company') {
       // 企業プロフィールを取得
+      console.log(`🔍 API[${requestId}] Querying company profile for userId: ${userId}`)
       const { data, error } = await supabaseAdmin
         .from(TABLES.BIZ_PROFILES)
         .select('*')
         .eq('biz_user_id', userId)
         .single()
+      
+      console.log(`📊 API[${requestId}] Company query result:`, {
+        hasData: !!data,
+        hasError: !!error,
+        errorMessage: error?.message || 'none'
+      })
       
       if (data) {
         profile = {
@@ -108,7 +137,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (profileError) {
-      console.error('Profile fetch error:', profileError)
+      console.error(`❌ API[${requestId}] Profile fetch error:`, profileError)
+      console.error(`❌ API[${requestId}] Error details:`, {
+        code: profileError.code,
+        message: profileError.message,
+        details: profileError.details
+      })
       return NextResponse.json(
         { success: false, error: 'プロフィール情報の取得に失敗しました' },
         { status: 500 }
@@ -116,7 +150,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!profile) {
-      console.log('Profile not found, returning default profile')
+      console.log(`⚠️ API[${requestId}] Profile not found, returning default profile`)
       // プロフィールが存在しない場合のデフォルト値
       profile = {
         id: userId,
@@ -129,7 +163,7 @@ export async function GET(request: NextRequest) {
       (profile as any).hasProfile = true
     }
 
-    console.log('✅ API GET /profile: プロフィール取得成功', {
+    console.log(`✅ API[${requestId}] GET /profile: プロフィール取得成功`, {
       userId: profile.id,
       userType: profile.userType,
       hasProfile: profile.hasProfile
@@ -141,7 +175,8 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ API GET /profile: 予期しないエラー', error)
+    console.error(`❌ API[${requestId}] GET /profile: 予期しないエラー`, error)
+    console.error(`❌ API[${requestId}] Error stack:`, error instanceof Error ? error.stack : 'No stack')
     return NextResponse.json(
       { success: false, error: 'サーバーエラーが発生しました' },
       { status: 500 }
