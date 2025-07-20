@@ -36,18 +36,12 @@ const MessageArea = memo(({ messages, messageInput, onMessageInputChange, onSend
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
 
-  // デバッグ用：選択された会話の情報をログ出力
-  console.log('MessageArea selectedChat:', selectedChat)
-  console.log('MessageArea messages:', messages)
-  console.log('MessageArea messages sample:', messages?.[0])
 
   const showToastMessage = (message: string) => {
-    console.log('トースト表示:', message)
     setToastMessage(message)
     setShowToast(true)
     setTimeout(() => {
       setShowToast(false)
-      console.log('トースト非表示')
     }, 3000)
   }
 
