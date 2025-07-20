@@ -46,7 +46,7 @@ export async function GET(
       .from(TABLES.MESSAGES)
       .select('msg_id, body, sent_at')
       .eq('sender_id', session.user.id)
-      .eq('receiver_id', cfo.cfo_user_id)
+      .eq('receiver_id', cfo?.cfo_user_id || cfoId)
       .eq('msg_type', 'scout')
       .order('sent_at', { ascending: false })
       .limit(1)
@@ -57,7 +57,7 @@ export async function GET(
       .from(TABLES.LIKES)
       .select('created_at')
       .eq('liker_id', session.user.id)
-      .eq('target_id', cfo.cfo_user_id)
+      .eq('target_id', cfo?.cfo_user_id || cfoId)
       .maybeSingle()
 
     // スカウト状態の判定（新アーキテクチャ対応）

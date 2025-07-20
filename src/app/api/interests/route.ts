@@ -48,7 +48,7 @@ export async function GET(_request: NextRequest) {
         const { data: cfoProfile } = await supabaseAdmin
           .from(TABLES.CFO_PROFILES)
           .select('cfo_name, cfo_display_name, avatar_url')
-          .eq('cfo_user_id', like.target_id)
+          .eq('cfo_user_id', String(like.target_id))
           .single()
 
         if (cfoProfile) {

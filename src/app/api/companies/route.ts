@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
 
     // データ変換（フロントエンド互換性のため）
     const companies = (bizProfiles || []).map(profile => {
-      const parsedDescription = parseProfileDescription(profile.biz_raw_profile)
+      const parsedDescription = parseProfileDescription(String(profile.biz_raw_profile || ''))
       
       return {
         id: profile.biz_user_id,

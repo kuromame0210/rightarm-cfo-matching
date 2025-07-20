@@ -51,7 +51,7 @@ export async function GET(_request: NextRequest) {
       
       // 既存の会話がない場合、または新しいメッセージの場合
       if (!conversationMap.has(conversationId) || 
-          new Date(message.sent_at) > new Date(conversationMap.get(conversationId).last_message_at)) {
+          new Date(String(message.sent_at)) > new Date(String(conversationMap.get(conversationId)?.last_message_at || ''))) {
         conversationMap.set(conversationId, {
           id: conversationId,
           participant1_id: userId,
@@ -81,9 +81,9 @@ export async function GET(_request: NextRequest) {
 
         if (cfoProfile) {
           otherUserInfo = {
-            name: cfoProfile.cfo_name || cfoProfile.cfo_display_name || 'CFO',
+            name: String(cfoProfile.cfo_name || cfoProfile.cfo_display_name || 'CFO'),
             type: 'cfo',
-            avatar: cfoProfile.avatar_url || '👤'
+            avatar: String(cfoProfile.avatar_url || '👤')
           }
         } else {
           // 企業プロフィールを確認
@@ -95,9 +95,9 @@ export async function GET(_request: NextRequest) {
 
           if (bizProfile) {
             otherUserInfo = {
-              name: bizProfile.biz_company_name || '企業',
+              name: String(bizProfile.biz_company_name || '企業'),
               type: 'company',
-              avatar: bizProfile.avatar_url || '🏢'
+              avatar: String(bizProfile.avatar_url || '🏢')
             }
           }
         }

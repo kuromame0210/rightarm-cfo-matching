@@ -63,7 +63,7 @@ export async function GET(
     const formattedCompany = {
       ...company,
       // 解析された説明文で上書き
-      biz_raw_profile: parseProfileDescription(company.biz_raw_profile)
+      biz_raw_profile: parseProfileDescription(String(company?.biz_raw_profile || ''))
     }
 
     return NextResponse.json({

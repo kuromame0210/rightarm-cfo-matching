@@ -9,19 +9,67 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
+// クライアントサイドではより寛容なエラーハンドリング
+const isClient = typeof window !== 'undefined'
+
 if (!supabaseUrl) {
-  throw new Error('NEXT_PUBLIC_SUPABASE_URL is required. Please check your .env.local file.')
+  const errorMsg = 'NEXT_PUBLIC_SUPABASE_URL is required. Please check your environment variables.'
+  if (isClient) {
+    console.error(errorMsg)
+  } else {
+    throw new Error(errorMsg)
+  }
 }
 
 if (!supabaseAnonKey) {
-  throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Please check your .env.local file.')
+  const errorMsg = 'NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Please check your environment variables.'
+  if (isClient) {
+    console.error(errorMsg)
+  } else {
+    throw new Error(errorMsg)
+  }
 }
 
+// シングルトンパターンでSupabaseクライアントを作成
+let supabaseInstance: ReturnType<typeof createClient> | null = null
+
 // クライアントサイド用Supabaseクライアント
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = (() => {
+  if (supabaseInstance) {
+    return supabaseInstance
+  }
+  
+  // 環境変数が設定されていない場合のフォールバック処理
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('Supabase environment variables not properly set. Using fallback configuration.')
+    // ダミークライアントを作成（エラーを防ぐため）
+    supabaseInstance = createClient(
+      'https://placeholder.supabase.co',
+      'placeholder-key'
+    )
+    return supabaseInstance
+  }
+  
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey)
+  return supabaseInstance
+})()
 
 // サーバーサイド用Supabaseクライアント（管理者権限）
-export const supabaseAdmin = (() => {
+// 遅延初期化でクライアントサイドでのエラーを防ぐ
+let supabaseAdminInstance: ReturnType<typeof createClient> | null = null
+
+export const getSupabaseAdmin = () => {
+  // クライアントサイドでは実行しない
+  if (typeof window !== 'undefined') {
+    // クライアントサイドでは通常のクライアントを返す
+    return supabase
+  }
+
+  // 既に初期化済みなら再利用
+  if (supabaseAdminInstance) {
+    return supabaseAdminInstance
+  }
+
   if (!supabaseServiceRoleKey) {
     console.warn('SUPABASE_SERVICE_ROLE_KEY is not set. Server-side operations may fail.')
     // 開発環境では警告のみ、本番環境では例外を投げる
@@ -29,21 +77,26 @@ export const supabaseAdmin = (() => {
       throw new Error('SUPABASE_SERVICE_ROLE_KEY is required for production.')
     }
     // 開発環境では匿名キーでフォールバック（制限された機能）
-    return createClient(supabaseUrl, supabaseAnonKey, {
+    supabaseAdminInstance = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
       }
     })
+    return supabaseAdminInstance
   }
 
-  return createClient(supabaseUrl, supabaseServiceRoleKey, {
+  supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
   })
-})()
+  return supabaseAdminInstance
+}
+
+// 後方互換性のため
+export const supabaseAdmin = getSupabaseAdmin()
 
 // 新アーキテクチャ対応 Database型定義
 export interface Database {
