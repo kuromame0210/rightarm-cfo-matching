@@ -35,7 +35,14 @@
       "Bash(npx next build:*)",
       "Bash(node:*)",
       "Bash(npm run type-check:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(psql:*)",
+      "Bash(NEXT_PUBLIC_SUPABASE_URL=https://ipovokidhyhojjqhanwj.supabase.co SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwb3Zva2lkaHlob2pqcWhhbndqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjQ2OTE3MywiZXhwIjoyMDY4MDQ1MTczfQ.RyEKSSsLjip0TQht-Flu4fox0jIUaizsEK1ew9oH7Kk node scripts/investigate-cfo-data.js)",
+      "Bash(NEXT_PUBLIC_SUPABASE_URL=https://ipovokidhyhojjqhanwj.supabase.co SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwb3Zva2lkaHlob2pqcWhhbndqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjQ2OTE3MywiZXhwIjoyMDY4MDQ1MTczfQ.RyEKSSsLjip0TQht-Flu4fox0jIUaizsEK1ew9oH7Kk node scripts/diagnose-search-issues.js)",
+      "Bash(npx supabase db:*)",
+      "Bash(echo:*)",
+      "Bash(NEXT_PUBLIC_SUPABASE_URL=\"https://ipovokidhyhojjqhanwj.supabase.co\" SUPABASE_SERVICE_ROLE_KEY=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwb3Zva2lkaHlob2pqcWhhbndqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjQ2OTE3MywiZXhwIjoyMDY4MDQ1MTczfQ.RyEKSSsLjip0TQht-Flu4fox0jIUaizsEK1ew9oH7Kk\" node scripts/analyze-scout-system.js)",
+      "Bash(NEXT_PUBLIC_SUPABASE_URL=\"https://ipovokidhyhojjqhanwj.supabase.co\" SUPABASE_SERVICE_ROLE_KEY=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlwb3Zva2lkaHlob2pqcWhhbndqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjQ2OTE3MywiZXhwIjoyMDY4MDQ1MTczfQ.RyEKSSsLjip0TQht-Flu4fox0jIUaizsEK1ew9oH7Kk\" node scripts/deep-scout-flow-analysis.js)"
     ],
     "deny": []
   }
