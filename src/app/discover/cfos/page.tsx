@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic'
 export default function DiscoverCFOsPage() {
   const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
-  const { isInterested, toggleInterest } = useInterests()
+  const { isInterested, toggleInterest, refetchInterests } = useInterests()
   const { isOnline } = useNetworkStatus()
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -118,8 +118,10 @@ export default function DiscoverCFOsPage() {
     
     if (isAuthenticated) {
       fetchCFOs()
+      // ページ表示時にお気に入り状態も再取得
+      refetchInterests()
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, router, refetchInterests])
 
   const toggleSkill = (skill: string) => {
     setSelectedSkills(prev =>

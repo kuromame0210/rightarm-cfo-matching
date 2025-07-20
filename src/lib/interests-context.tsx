@@ -86,20 +86,20 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
       const response = await api.interests.list()
       
       if (isSuccessResponse(response)) {
-        // 新アーキテクチャ: response.dataから取得
-        const interestsData = response.data || []
-        
-        // データ形式の確認と変換
+        // 新アーキテクチャ: response.data.likesから取得
+        const responseData = response.data || {}
         let processedData: LikeItem[] = []
-        if (Array.isArray(interestsData)) {
-          processedData = interestsData
-        } else if ((interestsData as any).likes && Array.isArray((interestsData as any).likes)) {
-          processedData = (interestsData as any).likes
+        
+        if (responseData.likes && Array.isArray(responseData.likes)) {
+          processedData = responseData.likes
+        } else if (Array.isArray(responseData)) {
+          processedData = responseData
         } else {
-          console.warn('API response.data is not in expected format:', interestsData)
+          console.warn('API response.data format:', responseData)
           processedData = []
         }
         
+        console.log(`✅ InterestsContext: ${processedData.length}件のお気に入りを取得`)
         setInterests(processedData)
       } else {
         throw new Error(response.error?.message || '気になるリストの取得に失敗しました')
@@ -128,14 +128,39 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
 
   // 初期データ読み込み（認証完了後のみ）
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // セッション同期を待つため少し遅延
-      const timer = setTimeout(() => {
-        fetchInterests()
-      }, 100)
-      return () => clearTimeout(timer)
+    if (isAuthenticated && user && session) {
+      fetchInterests()
     }
-  }, [fetchInterests, isAuthenticated, user])
+  }, [fetchInterests, isAuthenticated, user, session])
+
+  // ページ変更時の再取得（Next.jsルーティング対応）
+  useEffect(() => {
+    const handleRouteChange = () => {
+      if (isAuthenticated && user && session) {
+        console.log('🔄 ページ遷移: お気に入りリストを再取得')
+        fetchInterests()
+      }
+    }
+
+    // Next.jsのページ遷移を検知
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isAuthenticated && user && session) {
+        console.log('🔄 ページ表示: お気に入りリストを再取得')
+        fetchInterests()
+      }
+    }
+
+    // ページが表示状態になった時に再取得（タブ切り替え対応）
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    // ブラウザフォーカス時も念のため再取得
+    window.addEventListener('focus', handleRouteChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleRouteChange)
+    }
+  }, [isAuthenticated, user, session, fetchInterests])
 
   // お気に入りかどうかをチェック
   const isInterested = useCallback((targetUserId: string): boolean => {
@@ -171,28 +196,10 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
       const response = await api.interests.add(targetUserId, targetType)
 
       if (isSuccessResponse(response)) {
-        // ローカル状態を更新（新アーキテクチャ準拠）
-        const newLike: LikeItem = {
-          likerId: response.data.likerId || session.user.id,
-          targetId: response.data.targetId || targetUserId,
-          targetName: 'Unknown', // 実際の実装では詳細情報を取得
-          targetType: targetType,
-          targetAvatar: '',
-          createdAt: response.data.createdAt || new Date().toISOString(),
-          meta: {
-            architecture: 'new',
-            table: 'likes'
-          }
-        }
-        setInterests(prev => {
-          if (!Array.isArray(prev)) {
-            console.warn('Previous interests is not an array, resetting:', prev)
-            return [newLike]
-          }
-          return [...prev, newLike]
-        })
+        // サーバーから最新データを再取得して確実に同期
+        await fetchInterests()
         
-        console.log('Like added:', newLike)
+        console.log('Like added and data refreshed:', targetUserId)
         return true
       } else {
         throw new Error(response.error?.message || 'お気に入りの追加に失敗しました')
@@ -225,16 +232,10 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
       const response = await api.interests.remove(targetUserId)
 
       if (isSuccessResponse(response)) {
-        // ローカル状態を更新（新アーキテクチャ準拠）
-        setInterests(prev => {
-          if (!Array.isArray(prev)) {
-            console.warn('Previous interests is not an array, resetting:', prev)
-            return []
-          }
-          return prev.filter(interest => interest.targetId !== targetUserId)
-        })
+        // サーバーから最新データを再取得して確実に同期
+        await fetchInterests()
         
-        console.log('Like removed:', targetUserId)
+        console.log('Like removed and data refreshed:', targetUserId)
         return true
       } else {
         throw new Error(response.error?.message || 'お気に入りの削除に失敗しました')

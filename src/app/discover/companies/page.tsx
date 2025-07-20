@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 
 export default function DiscoverCompaniesPage() {
   const { user, isAuthenticated } = useAuth()
-  const { isInterested, toggleInterest } = useInterests()
+  const { isInterested, toggleInterest, refetchInterests } = useInterests()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRevenueRange, setSelectedRevenueRange] = useState('')
@@ -136,8 +136,10 @@ export default function DiscoverCompaniesPage() {
     
     if (isAuthenticated) {
       fetchCompanies()
+      // ページ表示時にお気に入り状態も再取得
+      refetchInterests()
     }
-  }, [isAuthenticated, router, fetchCompanies])
+  }, [isAuthenticated, router, fetchCompanies, refetchInterests])
 
 
   const showToastMessage = (message: string) => {
