@@ -247,12 +247,6 @@ export default function DiscoverCFOsPage() {
 
   const handleInterested = async (cfo: any) => {
     try {
-      console.log('🔄 お気に入り操作開始:', {
-        cfoId: cfo.id,
-        cfoName: cfo.name,
-        isAuthenticated,
-        userType: user?.userType
-      })
       
       const success = await toggleInterest(cfo.id, 'cfo')
       

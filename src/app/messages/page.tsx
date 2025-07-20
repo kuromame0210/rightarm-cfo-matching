@@ -49,7 +49,6 @@ function MessagesContent() {
   // 会話一覧を取得
   const fetchConversations = useCallback(async (preserveSelection = false) => {
     if (!isAuthenticated) {
-      console.log('ユーザーが認証されていません')
       setLoading(false)
       return
     }
@@ -97,20 +96,17 @@ function MessagesContent() {
   const fetchMessages = useCallback(async (conversationId: string) => {
     // 一時的な会話IDの場合はメッセージを空にする
     if (conversationId.startsWith('temp_')) {
-      console.log('一時的な会話IDのため、メッセージを空に設定:', conversationId)
       setMessages([])
       return
     }
     
     try {
-      console.log('メッセージを取得中:', conversationId)
       const response = await fetch(`/api/messages?conversationId=${conversationId}`)
       
       console.log('メッセージAPI レスポンス status:', response.status)
       
       if (response.ok) {
         const data = await response.json()
-        console.log('メッセージ:', data)
         if (data.success) {
           setMessages(data.data.messages || [])
         } else {
@@ -141,7 +137,6 @@ function MessagesContent() {
         // メッセージボタンからの場合はユーザー入力のみ送信
         const initialMessage = messageInput.trim()
         
-        console.log('新規会話でメッセージ送信中:', initialMessage)
         const response = await fetch('/api/conversations', {
           method: 'POST',
           headers: {
@@ -155,7 +150,6 @@ function MessagesContent() {
         
         if (response.ok) {
           const data = await response.json()
-          console.log('新規会話作成とメッセージ送信成功:', data)
           if (data.success) {
             setMessageInput('')
             // 会話一覧を再取得して新しい会話を選択
@@ -176,7 +170,6 @@ function MessagesContent() {
     // 既存の会話がある場合は通常のメッセージ送信
     else if (selectedChatId) {
       try {
-        console.log('メッセージ送信中:', messageInput)
         const response = await fetch('/api/messages', {
           method: 'POST',
           headers: {
@@ -190,7 +183,6 @@ function MessagesContent() {
         
         if (response.ok) {
           const data = await response.json()
-          console.log('メッセージ送信成功:', data)
           if (data.success) {
             // メッセージリストに新しいメッセージを追加
             setMessages(prev => [...prev, data.data])
@@ -228,7 +220,6 @@ function MessagesContent() {
     // 会話作成フラグを設定して、チャット画面を表示
     setCreatingConversation(true)
     try {
-      console.log('新しい会話を準備中:', userIdToUse)
       
       // 一時的な会話IDを生成（実際のメッセージが送信されるまで使用）
       const tempConversationId = `temp_${userIdToUse}`

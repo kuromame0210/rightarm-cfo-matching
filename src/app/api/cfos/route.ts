@@ -136,18 +136,6 @@ export async function GET(request: NextRequest) {
 
     const { data: cfos, error, count } = await query
 
-    // デバッグ情報を追加
-    console.log('CFO API Debug:', {
-      table: TABLES.CFO_PROFILES,
-      count: count,
-      dataLength: cfos?.length || 0,
-      error: error,
-      actualData: cfos?.map(cfo => ({
-        id: cfo.cfo_user_id,
-        user_id: cfo.cfo_user_id,
-        keys: Object.keys(cfo)
-      }))
-    })
 
     if (error) {
       console.error('CFOs fetch error:', error)

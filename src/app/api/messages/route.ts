@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log('💬 メッセージ一覧API - 新アーキテクチャ版')
 
     const userId = session.user.id
     const { searchParams } = new URL(request.url)
@@ -63,7 +62,6 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log(`✅ メッセージ取得成功: ${messages?.length || 0}件`)
 
     // 会話一覧形式での取得要求の場合
     if (msgType === 'conversations') {
@@ -163,7 +161,6 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    console.log(`✅ メッセージ取得成功: ${messages?.length || 0}件`)
 
     // 🚀 N+1クエリ解決: ユーザー情報をバッチ取得
     const allUserIds = (messages || []).flatMap(m => [m.sender_id, m.receiver_id])
@@ -287,7 +284,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log(`📊 メッセージ統計: ${enrichedMessages.length}件, 会話数: ${Object.keys(conversations).length}`)
 
     return NextResponse.json(response)
 
@@ -331,7 +327,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('💬 メッセージ送信:', { from: userId, to: targetReceiverId, type: msgType })
 
     // 新アーキテクチャ: messages テーブルに挿入
     const { data: newMessage, error: insertError } = await supabaseAdmin
@@ -353,7 +348,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('✅ メッセージ送信成功:', newMessage.msg_id)
 
     return NextResponse.json({
       success: true,
