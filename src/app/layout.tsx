@@ -19,9 +19,6 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <head>
-        <link rel="prefetch" as="script" href="/_next/static/chunks/app/scout/page.js" />
-        <link rel="prefetch" as="script" href="/_next/static/chunks/app/messages/page.js" />
-        <link rel="prefetch" as="script" href="/_next/static/chunks/app/meetings/page.js" />
       </head>
       <body className="antialiased">
         <Providers>
