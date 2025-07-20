@@ -17,8 +17,6 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log('🎯 スカウト一覧API - 新アーキテクチャ版')
-
     const userId = session.user.id
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') // 'received' or 'sent'
@@ -51,8 +49,6 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       )
     }
-
-    console.log(`✅ スカウト取得成功: ${scoutMessages?.length || 0}件`)
 
     // 送信者・受信者の詳細情報を取得
     const enrichedScouts = await Promise.all(
@@ -231,8 +227,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log(`📊 スカウト統計: 受信${receivedScouts.length}件, 送信${sentScouts.length}件`)
-
     return NextResponse.json(response)
 
   } catch (error) {
@@ -271,8 +265,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('🎯 スカウト送信:', { from: userId, to: targetReceiverId })
-
     // 新アーキテクチャ: messages テーブルに msg_type='scout' で挿入
     const { data: scoutMessage, error: insertError } = await supabaseAdmin
       .from(TABLES.MESSAGES)
@@ -292,8 +284,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
-
-    console.log('✅ スカウト送信成功:', scoutMessage.msg_id)
 
     return NextResponse.json({
       success: true,

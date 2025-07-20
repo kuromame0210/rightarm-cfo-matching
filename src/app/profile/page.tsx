@@ -190,10 +190,8 @@ export default function ProfilePage() {
   // マスターデータ取得は useMasterData フックで統一処理
 
   const handleInputChange = useCallback((field: string, value: string) => {
-    console.log(`📝 INPUT CHANGE: ${field} = "${value}"`)
     setFormData(prev => {
       const newData = { ...prev, [field]: value }
-      console.log('📋 更新後のフォームデータ:', newData)
       return newData
     })
   }, [])
@@ -222,12 +220,6 @@ export default function ProfilePage() {
       setIsSaving(true)
       setError('')
 
-      console.log('🚀 === PROFILE SAVE: 保存ボタン押下 ===')
-      console.log('📋 現在のフォームデータ:', JSON.stringify(formData, null, 2))
-      console.log('🖼️ プロフィール画像URL:', profileImageUrl)
-      console.log('👤 ユーザー情報:', user)
-      console.log('🚀 === useProfile フック経由で保存開始 ===')
-      console.log('🖼️ 保存前の画像URL:', profileImageUrl)
 
       // 新しいカラム構造に対応したプロフィール更新
       const result = await updateProfile({
@@ -260,8 +252,6 @@ export default function ProfilePage() {
       } as any)
 
       if (result.success) {
-        console.log('🎉 保存成功 - 画面に反映されるはずです')
-        console.log('🔄 保存後のプロフィール再取得...')
         setIsEditing(false)
         setShowToast(true)
         setTimeout(() => setShowToast(false), 3000)

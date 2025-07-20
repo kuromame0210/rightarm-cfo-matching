@@ -52,15 +52,10 @@ function MessagesContent() {
     }
 
     try {
-      console.log('会話一覧を取得中...')
       const response = await fetch('/api/conversations')
-      
-      console.log('会話一覧API レスポンス status:', response.status)
       
       if (response.ok) {
         const data = await response.json()
-        console.log('会話一覧:', data)
-        console.log('会話一覧の詳細データ:', JSON.stringify(data.data, null, 2))
         if (data.success) {
           setChatList(data.data || [])
           
@@ -74,13 +69,11 @@ function MessagesContent() {
             const targetConversation = data.data.find((conv: any) => 
               conv.otherUserId === targetUserId
             )
-            console.log('ターゲット会話:', targetConversation)
             if (targetConversation) {
               setSelectedChatId(targetConversation.id.toString())
             }
           } else if (data.data && data.data.length > 0) {
             // 最初の会話を選択（preserveSelectionがfalseの場合のみ）
-            console.log('最初の会話を選択:', data.data[0])
             setSelectedChatId(data.data[0].id.toString())
           }
         }

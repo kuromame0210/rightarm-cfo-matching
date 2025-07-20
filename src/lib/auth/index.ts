@@ -7,12 +7,6 @@ import { supabaseAdmin, TABLES } from '@/lib/supabase'
 import { createClient } from '@supabase/supabase-js'
 
 // 🔍 NextAuth環境変数診断
-console.log('🔍 NextAuth環境変数診断:')
-console.log(`  NEXTAUTH_SECRET: ${process.env.NEXTAUTH_SECRET ? '✅ 設定済み (' + process.env.NEXTAUTH_SECRET.length + '文字)' : '❌ 未設定'}`)
-console.log(`  NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || '❌ 未設定'}`)
-console.log(`  NODE_ENV: ${process.env.NODE_ENV}`)
-console.log(`  Cookie Secure設定: ${process.env.NODE_ENV === "production" ? 'true (本番)' : 'false (開発)'}`)
-
 // ===== 型定義（削除：NextAuth.jsの型拡張を使用）=====
 
 // ===== JWT関連（削除：NextAuth.jsが処理）=====
@@ -47,13 +41,11 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!credentials?.email || !credentials?.password) {
-          console.log('🚨 NextAuth: 認証情報不足')
           return null
         }
 
         try {
           // Supabase Auth でユーザー検索
-          console.log('🔍 NextAuth: Supabase Auth ユーザー検索開始', { email: credentials.email })
           
           // 一時的なクライアントでパスワード検証
           const tempClient = createClient(
@@ -67,11 +59,8 @@ export const authOptions: NextAuthOptions = {
           })
 
           if (signInError || !signInData.user) {
-            console.log('🚨 NextAuth: パスワード検証失敗', signInError?.message)
             return null
           }
-
-          console.log('✅ NextAuth: パスワード検証成功')
           const user = signInData.user
 
           // プロフィール情報を取得（CFOまたは企業）
@@ -81,7 +70,6 @@ export const authOptions: NextAuthOptions = {
           // まずメタデータのroleをチェック（最優先）
           if (user.user_metadata?.role === 'cfo' || user.user_metadata?.role === 'company') {
             userType = user.user_metadata.role
-            console.log('🏷️ NextAuth: メタデータからuserType取得:', userType)
           }
           
           // CFOプロフィールを確認
@@ -124,7 +112,6 @@ export const authOptions: NextAuthOptions = {
             status: 'active' // Supabase Auth ユーザーは基本的にアクティブ
           }
 
-          console.log('✅ NextAuth: 認証成功 - ユーザー情報返却', userResult)
           return userResult
         } catch (error) {
           console.error('Auth error:', error)

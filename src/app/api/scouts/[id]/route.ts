@@ -22,10 +22,6 @@ export async function GET(
     const resolvedParams = await params
     const scoutId = resolvedParams.id
 
-    console.log('🔍 Scout GET Debug Info:')
-    console.log('- Scout ID:', scoutId, 'Type:', typeof scoutId)
-    console.log('- User ID:', user.id, 'Type:', typeof user.id)
-
     // 新アーキテクチャ: messages テーブルから msg_type='scout' で取得
     const { data: scout, error } = await supabaseAdmin
       .from(TABLES.MESSAGES)
@@ -33,9 +29,6 @@ export async function GET(
       .eq('msg_id', scoutId)
       .eq('msg_type', 'scout')
       .single()
-
-    console.log('- GET Query result:', scout)
-    console.log('- GET Query error:', error)
 
     if (error) {
       console.error('スカウト取得エラー:', error)
@@ -209,12 +202,6 @@ export async function PATCH(
       return createErrorResponse('有効なステータスを指定してください', { status: 400 })
     }
 
-    // デバッグ情報を追加
-    console.log('🔍 Scout PATCH Debug Info:')
-    console.log('- Scout ID:', scoutId, 'Type:', typeof scoutId)
-    console.log('- User ID:', user.id, 'Type:', typeof user.id)
-    console.log('- Status:', status)
-
     // 新アーキテクチャ: まずスカウトが存在することを確認
     const { data: scoutCheck, error: scoutCheckError } = await supabaseAdmin
       .from(TABLES.MESSAGES)
@@ -222,9 +209,6 @@ export async function PATCH(
       .eq('msg_id', scoutId)
       .eq('msg_type', 'scout')
       .single()
-
-    console.log('- Scout existence check:', scoutCheck)
-    console.log('- Scout check error:', scoutCheckError)
 
     if (scoutCheckError || !scoutCheck) {
       return createErrorResponse('スカウトが見つかりません', { 
@@ -239,11 +223,6 @@ export async function PATCH(
 
     // 現在のユーザーがスカウトの受信者であることを確認
     if (scoutCheck.receiver_id !== user.id) {
-      console.log('- Access denied: User is not the receiver')
-      console.log('- Scout sender_id:', scoutCheck.sender_id)
-      console.log('- Scout receiver_id:', scoutCheck.receiver_id)
-      console.log('- Current user_id:', user.id)
-      
       return createErrorResponse('このスカウトに対する承諾・辞退権限がありません', { 
         status: 403,
         debug: {
@@ -286,8 +265,6 @@ export async function PATCH(
         }
       })
     }
-
-    console.log('✅ スカウト返信送信成功:', responseMessage.msg_id)
 
     return createSuccessResponse(
       { 
