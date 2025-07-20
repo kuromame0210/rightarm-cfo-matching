@@ -16,22 +16,53 @@ export function useAuth() {
     if (profileSetupRequired !== null) return // 既にチェック済み
     
     async function checkProfileSetup() {
+      const checkId = Math.random().toString(36).substr(2, 9)
+      console.log(`🔍 useAuth[${checkId}]: checkProfileSetup start`, {
+        hasSession: !!session?.user,
+        status,
+        userEmail: session?.user?.email,
+        userType: session?.user?.userType,
+        timestamp: new Date().toISOString()
+      })
+
       if (!session?.user || status !== 'authenticated') {
+        console.log(`⏭️ useAuth[${checkId}]: Skipping profile check - not authenticated`)
         setProfileSetupRequired(null)
         return
       }
 
       try {
+        console.log(`📡 useAuth[${checkId}]: Calling /api/profile for profile setup check`)
         const response = await fetch('/api/profile')
+        console.log(`📡 useAuth[${checkId}]: Profile check response:`, {
+          status: response.status,
+          ok: response.ok,
+          statusText: response.statusText,
+          url: response.url
+        })
         
         if (response.ok) {
+          console.log(`✅ useAuth[${checkId}]: Profile exists, setup not required`)
           setProfileSetupRequired(false) // プロフィール存在
         } else if (response.status === 404) {
+          console.log(`❌ useAuth[${checkId}]: Profile not found, setup required`)
           setProfileSetupRequired(true) // プロフィール未作成
         } else {
+          console.log(`⚠️ useAuth[${checkId}]: Profile check error status:`, response.status)
+          try {
+            const errorData = await response.text()
+            console.log(`⚠️ useAuth[${checkId}]: Error response body:`, errorData)
+          } catch (e) {
+            console.log(`⚠️ useAuth[${checkId}]: Could not read error response body`)
+          }
           setProfileSetupRequired(null) // エラー状態
         }
       } catch (error) {
+        console.error(`❌ useAuth[${checkId}]: Profile check error:`, {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        })
         setProfileSetupRequired(null)
       }
     }
