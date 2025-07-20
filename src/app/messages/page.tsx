@@ -156,7 +156,7 @@ function MessagesContent() {
               const scoutData = await scoutResponse.json()
               if (scoutData.success) {
                 const scout = scoutData.data
-                const scoutMessageText = `【スカウト】${scout.title || 'スカウト'}\n\n${scout.message || ''}`
+                const scoutMessageText = `【スカウト】\n\n${scout.message || scout.title || ''}`
                 initialMessage = scoutMessageText
                 console.log('スカウトメッセージを最初のメッセージとして設定:', scoutMessageText)
               }
@@ -289,7 +289,7 @@ function MessagesContent() {
         const scoutData = await scoutResponse.json()
         if (scoutData.success) {
           const scout = scoutData.data
-          const scoutMessageText = `【スカウト】${scout.title || 'スカウト'}\n\n${scout.message || ''}`
+          const scoutMessageText = `【スカウト】\n\n${scout.message || scout.title || ''}`
           
           // スカウトメッセージを会話に追加
           const messageResponse = await fetch('/api/messages', {

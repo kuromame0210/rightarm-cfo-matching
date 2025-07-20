@@ -140,16 +140,30 @@ export async function GET(request: NextRequest) {
           .eq('msg_type', 'chat')
           .gt('sent_at', scout.sent_at)
           .order('sent_at', { ascending: false })
-          .limit(1)
         
         if (responses && responses.length > 0) {
-          const response = responses[0]
-          if (response.body.includes('スカウトを承諾しました')) {
-            status = 'accepted'
-            responseMessage = response.body
-          } else if (response.body.includes('スカウトをお断りしました')) {
+          // 承諾メッセージを優先して検索（一度承諾されたら確定）
+          let hasAccepted = false
+          let hasDeclined = false
+          
+          for (const response of responses) {
+            const body = response.body?.toLowerCase() || ''
+            if (body.includes('スカウトを承諾しました') || body.includes('スカウトを承諾')) {
+              hasAccepted = true
+              status = 'accepted'
+              responseMessage = response.body
+              // 承諾が見つかったら即座に確定
+              break
+            } else if (body.includes('スカウトをお断りしました') || body.includes('スカウトを辞退')) {
+              hasDeclined = true
+              status = 'declined'
+              responseMessage = response.body
+            }
+          }
+          
+          // 承諾がない場合のみ辞退状態を適用
+          if (!hasAccepted && hasDeclined) {
             status = 'declined'
-            responseMessage = response.body
           }
         }
 
@@ -182,7 +196,6 @@ export async function GET(request: NextRequest) {
           
           // UIで必要な追加フィールド
           receivedAt: isReceived ? scout.sent_at : null,
-          sentAt: !isReceived ? scout.sent_at : null,
           avatar: isReceived ? senderInfo?.avatar || '❓' : receiverInfo?.avatar || '❓',
           
           // 新アーキテクチャメタ情報
