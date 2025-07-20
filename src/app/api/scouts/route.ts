@@ -131,10 +131,10 @@ export async function GET(request: NextRequest) {
         const { data: responses } = await supabaseAdmin
           .from(TABLES.MESSAGES)
           .select('body, sent_at')
-          .eq('sender_id', scout.receiver_id)
-          .eq('receiver_id', scout.sender_id)
+          .eq('sender_id', String(scout.receiver_id))
+          .eq('receiver_id', String(scout.sender_id))
           .eq('msg_type', 'chat')
-          .gt('sent_at', scout.sent_at)
+          .gt('sent_at', String(scout.sent_at))
           .order('sent_at', { ascending: false })
         
         if (responses && responses.length > 0) {
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
           let hasDeclined = false
           
           for (const response of responses) {
-            const body = response.body?.toLowerCase() || ''
+            const body = String(response.body || '').toLowerCase()
             if (body.includes('スカウトを承諾しました') || body.includes('スカウトを承諾')) {
               hasAccepted = true
               status = 'accepted'

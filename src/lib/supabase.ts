@@ -77,7 +77,7 @@ export const getSupabaseAdmin = () => {
       throw new Error('SUPABASE_SERVICE_ROLE_KEY is required for production.')
     }
     // 開発環境では匿名キーでフォールバック（制限された機能）
-    supabaseAdminInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    supabaseAdminInstance = createClient(supabaseUrl || '', supabaseAnonKey || '', {
       auth: {
         autoRefreshToken: false,
         persistSession: false
@@ -86,7 +86,7 @@ export const getSupabaseAdmin = () => {
     return supabaseAdminInstance
   }
 
-  supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  supabaseAdminInstance = createClient(supabaseUrl || '', supabaseServiceRoleKey || '', {
     auth: {
       autoRefreshToken: false,
       persistSession: false

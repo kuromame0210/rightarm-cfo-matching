@@ -53,23 +53,23 @@ export async function GET(_request: NextRequest) {
 
         if (cfoProfile) {
           targetInfo = {
-            name: cfoProfile.cfo_display_name || cfoProfile.cfo_name || 'CFO',
+            name: String(cfoProfile.cfo_display_name || cfoProfile.cfo_name || 'CFO'),
             type: 'cfo',
-            avatar: cfoProfile.avatar_url || '👤'
+            avatar: String(cfoProfile.avatar_url || '👤')
           }
         } else {
           // 企業プロフィールを確認
           const { data: bizProfile } = await supabaseAdmin
             .from(TABLES.BIZ_PROFILES)
             .select('biz_company_name, avatar_url')
-            .eq('biz_user_id', like.target_id)
+            .eq('biz_user_id', String(like.target_id))
             .single()
 
           if (bizProfile) {
             targetInfo = {
-              name: bizProfile.biz_company_name || '企業',
+              name: String(bizProfile.biz_company_name || '企業'),
               type: 'company',
-              avatar: bizProfile.avatar_url || '🏢'
+              avatar: String(bizProfile.avatar_url || '🏢')
             }
           }
         }

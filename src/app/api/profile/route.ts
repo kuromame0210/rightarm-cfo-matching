@@ -49,8 +49,8 @@ export async function GET(request: NextRequest) {
           name: data.cfo_display_name || data.cfo_name || session.user.email?.split('@')[0] || 'CFOユーザー',
           location: data.cfo_location || '',
           availability: data.cfo_availability || '',
-          feeMin: data.cfo_fee_min ? Math.floor(data.cfo_fee_min / 10000) : null, // 円を万円に変換
-          feeMax: data.cfo_fee_max ? Math.floor(data.cfo_fee_max / 10000) : null,
+          feeMin: data.cfo_fee_min ? Math.floor(Number(data.cfo_fee_min) / 10000) : null, // 円を万円に変換
+          feeMax: data.cfo_fee_max ? Math.floor(Number(data.cfo_fee_max) / 10000) : null,
           skills: data.cfo_skills || [],
           rawProfile: data.cfo_raw_profile || '',
           // 新しいカラムから直接データを取得
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
           revenueMax: data.biz_revenue_max,
           issues: data.biz_issues || [],
           // 企業の4項目に対応（カラムが存在しない場合は既存データから生成）
-          description: data.biz_description || data.biz_raw_profile?.substring(0, 500) || '',
+          description: data.biz_description || String(data.biz_raw_profile || '').substring(0, 500) || '',
           revenueRange: data.biz_revenue_range || (data.biz_revenue_min && data.biz_revenue_max ? 
             `${data.biz_revenue_min}円 〜 ${data.biz_revenue_max}円` : ''),
           challengeBackground: data.biz_challenge_background || (data.biz_issues && Array.isArray(data.biz_issues) && data.biz_issues.length > 0 ? 

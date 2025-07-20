@@ -120,10 +120,10 @@ export async function GET(
     const { data: responses } = await supabaseAdmin
       .from(TABLES.MESSAGES)
       .select('body, sent_at')
-      .eq('sender_id', scout.receiver_id)
-      .eq('receiver_id', scout.sender_id)
+      .eq('sender_id', String(scout.receiver_id))
+      .eq('receiver_id', String(scout.sender_id))
       .eq('msg_type', 'chat')
-      .gt('sent_at', scout.sent_at)
+      .gt('sent_at', String(scout.sent_at))
       .order('sent_at', { ascending: false })
     
     if (responses && responses.length > 0) {
@@ -132,7 +132,7 @@ export async function GET(
       let hasDeclined = false
       
       for (const response of responses) {
-        const body = response.body?.toLowerCase() || ''
+        const body = String(response.body || '').toLowerCase()
         if (body.includes('スカウトを承諾しました') || body.includes('スカウトを承諾')) {
           hasAccepted = true
           status = 'accepted'
@@ -199,11 +199,11 @@ export async function GET(
     // プロフィール情報から表示用データを生成
     const formatCompensationFromProfile = () => {
       if (cfoProfileData?.cfo_fee_min && cfoProfileData?.cfo_fee_max) {
-        const minMan = Math.floor(cfoProfileData.cfo_fee_min / 10000)
-        const maxMan = Math.floor(cfoProfileData.cfo_fee_max / 10000)
+        const minMan = Math.floor(Number(cfoProfileData.cfo_fee_min) / 10000)
+        const maxMan = Math.floor(Number(cfoProfileData.cfo_fee_max) / 10000)
         return `${minMan}万円〜${maxMan}万円`
       } else if (cfoProfileData?.cfo_fee_min) {
-        const minMan = Math.floor(cfoProfileData.cfo_fee_min / 10000)
+        const minMan = Math.floor(Number(cfoProfileData.cfo_fee_min) / 10000)
         return `${minMan}万円〜`
       }
       return '相談'
@@ -241,8 +241,8 @@ export async function GET(
       // ステータス
       status: status,
       // 表示用フィールド
-      title: scout.body?.split('\n')[0] || 'スカウト',
-      message: scout.body || 'メッセージがありません',
+      title: String(scout.body || '').split('\n')[0] || 'スカウト',
+      message: String(scout.body || '') || 'メッセージがありません',
       // 詳細情報
       cfo_profile: cfoProfileData,
       biz_profile: bizProfileData,

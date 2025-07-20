@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       const conversations: Record<string, any> = {}
       
       for (const message of messages || []) {
-        const otherUserId = message.sender_id === userId ? message.receiver_id : message.sender_id
+        const otherUserId = String(message.sender_id === userId ? message.receiver_id : message.sender_id)
         
         if (!conversations[otherUserId]) {
           conversations[otherUserId] = {
@@ -92,9 +92,9 @@ export async function GET(request: NextRequest) {
         
         // 最新メッセージを設定
         if (!conversations[otherUserId].lastMessage || 
-            new Date(message.sent_at) > new Date(conversations[otherUserId].lastMessage.sent_at)) {
+            new Date(String(message.sent_at)) > new Date(String(conversations[otherUserId].lastMessage.sent_at))) {
           conversations[otherUserId].lastMessage = {
-            content: message.body,
+            content: String(message.body),
             sent_at: message.sent_at
           }
         }
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
             .single()
 
           if (cfoProfile) {
-            otherUserName = cfoProfile.cfo_display_name || cfoProfile.cfo_name || 'CFO'
+            otherUserName = String(cfoProfile.cfo_display_name || cfoProfile.cfo_name || 'CFO')
             otherUserType = 'cfo'
             otherProfileId = conv.otherUserId
           } else {
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
               .single()
 
             if (bizProfile) {
-              otherUserName = bizProfile.biz_company_name || '企業'
+              otherUserName = String(bizProfile.biz_company_name || '企業')
               otherUserType = 'company'
               otherProfileId = conv.otherUserId
             }
@@ -256,7 +256,7 @@ export async function GET(request: NextRequest) {
     // 会話をグループ化（otherUserIdごと）
     const conversations: Record<string, any> = {}
     enrichedMessages.forEach(msg => {
-      const key = msg.otherUserId
+      const key = String(msg.otherUserId)
       if (!conversations[key]) {
         conversations[key] = {
           otherUserId: msg.otherUserId,
@@ -271,7 +271,7 @@ export async function GET(request: NextRequest) {
       conversations[key].messages.push(msg)
       
       // 最新メッセージで上書き（既にsent_atでソート済み）
-      if (new Date(msg.sentAt) > new Date(conversations[key].lastMessage.sentAt)) {
+      if (new Date(String(msg.sentAt)) > new Date(String(conversations[key].lastMessage.sentAt))) {
         conversations[key].lastMessage = msg
       }
     })
@@ -395,10 +395,10 @@ export async function POST(request: NextRequest) {
               console.error('🚨 添付ファイル記録エラー:', attachmentError)
             } else {
               uploadedAttachments.push({
-                file_id: attachmentRecord.file_id,
-                file_url: attachmentRecord.file_url,
-                file_name: attachmentRecord.file_name || attachment.name,
-                file_size: attachment.size
+                file_id: Number(attachmentRecord.file_id),
+                file_url: String(attachmentRecord.file_url),
+                file_name: String(attachmentRecord.file_name || attachment.name),
+                file_size: Number(attachment.size)
               })
             }
           } else {

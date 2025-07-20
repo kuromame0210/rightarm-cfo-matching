@@ -108,7 +108,7 @@ export const authOptions: NextAuthOptions = {
               : (userType === 'company' && profile)
               ? (profile as any).biz_company_name || user.email?.split('@')[0] || 'ユーザー'
               : user.email?.split('@')[0] || 'ユーザー',
-            image: profile?.avatar_url || null,
+            image: String(profile?.avatar_url) || undefined,
             userType: userType as 'company' | 'cfo',
             status: 'active' // Supabase Auth ユーザーは基本的にアクティブ
           }
