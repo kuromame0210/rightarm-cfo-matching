@@ -13,23 +13,27 @@ export function useAuth() {
 
   // プロフィール作成状況をチェック（一度だけ実行）
   useEffect(() => {
-    if (profileSetupRequired !== null) return // 既にチェック済み
-    
+    // 認証状態でない場合は早期リターン
+    if (!session?.user || status !== 'authenticated') {
+      setProfileSetupRequired(null)
+      return
+    }
+
+    // すでにチェック済みなら実行しない
+    if (profileSetupRequired !== null) {
+      return
+    }
+
     async function checkProfileSetup() {
       const checkId = Math.random().toString(36).substr(2, 9)
-      console.log(`🔍 useAuth[${checkId}]: checkProfileSetup start`, {
+      console.log(`🔍 useAuth[${checkId}]: checkProfileSetup start (delayed 500ms)`, {
         hasSession: !!session?.user,
         status,
         userEmail: session?.user?.email,
         userType: session?.user?.userType,
+        profileSetupRequired,
         timestamp: new Date().toISOString()
       })
-
-      if (!session?.user || status !== 'authenticated') {
-        console.log(`⏭️ useAuth[${checkId}]: Skipping profile check - not authenticated`)
-        setProfileSetupRequired(null)
-        return
-      }
 
       try {
         console.log(`📡 useAuth[${checkId}]: Calling /api/profile for profile setup check`)
@@ -55,7 +59,8 @@ export function useAuth() {
           } catch (e) {
             console.log(`⚠️ useAuth[${checkId}]: Could not read error response body`)
           }
-          setProfileSetupRequired(null) // エラー状態
+          // 500エラーの場合は再試行せずに一旦null（未確定）状態にする
+          setProfileSetupRequired(null)
         }
       } catch (error) {
         console.error(`❌ useAuth[${checkId}]: Profile check error:`, {
@@ -67,8 +72,13 @@ export function useAuth() {
       }
     }
 
-    checkProfileSetup()
-  }, [session, status, profileSetupRequired])
+    // セッションが完全に確立されるまで少し待機（認証トークンの設定待ち）
+    const timer = setTimeout(() => {
+      checkProfileSetup()
+    }, 500) // 500ms待機してからAPI呼び出し
+
+    return () => clearTimeout(timer)
+  }, [session?.user?.id, status]) // 依存関係を最小限に変更
 
   // 認証状態の変化をログ出力（デバッグ用）
   useEffect(() => {
