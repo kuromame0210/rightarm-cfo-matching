@@ -146,14 +146,24 @@ export async function GET(request: NextRequest) {
     }
 
     if (profileError) {
-      console.error(`❌ API[${requestId}] Profile fetch error:`, {
+      console.error(`❌ API[${requestId}] Supabase Profile fetch error:`, {
         code: profileError.code,
         message: profileError.message,
         details: profileError.details,
-        hint: profileError.hint
+        hint: profileError.hint,
+        userId: userId,
+        userType: session.user.userType,
+        table: session.user.userType === 'cfo' ? TABLES.CFO_PROFILES : TABLES.BIZ_PROFILES,
+        timestamp: new Date().toISOString()
       })
+      
+      // Supabaseエラーの詳細をクライアントに返す（開発環境のみ）
+      const errorDetail = process.env.NODE_ENV === 'development' ? 
+        `${profileError.message} (${profileError.code})` : 
+        'プロフィール情報の取得に失敗しました'
+      
       return NextResponse.json(
-        { success: false, error: 'プロフィール情報の取得に失敗しました' },
+        { success: false, error: errorDetail, debugInfo: process.env.NODE_ENV === 'development' ? profileError : undefined },
         { status: 500 }
       )
     }

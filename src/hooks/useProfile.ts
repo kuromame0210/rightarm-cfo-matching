@@ -154,17 +154,12 @@ export function useProfile() {
     }
   }, [fetchProfile])
 
-  // 初回ロード（認証確立後に少し待機）
+  // 初回ロード
   useEffect(() => {
     if (isAuthenticated && user) {
-      // 認証確立後に少し待機してからプロフィール取得
-      const timer = setTimeout(() => {
-        fetchProfile()
-      }, 1000) // 1秒待機
-
-      return () => clearTimeout(timer)
+      fetchProfile()
     }
-  }, [isAuthenticated, user?.id]) // user.idに変更して安定化
+  }, [isAuthenticated, user?.id, fetchProfile]) // 依存関係を正確に指定
 
   return {
     profile,

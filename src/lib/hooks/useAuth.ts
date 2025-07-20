@@ -23,10 +23,10 @@ export function useAuth() {
     if (profileSetupRequired !== null) {
       return
     }
-
+    
     async function checkProfileSetup() {
       const checkId = Math.random().toString(36).substr(2, 9)
-      console.log(`🔍 useAuth[${checkId}]: checkProfileSetup start (delayed 500ms)`, {
+      console.log(`🔍 useAuth[${checkId}]: checkProfileSetup start`, {
         hasSession: !!session?.user,
         status,
         userEmail: session?.user?.email,
@@ -54,16 +54,20 @@ export function useAuth() {
         } else {
           console.log(`⚠️ useAuth[${checkId}]: Profile check error status:`, response.status)
           try {
-            const errorData = await response.text()
-            console.log(`⚠️ useAuth[${checkId}]: Error response body:`, errorData)
+            const errorData = await response.json()
+            console.log(`⚠️ useAuth[${checkId}]: Error response:`, errorData)
+            // より詳細なSupabaseエラー情報をログ出力
+            if (errorData.debugInfo) {
+              console.log(`🔍 useAuth[${checkId}]: Supabase debug info:`, errorData.debugInfo)
+            }
           } catch (e) {
-            console.log(`⚠️ useAuth[${checkId}]: Could not read error response body`)
+            console.log(`⚠️ useAuth[${checkId}]: Could not parse error response`)
           }
           // 500エラーの場合は再試行せずに一旦null（未確定）状態にする
           setProfileSetupRequired(null)
         }
       } catch (error) {
-        console.error(`❌ useAuth[${checkId}]: Profile check error:`, {
+        console.error(`❌ useAuth[${checkId}]: Profile check network error:`, {
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
           timestamp: new Date().toISOString()
@@ -72,12 +76,7 @@ export function useAuth() {
       }
     }
 
-    // セッションが完全に確立されるまで少し待機（認証トークンの設定待ち）
-    const timer = setTimeout(() => {
-      checkProfileSetup()
-    }, 500) // 500ms待機してからAPI呼び出し
-
-    return () => clearTimeout(timer)
+    checkProfileSetup()
   }, [session?.user?.id, status]) // 依存関係を最小限に変更
 
   // 認証状態の変化をログ出力（デバッグ用）
