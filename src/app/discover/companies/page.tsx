@@ -13,10 +13,7 @@ export default function DiscoverCompaniesPage() {
   const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [selectedRegion, setSelectedRegion] = useState('')
-  const [selectedWorkStyle, setSelectedWorkStyle] = useState('')
-  const [selectedCompensation, setSelectedCompensation] = useState('')
+  const [selectedRevenueRange, setSelectedRevenueRange] = useState('')
   const [sortBy, setSortBy] = useState('newest')
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [interestedCompanies, setInterestedCompanies] = useState<number[]>([])
@@ -33,67 +30,21 @@ export default function DiscoverCompaniesPage() {
     totalPages: 0
   })
 
-  // マスターデータの状態管理
-  const [challengeTags, setChallengeTags] = useState<string[]>([])
-  const [regions, setRegions] = useState<any[]>([])
-  const [workStyles, setWorkStyles] = useState<any[]>([])
-  const [compensationRanges, setCompensationRanges] = useState<string[]>([])
-  const [masterDataLoading, setMasterDataLoading] = useState(true)
+  // 企業が実際に設定可能な年商範囲
+  const revenueRanges = [
+    { value: '', label: 'すべて' },
+    { value: 'under_100m', label: '1億円未満' },
+    { value: '100m_1b', label: '1〜10億円' },
+    { value: '1b_10b', label: '10〜30億円' },
+    { value: '10b_30b', label: '30〜50億円' },
+    { value: 'over_50b', label: '50億円以上' },
+    { value: 'private', label: '非公開' }
+  ]
   const sortOptions = [
     { value: 'newest', label: '新着順' },
-    { value: 'compensation_high', label: '報酬高順' },
-    { value: 'company_size', label: '企業規模順' },
-    { value: 'urgency', label: '緊急度順' }
+    { value: 'company_name', label: '会社名順' }
   ]
 
-  // マスターデータ取得
-  const fetchMasterData = async () => {
-    try {
-      setMasterDataLoading(true)
-      
-      // 並列でマスターデータを取得
-      const [skillsRes, regionsRes, workStylesRes] = await Promise.all([
-        fetch('/api/master/skills?category=finance'),
-        fetch('/api/master/regions?popular=true'),
-        fetch('/api/master/work-styles?popular=true')
-      ])
-
-      if (skillsRes.ok) {
-        const skillsData = await skillsRes.json()
-        if (skillsData.success) {
-          // 課題タグとしてスキル名を使用
-          const tags = skillsData.data.skills?.map((skill: any) => skill.name) || []
-          setChallengeTags(tags)
-        }
-      }
-
-      if (regionsRes.ok) {
-        const regionsData = await regionsRes.json()
-        if (regionsData.success) {
-          setRegions(regionsData.data.regions || [])
-        }
-      }
-
-      if (workStylesRes.ok) {
-        const workStylesData = await workStylesRes.json()
-        if (workStylesData.success) {
-          setWorkStyles(workStylesData.data.workStyles || [])
-        }
-      }
-
-      // 報酬レンジは一旦固定（将来的にはマスターデータ化）
-      setCompensationRanges(['〜50万円', '50〜100万円', '100〜150万円', '150〜200万円', '200万円〜'])
-
-    } catch (error) {
-      console.error('Master data fetch error:', error)
-    } finally {
-      setMasterDataLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchMasterData()
-  }, [])
 
   // 企業データをAPIから取得する関数
   const fetchCompanies = useCallback(async () => {
@@ -106,8 +57,7 @@ export default function DiscoverCompaniesPage() {
       })
       
       if (searchQuery) params.append('search', searchQuery)
-      if (selectedRegion && selectedRegion !== '全国') params.append('region', selectedRegion)
-      if (selectedTags.length > 0) params.append('challenges', selectedTags.join(','))
+      if (selectedRevenueRange) params.append('revenue_range', selectedRevenueRange)
       
       const response = await fetch(`/api/companies?${params}`)
       const data = await response.json()
@@ -125,27 +75,47 @@ export default function DiscoverCompaniesPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [searchQuery, selectedRevenueRange, pagination.page, pagination.limit])
   
-  // APIデータを統一フォーマットに変換
+  // 実際の企業編集可能項目のみ使用するフォーマット関数
   const formatCompanyData = (company: any) => {
+    // 年商数値範囲を日本語表示に変換
+    const formatRevenueFromNumbers = (minRevenue: number, maxRevenue: number) => {
+      // null、undefined、両方と0の場合のみ未設定とする
+      if ((minRevenue == null || minRevenue === 0) && (maxRevenue == null || maxRevenue === 0)) {
+        return '年商未設定'
+      }
+      
+      const formatBillion = (amount: number) => {
+        if (amount >= 100000000) {
+          return Math.floor(amount / 100000000) + '億円'
+        }
+        return Math.floor(amount / 10000) + '万円'
+      }
+      
+      // 片方のみ設定されている場合
+      if (minRevenue && !maxRevenue) {
+        return `${formatBillion(minRevenue)}以上`
+      }
+      if (!minRevenue && maxRevenue) {
+        return `${formatBillion(maxRevenue)}以下`
+      }
+      
+      // 両方設定されている場合
+      if (minRevenue === maxRevenue) {
+        return formatBillion(minRevenue)
+      }
+      
+      return `${formatBillion(minRevenue)}〜${formatBillion(maxRevenue)}`
+    }
+
     return {
-      id: company.id,
-      companyName: company.company_name || '会社名',
-      businessName: company.business_name || '事業名',
-      industry: company.industry || '業界',
-      region: company.region || '地域',
-      revenue: company.revenue_range || '年商未入力',
-      employeeCount: '従業員数未入力',
-      challenges: company.biz_issues || [],
-      challengeBackground: company.description || '課題の背景を記載中',
-      cfoRequirements: 'CFOに求めるスキルを記載中',
-      expectedTimeline: '2024年〜',
-      workStyle: '相談可能',
-      compensation: '相談可能',
-      description: company.description || '企業の説明を記載中',
-      urgency: 'medium',
-      postedAt: company.created_at || '2024-01-01',
+      id: company.id || company.biz_user_id,
+      companyName: company.companyName || company.biz_company_name || '会社名未設定',
+      description: company.description || company.biz_raw_profile || '会社概要未設定',
+      revenueRange: formatRevenueFromNumbers(company.revenueMin || company.biz_revenue_min, company.revenueMax || company.biz_revenue_max),
+      challenges: company.biz_raw_profile ? '詳細は企業概要をご覧ください' : '財務課題未設定',
+      postedAt: company.created_at || new Date().toISOString(),
       logo: '🏢'
     }
   }
@@ -167,13 +137,6 @@ export default function DiscoverCompaniesPage() {
     }
   }, [isAuthenticated, router, fetchCompanies])
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    )
-  }
 
   const showToastMessage = (message: string) => {
     setToastMessage(message)
@@ -239,69 +202,36 @@ export default function DiscoverCompaniesPage() {
     }
   }
 
-  // フィルタリング処理（ローカルフィルタ - APIフィルタを補完）
+  // 実際の編集可能項目でのフィルタリング処理（API側で年商フィルター対応済み）
   const filteredCompanies = displayCompanies.filter((company: any) => {
+    // 会社名・概要でのキーワード検索
     const matchesSearch = searchQuery === '' || 
       company.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.industry.toLowerCase().includes(searchQuery.toLowerCase())
+      company.description.toLowerCase().includes(searchQuery.toLowerCase())
     
-    const matchesTags = selectedTags.length === 0 || 
-      selectedTags.some((tag: string) => company.challenges.includes(tag))
-    
-    const matchesRegion = selectedRegion === '' || selectedRegion === '全国' || 
-      company.region === selectedRegion
-    
-    const matchesWorkStyle = selectedWorkStyle === '' || 
-      company.workStyle.includes(selectedWorkStyle)
-    
-    return matchesSearch && matchesTags && matchesRegion && matchesWorkStyle
+    // 年商フィルターはAPI側で処理済みのため、ローカルフィルターは不要
+    return matchesSearch
   })
 
-  // ソート処理
+  // ソート処理（編集可能項目のみ）
   const sortedCompanies = [...filteredCompanies].sort((a: any, b: any) => {
     switch (sortBy) {
       case 'newest':
         return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
-      case 'compensation_high':
-        const aComp = parseInt(a.compensation.replace(/[^\d]/g, ''))
-        const bComp = parseInt(b.compensation.replace(/[^\d]/g, ''))
-        return bComp - aComp
-      case 'urgency':
-        const urgencyOrder = { 'high': 3, 'medium': 2, 'low': 1 }
-        return urgencyOrder[b.urgency as keyof typeof urgencyOrder] - urgencyOrder[a.urgency as keyof typeof urgencyOrder]
+      case 'company_name':
+        return a.companyName.localeCompare(b.companyName)
       default:
         return 0
     }
   })
 
-  const getUrgencyBadge = (urgency: string) => {
-    switch (urgency) {
-      case 'high':
-        return 'bg-red-100 text-red-800 border-red-200'
-      case 'medium':
-        return 'bg-orange-100 text-orange-800 border-orange-200'
-      case 'low':
-        return 'bg-gray-100 text-gray-800 border-gray-200'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
-    }
-  }
-
-  const getUrgencyText = (urgency: string) => {
-    switch (urgency) {
-      case 'high': return '急募'
-      case 'medium': return '通常'
-      case 'low': return '長期'
-      default: return '通常'
-    }
-  }
 
   // 認証状態が不明の間はローディング画面を表示
   if (isAuthenticated === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loading size="lg" text="認証状態を確認中..." />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+        <p className="text-gray-600">認証状態を確認中...</p>
       </div>
     )
   }
@@ -332,7 +262,7 @@ export default function DiscoverCompaniesPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="会社名や業界で検索"
+              placeholder="会社名や概要で検索"
               className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs mb-1.5"
             />
             <button 
@@ -350,51 +280,17 @@ export default function DiscoverCompaniesPage() {
             <div className="bg-white rounded-lg shadow-sm p-2">
               <h3 className="text-sm font-semibold text-gray-900 mb-2">検索・絞り込み</h3>
               
-              {/* 財務課題タグ */}
-              <div className="mb-2">
-                <label className="block text-xs font-medium text-gray-700 mb-0.5">財務課題</label>
-                <div className="flex flex-wrap gap-0.5 max-h-20 overflow-y-auto">
-                  {challengeTags.map((tag: string) => (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`px-1.5 py-0.5 rounded-full text-xs border transition-colors ${
-                        selectedTags.includes(tag)
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* その他フィルター */}
+              {/* 年商範囲フィルター */}
               <div className="space-y-1.5">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-0.5">地域</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">年商範囲</label>
                   <select 
-                    value={selectedRegion}
-                    onChange={(e) => setSelectedRegion(e.target.value)}
+                    value={selectedRevenueRange}
+                    onChange={(e) => setSelectedRevenueRange(e.target.value)}
                     className="w-full px-2 py-1 border border-gray-300 rounded-lg text-xs"
                   >
-                    {regions.map(region => (
-                      <option key={region.id || region.name} value={region.name === '全国' ? '' : region.name}>{region.name}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-0.5">稼働形態</label>
-                  <select 
-                    value={selectedWorkStyle}
-                    onChange={(e) => setSelectedWorkStyle(e.target.value)}
-                    className="w-full px-2 py-1 border border-gray-300 rounded-lg text-xs"
-                  >
-                    <option value="">すべて</option>
-                    {workStyles.map(style => (
-                      <option key={style.id || style.name} value={style.name}>{style.name}</option>
+                    {revenueRanges.map(range => (
+                      <option key={range.value} value={range.value}>{range.label}</option>
                     ))}
                   </select>
                 </div>
@@ -427,10 +323,7 @@ export default function DiscoverCompaniesPage() {
                 <button 
                   onClick={() => {
                     setSearchQuery('')
-                    setSelectedTags([])
-                    setSelectedRegion('')
-                    setSelectedWorkStyle('')
-                    setSelectedCompensation('')
+                    setSelectedRevenueRange('')
                   }}
                   className="px-2 bg-gray-100 text-gray-700 py-1 rounded-lg text-xs hover:bg-gray-200"
                 >
@@ -454,70 +347,22 @@ export default function DiscoverCompaniesPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="会社名や業界で検索"
+                  placeholder="会社名や概要で検索"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
-              {/* 財務課題タグ */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">財務課題</label>
-                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                  {challengeTags.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`px-3 py-1 rounded-full text-xs border transition-colors ${
-                        selectedTags.includes(tag)
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* その他フィルター */}
+              {/* 年商範囲フィルター */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">地域</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">年商範囲</label>
                   <select 
-                    value={selectedRegion}
-                    onChange={(e) => setSelectedRegion(e.target.value)}
+                    value={selectedRevenueRange}
+                    onChange={(e) => setSelectedRevenueRange(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   >
-                    {regions.map(region => (
-                      <option key={region.id || region.name} value={region.name === '全国' ? '' : region.name}>{region.name}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">稼働形態</label>
-                  <select 
-                    value={selectedWorkStyle}
-                    onChange={(e) => setSelectedWorkStyle(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  >
-                    <option value="">すべて</option>
-                    {workStyles.map(style => (
-                      <option key={style.id || style.name} value={style.name}>{style.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">報酬</label>
-                  <select 
-                    value={selectedCompensation}
-                    onChange={(e) => setSelectedCompensation(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  >
-                    <option value="">すべて</option>
-                    {compensationRanges.map(range => (
-                      <option key={range} value={range}>{range}</option>
+                    {revenueRanges.map(range => (
+                      <option key={range.value} value={range.value}>{range.label}</option>
                     ))}
                   </select>
                 </div>
@@ -548,10 +393,7 @@ export default function DiscoverCompaniesPage() {
                 <button 
                   onClick={() => {
                     setSearchQuery('')
-                    setSelectedTags([])
-                    setSelectedRegion('')
-                    setSelectedWorkStyle('')
-                    setSelectedCompensation('')
+                    setSelectedRevenueRange('')
                   }}
                   className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors"
                 >
@@ -598,32 +440,12 @@ export default function DiscoverCompaniesPage() {
               </div>
             </div>
 
-            {/* 選択中のタグ表示 */}
-            {!loading && selectedTags.length > 0 && (
-              <div className="mb-2">
-                <div className="flex flex-wrap gap-0.5">
-                  {selectedTags.map(tag => (
-                    <span 
-                      key={tag}
-                      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 border border-blue-200"
-                    >
-                      {tag}
-                      <button 
-                        onClick={() => toggleTag(tag)}
-                        className="ml-1 text-blue-600 hover:text-blue-800 text-xs"
-                      >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* ローディング表示 */}
             {loading && (
-              <div className="py-12">
-                <Loading size="md" text="企業データを読み込み中..." />
+              <div className="py-12 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                <p className="text-gray-600">企業データを読み込み中...</p>
               </div>
             )}
 
@@ -649,19 +471,15 @@ export default function DiscoverCompaniesPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-0.5 md:gap-2 mb-0.5 md:mb-1 safe-flex-wrap">
                           <h3 className="text-xs md:text-base lg:text-lg font-semibold text-gray-900 safe-flex-item responsive-truncate">{company.companyName}</h3>
-                          <span className={`px-1 py-0.5 md:px-2 md:py-1 rounded-full text-xs border safe-flex-item-important whitespace-nowrap ${getUrgencyBadge(company.urgency)}`}>
-                            {getUrgencyText(company.urgency)}
+                          <span className="px-1 py-0.5 md:px-2 md:py-1 rounded-full text-xs border safe-flex-item-important whitespace-nowrap bg-blue-100 text-blue-800 border-blue-200">
+                            募集中
                           </span>
                         </div>
-                        <p className="text-gray-600 text-xs md:text-sm mb-0.5 md:mb-1 responsive-truncate">{company.businessName}</p>
+                        <p className="text-gray-600 text-xs md:text-sm mb-0.5 md:mb-1 responsive-truncate">{company.description}</p>
                         <div className="flex items-center safe-flex-wrap text-xs text-gray-500">
-                          <span className="safe-flex-item-important">{company.industry}</span>
+                          <span className="safe-flex-item-important">年商: {company.revenueRange}</span>
                           <span className="text-gray-400 safe-flex-item-important">•</span>
-                          <span className="safe-flex-item-important">{company.region}</span>
-                          <span className="text-gray-400 hidden md:inline safe-flex-item-important">•</span>
-                          <span className="hidden md:inline safe-flex-item-important">{company.employeeCount}</span>
-                          <span className="text-gray-400 hidden lg:inline safe-flex-item-important">•</span>
-                          <span className="hidden lg:inline safe-flex-item-important">{company.revenue}</span>
+                          <span className="safe-flex-item-important">{new Date(company.postedAt).toLocaleDateString('ja-JP')}</span>
                         </div>
                       </div>
                     </div>
@@ -701,54 +519,12 @@ export default function DiscoverCompaniesPage() {
                   
                   {/* 企業詳細情報セクション */}
                   <div className="space-y-1.5 md:space-y-3">
-                    {/* 財務課題タグ */}
+                    {/* 財務課題 */}
                     <div>
                       <p className="text-xs text-gray-500 mb-0.5">財務課題:</p>
-                      <div className="safe-flex-wrap">
-                        {company.challenges.slice(0, 3).map((challenge: string) => (
-                          <span key={challenge} className="px-1 py-0.5 md:px-2 md:py-1 bg-red-50 text-red-700 text-xs rounded border border-red-200">
-                            {challenge}
-                          </span>
-                        ))}
-                        {company.challenges.length > 3 && (
-                          <span className="px-1 py-0.5 md:px-2 md:py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                            +{company.challenges.length - 3}
-                          </span>
-                        )}
-                      </div>
+                      <p className="text-gray-600 text-xs md:text-sm line-clamp-2">{company.challenges}</p>
                     </div>
                     
-                    {/* 課題の背景 */}
-                    <div>
-                      <p className="text-xs text-gray-500 mb-0.5">課題の背景:</p>
-                      <p className="text-gray-600 text-xs md:text-sm line-clamp-1 md:line-clamp-2">{company.challengeBackground}</p>
-                    </div>
-
-                    {/* CFOに求めたいこと */}
-                    <div className="hidden md:block">
-                      <p className="text-xs text-gray-500 mb-0.5">CFOに求めたいこと:</p>
-                      <p className="text-gray-600 text-xs md:text-sm line-clamp-1 md:line-clamp-2">{company.cfoRequirements}</p>
-                    </div>
-
-                    {/* 条件情報 */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-2 text-xs text-gray-600">
-                      <div className="safe-flex-item">
-                        <span className="text-xs text-gray-500 block">時期:</span>
-                        <p className="font-medium text-xs responsive-truncate">{company.expectedTimeline}</p>
-                      </div>
-                      <div className="safe-flex-item">
-                        <span className="text-xs text-gray-500 block">稼働:</span>
-                        <p className="font-medium text-xs responsive-truncate">{company.workStyle}</p>
-                      </div>
-                      <div className="safe-flex-item">
-                        <span className="text-xs text-gray-500 block">報酬:</span>
-                        <p className="font-medium text-xs responsive-truncate">{company.compensation}</p>
-                      </div>
-                      <div className="safe-flex-item">
-                        <span className="text-xs text-gray-500 block">投稿:</span>
-                        <p className="font-medium text-xs responsive-truncate">{new Date(company.postedAt).toLocaleDateString('ja-JP')}</p>
-                      </div>
-                    </div>
                   </div>
                 </div>
                 ))}
@@ -764,10 +540,7 @@ export default function DiscoverCompaniesPage() {
                 <button 
                   onClick={() => {
                     setSearchQuery('')
-                    setSelectedTags([])
-                    setSelectedRegion('')
-                    setSelectedWorkStyle('')
-                    setSelectedCompensation('')
+                    setSelectedRevenueRange('')
                   }}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >

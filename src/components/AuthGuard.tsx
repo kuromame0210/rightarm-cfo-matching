@@ -10,7 +10,7 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const { user, isAuthenticated, isLoading } = useAuth()
+  const { user, isAuthenticated, isLoading, profileSetupRequired } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -21,9 +21,10 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       isAuthenticated,
       isLoading,
       hasUser: !!user,
-      userType: user?.userType || 'none'
+      userType: user?.userType || 'none',
+      profileSetupRequired: profileSetupRequired
     })
-  }, [pathname, isAuthenticated, isLoading, user])
+  }, [pathname, isAuthenticated, isLoading, user, profileSetupRequired])
 
   useEffect(() => {
     console.log(`🔍 AuthGuard Effect - Loading: ${isLoading}, Auth: ${isAuthenticated}, Path: ${pathname}`)
@@ -51,18 +52,54 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     
     // 認証済みユーザーがログイン/登録ページにアクセスした場合
     if (isAuthenticated && user && (pathname === '/auth/login' || pathname === '/auth/register')) {
-      const redirectTo = getDefaultRedirect(user.userType)
-      console.log('🔄 Redirecting authenticated user to default page', {
+      // URLパラメータからリダイレクト先を取得
+      const urlParams = new URLSearchParams(window.location.search)
+      const redirectParam = urlParams.get('redirect')
+      const redirectTo = redirectParam || getDefaultRedirect(user.userType)
+      
+      console.log('🔄 Redirecting authenticated user', {
         from: pathname,
         to: redirectTo,
-        userType: user.userType
+        userType: user.userType,
+        hasRedirectParam: !!redirectParam
       })
       router.push(redirectTo)
       return
     }
 
+    // プロフィール作成が必要な場合のリダイレクト
+    if (isAuthenticated && user && profileSetupRequired === true) {
+      // プロフィール作成ページ自体は除外
+      if (pathname === '/profile' || pathname === '/auth/register') {
+        console.log('✅ Already on profile setup page, allowing access')
+        return
+      }
+
+      const userType = user.userType
+      if (!userType || userType === null) {
+        // ユーザータイプが未設定の場合は登録画面に誘導
+        console.log('🚨 REDIRECT TO REGISTER - User type not set', {
+          userType,
+          from: pathname,
+          to: '/auth/register'
+        })
+        router.push('/auth/register')
+        return
+      }
+
+      // ユーザータイプに応じたプロフィール作成画面に誘導
+      console.log('🚨 REDIRECT TO PROFILE SETUP - Profile required', {
+        userType,
+        profileSetupRequired,
+        from: pathname,
+        to: '/profile'
+      })
+      router.push('/profile')
+      return
+    }
+
     console.log('✅ AuthGuard: No action needed, allowing access')
-  }, [isAuthenticated, isLoading, pathname, router, user])
+  }, [isAuthenticated, isLoading, pathname, router, user, profileSetupRequired])
 
   // ローディング中
   if (isLoading) {

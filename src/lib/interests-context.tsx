@@ -93,8 +93,8 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
         let processedData: LikeItem[] = []
         if (Array.isArray(interestsData)) {
           processedData = interestsData
-        } else if (interestsData.likes && Array.isArray(interestsData.likes)) {
-          processedData = interestsData.likes
+        } else if ((interestsData as any).likes && Array.isArray((interestsData as any).likes)) {
+          processedData = (interestsData as any).likes
         } else {
           console.warn('API response.data is not in expected format:', interestsData)
           processedData = []

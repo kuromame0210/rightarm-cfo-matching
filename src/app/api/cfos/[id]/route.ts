@@ -89,8 +89,29 @@ export async function GET(
       availability: cfo.cfo_availability || '',
       introduction: cfo.cfo_introduction || '',
       rawProfile: cfo.cfo_raw_profile || '',
-      // システム情報
-      lastLogin: new Date().toLocaleDateString('ja-JP'),
+      // 🆕 構造化フィールド
+      structured: {
+        compensationType: cfo.compensation_type || null,
+        monthlyFeeMin: cfo.monthly_fee_min || null,
+        monthlyFeeMax: cfo.monthly_fee_max || null,
+        hourlyRateMin: cfo.hourly_rate_min || null,
+        hourlyRateMax: cfo.hourly_rate_max || null,
+        weeklyDays: cfo.weekly_days || null,
+        weeklyDaysFlexible: cfo.weekly_days_flexible || false,
+        dailyHours: cfo.daily_hours || null,
+        dailyHoursFlexible: cfo.daily_hours_flexible || false,
+        supportedPrefectures: Array.isArray(cfo.supported_prefectures) ? cfo.supported_prefectures : [],
+        fullRemoteAvailable: cfo.full_remote_available || false,
+        preferredTimeSlots: Array.isArray(cfo.preferred_time_slots) ? cfo.preferred_time_slots : [],
+        workStyles: Array.isArray(cfo.work_styles) ? cfo.work_styles : [],
+        businessTripLevel: cfo.business_trip_level || null,
+        cfoExperienceYears: cfo.cfo_experience_years || null,
+        cfoLevel: cfo.cfo_level || null,
+        industryExperience: Array.isArray(cfo.industry_experience) ? cfo.industry_experience : [],
+        companySizeExperience: Array.isArray(cfo.company_size_experience) ? cfo.company_size_experience : [],
+        projectExperience: Array.isArray(cfo.project_experience) ? cfo.project_experience : []
+      },
+      // システム情報（lastLoginは削除 - 実データなし）
       createdAt: cfo.created_at,
       updatedAt: cfo.updated_at,
       // インタラクション状態

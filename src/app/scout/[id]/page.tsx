@@ -164,11 +164,13 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
       console.log('承諪API レスポンス:', data) // デバッグ用
       
       if (data.success) {
-        // 最新のスカウトデータを再取得して確実に同期
-        await fetchScoutDetail()
-        
         // 成功メッセージを表示
         showToastMessage('スカウトを承諾しました！ メッセージページでやりとりを続けてください。', 'success')
+        
+        // データを強制的に再取得（少し待ってから実行）
+        setTimeout(async () => {
+          await fetchScoutDetail()
+        }, 500)
         
         // メッセージページに移動（スカウトIDを含める）
         setTimeout(() => {
@@ -245,11 +247,13 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
       console.log('辞退API レスポンス:', data) // デバッグ用
       
       if (data.success) {
-        // 最新のスカウトデータを再取得して確実に同期
-        await fetchScoutDetail()
-        
         // 成功メッセージを表示
         showToastMessage('スカウトを辞退しました。', 'success')
+        
+        // データを強制的に再取得（少し待ってから実行）
+        setTimeout(async () => {
+          await fetchScoutDetail()
+        }, 500)
         
         // スカウト一覧に戻る
         setTimeout(() => {

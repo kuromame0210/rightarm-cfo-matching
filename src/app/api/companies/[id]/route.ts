@@ -38,9 +38,37 @@ export async function GET(
 
     console.log('Company found:', company)
 
+    // JSON文字列を解析するヘルパー関数
+    const parseProfileDescription = (rawProfile: string): string => {
+      if (!rawProfile) return '会社概要未設定'
+      
+      // JSON文字列かどうか判定（{で始まる場合）
+      if (rawProfile.trim().startsWith('{')) {
+        try {
+          const jsonData = JSON.parse(rawProfile)
+          // descriptionフィールドが存在する場合はそれを使用
+          return jsonData.description || jsonData.businessName || rawProfile
+        } catch (e) {
+          // JSON解析に失敗した場合はそのまま返す
+          console.warn('JSON解析失敗:', e instanceof Error ? e.message : String(e))
+          return rawProfile
+        }
+      }
+      
+      // プレーンテキストの場合はそのまま返す
+      return rawProfile
+    }
+
+    // データ変換（フロントエンド互換性のため）
+    const formattedCompany = {
+      ...company,
+      // 解析された説明文で上書き
+      biz_raw_profile: parseProfileDescription(company.biz_raw_profile)
+    }
+
     return NextResponse.json({
       success: true,
-      data: company
+      data: formattedCompany
     })
 
   } catch (error) {

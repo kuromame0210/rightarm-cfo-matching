@@ -37,7 +37,29 @@ const registerSchema = z.object({
     .max(2000, '財務課題の詳細は2000文字以内で入力してください')
     .optional(),
 
-  // CFO固有情報（全て任意）
+  // 🆕 CFO構造化必須項目（EssentialProfileInputs準拠）
+  compensationType: z.enum(['monthly', 'negotiable'])
+    .optional(), // 必須だが、条件付きバリデーションで処理
+  monthlyFeeMin: z.number()
+    .min(50000, '月額下限は5万円以上で設定してください')
+    .max(2500000, '月額下限は250万円以下で設定してください')
+    .optional(),
+  monthlyFeeMax: z.number()
+    .min(50000, '月額上限は5万円以上で設定してください')
+    .max(2500000, '月額上限は250万円以下で設定してください')
+    .optional(),
+  weeklyDays: z.number()
+    .min(1, '週稼働日数は1日以上で設定してください')
+    .max(5, '週稼働日数は5日以下で設定してください')
+    .optional(), // 必須だが、条件付きバリデーションで処理
+  weeklyDaysFlexible: z.boolean()
+    .optional(),
+  supportedPrefectures: z.array(z.enum(['kanto', 'kansai', 'chubu', 'tohoku', 'kyushu', 'nationwide']))
+    .optional(), // 必須だが、条件付きバリデーションで処理
+  fullRemoteAvailable: z.boolean()
+    .optional(),
+
+  // CFO詳細情報（全て任意）
   nickname: z.string()
     .max(50, 'ニックネームは50文字以内で入力してください')
     .optional(),
@@ -57,7 +79,7 @@ const registerSchema = z.object({
     .max(200, '希望報酬は200文字以内で入力してください')
     .optional(),
   
-  // 新しいCFOフィールド
+  // レガシーCFOフィールド（任意）
   location: z.string()
     .max(100, '居住地は100文字以内で入力してください')
     .optional(),
@@ -199,7 +221,17 @@ export async function POST(request: NextRequest) {
     console.log('📋 登録データ:', {
       email: body.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
       userType: body.userType,
-      hasPassword: !!body.password
+      hasPassword: !!body.password,
+      ...(body.userType === 'cfo' && {
+        cfoStructuredFields: {
+          compensationType: body.compensationType,
+          monthlyFeeMin: body.monthlyFeeMin,
+          monthlyFeeMax: body.monthlyFeeMax,
+          weeklyDays: body.weeklyDays,
+          supportedPrefectures: body.supportedPrefectures?.length || 0,
+          fullRemoteAvailable: body.fullRemoteAvailable
+        }
+      })
     })
 
     // バリデーション
@@ -220,6 +252,47 @@ export async function POST(request: NextRequest) {
         success: false,
         error: '会社名は必須です'
       }, { status: 400 })
+    }
+
+    // CFOの場合は構造化必須項目チェック
+    if (data.userType === 'cfo') {
+      if (!data.compensationType) {
+        return NextResponse.json({
+          success: false,
+          error: '報酬体系（月額制・応相談）の選択は必須です'
+        }, { status: 400 })
+      }
+      
+      if (!data.weeklyDays) {
+        return NextResponse.json({
+          success: false,
+          error: '週稼働日数の選択は必須です'
+        }, { status: 400 })
+      }
+      
+      if (!data.supportedPrefectures || data.supportedPrefectures.length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: '対応エリアの選択は必須です'
+        }, { status: 400 })
+      }
+      
+      // 月額制の場合は料金設定チェック
+      if (data.compensationType === 'monthly') {
+        if (!data.monthlyFeeMin) {
+          return NextResponse.json({
+            success: false,
+            error: '月額制の場合、料金下限の設定は必須です'
+          }, { status: 400 })
+        }
+        
+        if (data.monthlyFeeMax && data.monthlyFeeMax < data.monthlyFeeMin) {
+          return NextResponse.json({
+            success: false,
+            error: '月額料金の上限は下限以上で設定してください'
+          }, { status: 400 })
+        }
+      }
     }
 
     // 重複チェック（未認証ユーザーは削除して再登録可能）
@@ -279,7 +352,12 @@ export async function POST(request: NextRequest) {
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
-      email_confirm: isDevelopment // 開発環境またはテストメールは自動認証
+      email_confirm: isDevelopment, // 開発環境またはテストメールは自動認証
+      user_metadata: {
+        name: data.displayName,
+        role: data.userType, // userTypeをメタデータに保存
+        email_verified: isDevelopment
+      }
     })
 
     if (authError || !authUser.user) {
@@ -356,10 +434,19 @@ export async function POST(request: NextRequest) {
           cfo_display_name: data.nickname || data.displayName,
           cfo_location: data.location || '',
           cfo_availability: data.workingHours || data.workPreference || '',
-          cfo_fee_min: null, // 今後実装
-          cfo_fee_max: null, // 今後実装
+          // 🆕 構造化必須項目を正しいカラムに保存
+          compensation_type: data.compensationType,
+          monthly_fee_min: data.monthlyFeeMin,
+          monthly_fee_max: data.monthlyFeeMax || data.monthlyFeeMin, // 上限未設定時は下限と同じ
+          weekly_days: data.weeklyDays,
+          weekly_days_flexible: data.weeklyDaysFlexible || false,
+          supported_prefectures: data.supportedPrefectures || [],
+          full_remote_available: data.fullRemoteAvailable || false,
+          // レガシーカラム（互換性維持）
+          cfo_fee_min: data.monthlyFeeMin,
+          cfo_fee_max: data.monthlyFeeMax || data.monthlyFeeMin,
           cfo_skills: data.skills ? Object.values(data.skills).flat() : [],
-          // 新しいカラム構造に直接保存
+          // 詳細情報（任意）
           cfo_compensation: data.monthlyCompensation || '',
           cfo_possible_tasks: data.possibleTasks || '',
           cfo_certifications: data.certifications || '',

@@ -287,12 +287,165 @@ export default function CFODetailPage() {
             <div className="bg-white rounded-lg shadow-sm border p-4 md:p-6">
               {activeSection === 'basic' && (
                 <div>
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">専門スキル</h3>
+                  {/* 🆕 構造化された稼働条件（統合表示） */}
+                  <div className="mb-8">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">💼 稼働条件・報酬</h3>
+                    
+                    {/* メイン構造化表示 */}
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-4">
+                      <table className="w-full">
+                        <tbody className="divide-y divide-gray-200">
+                          <tr>
+                            <td className="px-4 py-3 bg-gray-50 font-medium text-gray-900 w-1/3">報酬体系</td>
+                            <td className="px-4 py-3">
+                              {cfoData.structured?.compensationType ? (
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-lg font-medium">
+                                      💰 {cfoData.structured.compensationType === 'monthly' ? '月額制' : '応相談'}
+                                    </span>
+                                    {cfoData.structured.compensationType === 'monthly' && cfoData.structured.monthlyFeeMin && (
+                                      <span className="text-gray-700 font-semibold">
+                                        {cfoData.structured.monthlyFeeMax && cfoData.structured.monthlyFeeMax !== cfoData.structured.monthlyFeeMin ? 
+                                          `${Math.floor(cfoData.structured.monthlyFeeMin / 10000)}万円〜${Math.floor(cfoData.structured.monthlyFeeMax / 10000)}万円` : 
+                                          `${Math.floor(cfoData.structured.monthlyFeeMin / 10000)}万円`}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {/* 時給情報 */}
+                                  {(cfoData.structured.hourlyRateMin || cfoData.structured.hourlyRateMax) && (
+                                    <div className="flex items-center gap-2">
+                                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded">
+                                        ⏰ 時給
+                                      </span>
+                                      <span className="text-gray-700 text-sm">
+                                        {cfoData.structured.hourlyRateMin && Math.floor(cfoData.structured.hourlyRateMin / 100) / 10}万円
+                                        {cfoData.structured.hourlyRateMax && cfoData.structured.hourlyRateMax !== cfoData.structured.hourlyRateMin ? 
+                                          `〜${Math.floor(cfoData.structured.hourlyRateMax / 100) / 10}万円` : '〜'}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-gray-500">未設定</span>
+                              )}
+                            </td>
+                          </tr>
+                          
+                          <tr>
+                            <td className="px-4 py-3 bg-gray-50 font-medium text-gray-900">稼働時間</td>
+                            <td className="px-4 py-3">
+                              <div className="space-y-2">
+                                {/* 週稼働日数 */}
+                                {cfoData.structured?.weeklyDays ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg font-medium">
+                                      📅 週{cfoData.structured.weeklyDays}日
+                                    </span>
+                                    {cfoData.structured.weeklyDaysFlexible && (
+                                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-sm rounded">
+                                        応相談可
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-500 text-sm">週稼働日数: 未設定</span>
+                                )}
+                                
+                                {/* 日稼働時間 */}
+                                {cfoData.structured?.dailyHours ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg font-medium">
+                                      ⏰ 日{cfoData.structured.dailyHours}時間
+                                    </span>
+                                    {cfoData.structured.dailyHoursFlexible && (
+                                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-sm rounded">
+                                        応相談可
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-500 text-sm">日稼働時間: 未設定</span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          
+                          <tr>
+                            <td className="px-4 py-3 bg-gray-50 font-medium text-gray-900">対応エリア</td>
+                            <td className="px-4 py-3">
+                              {cfoData.structured?.supportedPrefectures && cfoData.structured.supportedPrefectures.length > 0 ? (
+                                <div className="space-y-2">
+                                  <div className="flex flex-wrap gap-1">
+                                    {cfoData.structured.supportedPrefectures.map((region: string) => {
+                                      const regionMap: { [key: string]: string } = {
+                                        'kanto': '関東エリア',
+                                        'kansai': '関西エリア',
+                                        'chubu': '中部エリア',
+                                        'tohoku': '東北エリア',
+                                        'kyushu': '九州エリア',
+                                        'nationwide': '全国対応'
+                                      }
+                                      return (
+                                        <span key={region} className="px-2 py-1 bg-purple-100 text-purple-800 text-sm rounded">
+                                          🗺️ {regionMap[region] || region}
+                                        </span>
+                                      )
+                                    })}
+                                  </div>
+                                  {cfoData.structured.fullRemoteAvailable && (
+                                    <span className="px-2 py-1 bg-green-100 text-green-800 text-sm rounded">
+                                      💻 完全リモート対応可
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-gray-500">未設定</span>
+                              )}
+                            </td>
+                          </tr>
+                          
+                          <tr>
+                            <td className="px-4 py-3 bg-gray-50 font-medium text-gray-900">居住地</td>
+                            <td className="px-4 py-3 text-gray-700">
+                              📍 {cfoData.location || '未設定'}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    {/* 詳細条件（テキスト補完） */}
+                    {(cfoData.compensation || cfoData.availability) && (
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h4 className="font-medium text-gray-900 mb-2 text-sm">詳細条件・特記事項</h4>
+                        <div className="space-y-2 text-sm text-gray-700">
+                          {cfoData.compensation && (
+                            <div>
+                              <span className="font-medium">報酬に関する詳細:</span>
+                              <p className="whitespace-pre-wrap">{cfoData.compensation}</p>
+                            </div>
+                          )}
+                          {cfoData.availability && (
+                            <div>
+                              <span className="font-medium">稼働に関する詳細:</span>
+                              <p className="whitespace-pre-wrap">{cfoData.availability}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 専門スキル */}
                   <div className="mb-6 md:mb-8">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">🎯 専門スキル</h3>
                     {cfoData.skills.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {cfoData.skills.map((skill: string, index: number) => (
-                          <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                          <span key={index} className={`px-3 py-2 text-sm rounded-lg ${
+                            index < 3 ? 'bg-blue-100 text-blue-800 font-medium border border-blue-200' : 'bg-gray-100 text-gray-700'
+                          }`}>
                             {skill}
                           </span>
                         ))}
@@ -302,18 +455,111 @@ export default function CFODetailPage() {
                     )}
                   </div>
 
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">保有資格</h3>
-                  <div className="bg-gray-50 rounded-lg p-4 mb-6 md:mb-8">
-                    <p className="text-sm md:text-base text-gray-700 whitespace-pre-wrap">
-                      {cfoData.certifications || '資格情報なし'}
-                    </p>
+                  {/* CFO経験・レベル */}
+                  <div className="mb-6 md:mb-8">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">👨‍💼 CFO経験・レベル</h3>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* CFO経験年数 */}
+                        <div>
+                          <span className="text-gray-600 block mb-2 text-sm font-medium">CFO経験年数</span>
+                          {cfoData.structured?.cfoExperienceYears ? (
+                            <div className="flex items-center gap-2">
+                              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-lg font-medium">
+                                📈 {cfoData.structured.cfoExperienceYears}年
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-500 text-sm">未設定</span>
+                          )}
+                        </div>
+
+                        {/* CFOレベル */}
+                        <div>
+                          <span className="text-gray-600 block mb-2 text-sm font-medium">CFOレベル</span>
+                          {cfoData.structured?.cfoLevel ? (
+                            <div className="flex items-center gap-2">
+                              <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-lg font-medium">
+                                ⭐ {(() => {
+                                  const levelMap: { [key: string]: string } = {
+                                    'assistant': 'アシスタント',
+                                    'manager': 'マネージャー',
+                                    'director': 'ディレクター',
+                                    'cfo': 'CFO',
+                                    'fractional': 'フラクショナルCFO'
+                                  }
+                                  return levelMap[cfoData.structured.cfoLevel] || cfoData.structured.cfoLevel
+                                })()}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-500 text-sm">未設定</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 業界経験 */}
+                      {cfoData.structured?.industryExperience && cfoData.structured.industryExperience.length > 0 && (
+                        <div className="mt-4">
+                          <span className="text-gray-600 block mb-2 text-sm font-medium">業界経験</span>
+                          <div className="flex flex-wrap gap-1">
+                            {cfoData.structured.industryExperience.map((industry: string, index: number) => (
+                              <span key={index} className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded">
+                                🏢 {industry}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 企業規模経験 */}
+                      {cfoData.structured?.companySizeExperience && cfoData.structured.companySizeExperience.length > 0 && (
+                        <div className="mt-4">
+                          <span className="text-gray-600 block mb-2 text-sm font-medium">企業規模経験</span>
+                          <div className="flex flex-wrap gap-1">
+                            {cfoData.structured.companySizeExperience.map((size: string, index: number) => (
+                              <span key={index} className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
+                                📊 {size}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* プロジェクト経験 */}
+                      {cfoData.structured?.projectExperience && cfoData.structured.projectExperience.length > 0 && (
+                        <div className="mt-4">
+                          <span className="text-gray-600 block mb-2 text-sm font-medium">プロジェクト経験</span>
+                          <div className="flex flex-wrap gap-1">
+                            {cfoData.structured.projectExperience.map((project: string, index: number) => (
+                              <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                                🚀 {project}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">紹介文</h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm md:text-base text-gray-700 whitespace-pre-wrap">
-                      {cfoData.introduction || '紹介文なし'}
-                    </p>
+                  {/* 保有資格 */}
+                  <div className="mb-6 md:mb-8">
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">🏅 保有資格</h3>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-sm md:text-base text-gray-700 whitespace-pre-wrap">
+                        {cfoData.certifications || '資格情報なし'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 紹介文 */}
+                  <div>
+                    <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">📝 紹介文</h3>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-sm md:text-base text-gray-700 whitespace-pre-wrap leading-relaxed">
+                        {cfoData.introduction || '紹介文なし'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -346,29 +592,88 @@ export default function CFODetailPage() {
 
               {activeSection === 'conditions' && (
                 <div>
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-3 md:mb-4">稼働条件</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <div className="space-y-3 md:space-y-4">
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">勤務地</h4>
-                        <p className="text-sm md:text-base text-gray-700">{cfoData.location || '勤務地情報なし'}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">稼働条件</h4>
-                        <p className="text-sm md:text-base text-gray-700">{cfoData.availability || '稼働条件情報なし'}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-3 md:space-y-4">
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">報酬</h4>
-                        <p className="text-sm md:text-base text-gray-700 font-semibold">{cfoData.compensation || '報酬情報なし'}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-1 md:mb-2 text-sm md:text-base">対応エリア</h4>
-                        <p className="text-sm md:text-base text-gray-700">{cfoData.workingAreas || '対応エリア情報なし'}</p>
-                      </div>
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-4">⚙️ 対応可能性・詳細条件</h3>
+                  
+                  {/* 詳細勤務条件 */}
+                  <div className="mb-6">
+                    <h4 className="font-medium text-gray-900 mb-3">詳細勤務条件</h4>
+                    <div className="space-y-4">
+                      {/* 勤務形態（リモート情報は対応エリアセクションにあるので除外） */}
+                      {cfoData.structured?.workStyles && cfoData.structured.workStyles.length > 0 && (
+                        <div>
+                          <span className="text-gray-600 block mb-2 text-sm font-medium">勤務形態</span>
+                          <div className="flex flex-wrap gap-2">
+                            {cfoData.structured.workStyles.map((style: string, index: number) => (
+                              <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded">
+                                {style}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 希望時間帯 */}
+                      {cfoData.structured?.preferredTimeSlots && cfoData.structured.preferredTimeSlots.length > 0 && (
+                        <div>
+                          <span className="text-gray-600 block mb-2 text-sm font-medium">希望時間帯</span>
+                          <div className="flex flex-wrap gap-2">
+                            {cfoData.structured.preferredTimeSlots.map((timeSlot: string, index: number) => (
+                              <span key={index} className="px-2 py-1 bg-green-100 text-green-800 text-sm rounded">
+                                ⏰ {timeSlot}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 出張対応レベル */}
+                      {cfoData.structured?.businessTripLevel && (
+                        <div>
+                          <span className="text-gray-600 block mb-2 text-sm font-medium">出張対応</span>
+                          <span className="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-lg">
+                            ✈️ {(() => {
+                              const levelMap: { [key: string]: string } = {
+                                'none': '出張なし',
+                                'local': '近隣地域のみ',
+                                'domestic': '国内出張可',
+                                'international': '海外出張可'
+                              }
+                              return levelMap[cfoData.structured.businessTripLevel] || cfoData.structured.businessTripLevel
+                            })()}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
+
+                  {/* 詳細条件（テキスト補完） */}
+                  {(cfoData.compensation || cfoData.availability || cfoData.workingAreas) && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3">詳細条件・特記事項</h4>
+                      <div className="space-y-4">
+                        {cfoData.compensation && (
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <h5 className="font-medium text-gray-900 mb-2 text-sm">報酬に関する詳細</h5>
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap">{cfoData.compensation}</p>
+                          </div>
+                        )}
+                        
+                        {cfoData.availability && (
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <h5 className="font-medium text-gray-900 mb-2 text-sm">稼働に関する詳細</h5>
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap">{cfoData.availability}</p>
+                          </div>
+                        )}
+                        
+                        {cfoData.workingAreas && (
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <h5 className="font-medium text-gray-900 mb-2 text-sm">エリアに関する詳細</h5>
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap">{cfoData.workingAreas}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -406,20 +711,61 @@ export default function CFODetailPage() {
               </div>
 
               <div className="border-t pt-3 lg:pt-4">
-                <h4 className="font-medium text-gray-900 mb-2 lg:mb-3 text-sm lg:text-base">基本情報</h4>
-                <div className="space-y-2 lg:space-y-3 text-xs lg:text-sm">
+                <h4 className="font-medium text-gray-900 mb-3 text-sm lg:text-base">📊 概要情報</h4>
+                
+                {/* 🆕 簡潔なサマリー表示 */}
+                <div className="space-y-3 text-xs lg:text-sm">
+                  {/* 報酬サマリー */}
                   <div>
-                    <span className="text-gray-600">最終ログイン</span>
-                    <p className="text-gray-900">{cfoData.lastLogin}</p>
+                    <span className="text-gray-600 block mb-1">報酬</span>
+                    {cfoData.structured?.compensationType === 'monthly' && cfoData.structured.monthlyFeeMin ? (
+                      <div className="text-gray-900 font-semibold">
+                        {cfoData.structured.monthlyFeeMax && cfoData.structured.monthlyFeeMax !== cfoData.structured.monthlyFeeMin ? 
+                          `${Math.floor(cfoData.structured.monthlyFeeMin / 10000)}万円〜${Math.floor(cfoData.structured.monthlyFeeMax / 10000)}万円` : 
+                          `${Math.floor(cfoData.structured.monthlyFeeMin / 10000)}万円`}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">応相談</p>
+                    )}
                   </div>
+
+                  {/* 稼働サマリー */}
                   <div>
-                    <span className="text-gray-600">稼働条件</span>
-                    <p className="text-gray-900">{cfoData.availability || '稼働条件情報なし'}</p>
+                    <span className="text-gray-600 block mb-1">稼働</span>
+                    {cfoData.structured?.weeklyDays ? (
+                      <div className="text-gray-900">
+                        週{cfoData.structured.weeklyDays}日
+                        {cfoData.structured.weeklyDaysFlexible && <span className="text-blue-600">（応相談可）</span>}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">未設定</p>
+                    )}
                   </div>
+
+                  {/* エリアサマリー */}
                   <div>
-                    <span className="text-gray-600">報酬目安</span>
-                    <p className="text-gray-900 font-semibold">{cfoData.compensation}</p>
+                    <span className="text-gray-600 block mb-1">エリア</span>
+                    {cfoData.structured?.supportedPrefectures && cfoData.structured.supportedPrefectures.length > 0 ? (
+                      <div className="text-gray-900">
+                        {cfoData.structured.supportedPrefectures.slice(0, 1).map((region: string) => {
+                          const regionMap: { [key: string]: string } = {
+                            'kanto': '関東',
+                            'kansai': '関西',
+                            'chubu': '中部',
+                            'tohoku': '東北',
+                            'kyushu': '九州',
+                            'nationwide': '全国'
+                          }
+                          return regionMap[region] || region
+                        })}
+                        {cfoData.structured.supportedPrefectures.length > 1 && ` 他${cfoData.structured.supportedPrefectures.length - 1}エリア`}
+                        {cfoData.structured.fullRemoteAvailable && <div className="text-green-600 text-xs">💻 リモート可</div>}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">未設定</p>
+                    )}
                   </div>
+
                 </div>
               </div>
             </div>

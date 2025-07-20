@@ -8,6 +8,11 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useProfile, useMasterData } from '@/hooks/useProfile'
 import AppHeader from '@/components/AppHeader'
 import FileUpload from '@/components/FileUpload'
+import {
+  EssentialCompensationInput,
+  EssentialAvailabilityInput,
+  EssentialLocationInput
+} from '@/components/EssentialProfileInputs'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +31,14 @@ const EMPTY_FORM_DATA = {
   compensation: '', // 想定報酬（テキスト形式）
   availableAreas: [] as string[],
   introduction: '',
+  // 🆕 構造化フィールド
+  compensationType: '',
+  monthlyFeeMin: '',
+  monthlyFeeMax: '',
+  weeklyDays: '',
+  weeklyDaysFlexible: false,
+  supportedPrefectures: [] as string[],
+  fullRemoteAvailable: false,
   // 会社情報の4項目（企業ユーザー用）
   companyName: '',
   companyDescription: '',
@@ -85,19 +98,39 @@ export default function ProfilePage() {
             }
             
             // オブジェクトの場合はexperienceフィールドを取得
-            if (typeof profile.rawProfile === 'object' && profile.rawProfile.experience) {
-              return profile.rawProfile.experience;
+            if (typeof profile.rawProfile === 'object' && profile.rawProfile && 'experience' in profile.rawProfile) {
+              return (profile.rawProfile as any).experience;
             }
             
             // その他の場合は空文字列
             return '';
           })(),
           skills: profile.skills || [],
-          possibleTasksDetail: profile.possibleTasks || '', // 新カラムから取得
-          certifications: profile.certifications ? profile.certifications.split('\n').filter(c => c.trim()) : [],
+          possibleTasksDetail: (profile as any).possibleTasks || '', // 新カラムから取得
+          certifications: (() => {
+            const certs = (profile as any).certifications;
+            if (!certs) return [];
+            if (Array.isArray(certs)) return certs;
+            if (typeof certs === 'string') return certs.split('\n').filter(c => c.trim());
+            return [];
+          })(),
           compensation: profile.compensation || '', // 想定報酬（テキスト形式）
-          availableAreas: profile.workingAreas ? profile.workingAreas.split('\n').filter(a => a.trim()) : [],
+          availableAreas: (() => {
+            const areas = (profile as any).workingAreas;
+            if (!areas) return [];
+            if (Array.isArray(areas)) return areas;
+            if (typeof areas === 'string') return areas.split('\n').filter(a => a.trim());
+            return [];
+          })(),
           introduction: profile.introduction || '',
+          // 🆕 構造化フィールドを追加
+          compensationType: (profile as any).compensationType || '',
+          monthlyFeeMin: (profile as any).monthlyFeeMin || '',
+          monthlyFeeMax: (profile as any).monthlyFeeMax || '',
+          weeklyDays: (profile as any).weeklyDays || '',
+          weeklyDaysFlexible: (profile as any).weeklyDaysFlexible || false,
+          supportedPrefectures: (profile as any).supportedPrefectures || [],
+          fullRemoteAvailable: (profile as any).fullRemoteAvailable || false,
           // 企業情報（使用しない）
           companyName: '',
           companyDescription: '',
@@ -132,8 +165,16 @@ export default function ProfilePage() {
           certifications: [],
           monthlyFeeMin: '',
           monthlyFeeMax: '',
+          possibleTasksDetail: '',
+          compensation: '',
           availableAreas: [],
           introduction: '',
+          // 🆕 構造化フィールドを追加（企業ユーザーは使用しないが型合わせのため）
+          compensationType: '',
+          weeklyDays: '',
+          weeklyDaysFlexible: false,
+          supportedPrefectures: [],
+          fullRemoteAvailable: false,
           companyName: profile.companyName || profile.company || (rawProfileData?.businessName || rawProfileData?.displayName) || '',
           companyDescription: rawProfileData?.description || 
             (rawProfileData && !rawProfileData.description ? '' : profile.description) || '',
@@ -142,7 +183,7 @@ export default function ProfilePage() {
         }
         setFormData(newFormData)
       }
-      setProfileImageUrl(profile.avatarUrl || profile.profileImageUrl || null)
+      setProfileImageUrl((profile as any).avatarUrl || (profile as any).profileImageUrl || null)
     }
   }, [profile, profileLoading, user])
 
@@ -199,16 +240,24 @@ export default function ProfilePage() {
         // 新しいカラム構造に対応
         compensation: formData.compensation || '', // 想定報酬（テキスト形式）
         possibleTasks: formData.possibleTasksDetail || '', // 詳細業務テキストを保存
-        certifications: formData.certifications.join('\n'),
-        workingAreas: formData.availableAreas.join('\n'),
+        certifications: Array.isArray(formData.certifications) ? formData.certifications.join('\n') : (formData.certifications as any),
+        workingAreas: Array.isArray(formData.availableAreas) ? formData.availableAreas.join('\n') : (formData.availableAreas as any),
         introduction: formData.introduction,
         avatarUrl: profileImageUrl || undefined,
+        // 🆕 構造化フィールドを追加
+        compensationType: formData.compensationType || '',
+        monthlyFeeMin: formData.monthlyFeeMin || '',
+        monthlyFeeMax: formData.monthlyFeeMax || '',
+        weeklyDays: formData.weeklyDays || '',
+        weeklyDaysFlexible: formData.weeklyDaysFlexible || false,
+        supportedPrefectures: formData.supportedPrefectures || [],
+        fullRemoteAvailable: formData.fullRemoteAvailable || false,
         // 会社情報の4項目（企業ユーザー用）
         companyName: formData.companyName,
         description: formData.companyDescription,
         revenueRange: formData.revenueRange,
         challengeBackground: formData.financialChallenges
-      })
+      } as any)
 
       if (result.success) {
         console.log('🎉 保存成功 - 画面に反映されるはずです')
@@ -701,67 +750,136 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                {/* 想定月額報酬 */}
+                {/* 🎯 基本設定（選択式・必須） */}
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">💰 想定月額報酬 <span className="text-red-500">*</span></h4>
-                  {isEditing ? (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        報酬詳細
-                      </label>
-                      <p className="text-xs text-gray-500 mb-2">
-                        月額報酬、成果報酬、時給など、ご希望の報酬体系を自由に記述してください
-                      </p>
-                      <textarea
-                        value={formData.compensation || ''}
-                        onChange={(e) => handleInputChange('compensation', e.target.value)}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                        placeholder="例：月10万円〜、成果報酬応相談
-時給5,000円〜
-月額30万円〜50万円（稼働時間に応じて調整）"
-                        required
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">🎯 基本設定（必須項目）</h4>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-6">
+                    
+                    {/* 報酬設定（必須） */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <EssentialCompensationInput 
+                        formData={formData} 
+                        setFormData={setFormData}
+                        isEditing={isEditing}
+                        required={true}
                       />
                     </div>
-                  ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      {formData.compensation ? (
-                        <p className="text-gray-900 whitespace-pre-wrap">{formData.compensation}</p>
-                      ) : (
-                        <p className="text-gray-500 italic">報酬が未設定です</p>
-                      )}
+
+                    {/* 稼働条件（必須） */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <EssentialAvailabilityInput 
+                        formData={formData} 
+                        setFormData={setFormData}
+                        isEditing={isEditing}
+                        required={true}
+                      />
                     </div>
-                  )}
+
+                    {/* 対応エリア（必須） */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <EssentialLocationInput 
+                        formData={formData} 
+                        setFormData={setFormData}
+                        isEditing={isEditing}
+                        required={true}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                {/* 対応可能エリア */}
+                {/* 📝 詳細情報（任意） */}
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">🗺️ 対応可能エリア <span className="text-red-500">*</span></h4>
-                  {isEditing ? (
-                    <textarea
-                      value={formData.availableAreas.join('\n')}
-                      onChange={(e) => {
-                        const areas = e.target.value.split('\n').filter(area => area.trim() !== '')
-                        setFormData(prev => ({ ...prev, availableAreas: areas }))
-                      }}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
-                      placeholder="例：全国リモートOK\n東京近郊は対面可\n案件次第では日本国内、海外への出張可"
-                      required
-                    />
-                  ) : (
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">📝 詳細情報（任意）</h4>
+                  <div className="space-y-4">
+                    
+                    {/* 報酬詳細 */}
                     <div>
-                      {formData.availableAreas.length > 0 ? (
-                        <ul className="space-y-1">
-                          {formData.availableAreas.map((area, index) => (
-                            <li key={index} className="text-gray-900">・ {area}</li>
-                          ))}
-                        </ul>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        💰 報酬に関する詳細・特記事項
+                      </label>
+                      <p className="text-xs text-gray-500 mb-2">
+                        上記の基本設定に加えて、報酬に関する詳細条件や特記事項があれば記入してください
+                      </p>
+                      {isEditing ? (
+                        <textarea
+                          value={formData.compensation || ''}
+                          onChange={(e) => handleInputChange('compensation', e.target.value)}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                          placeholder="例：成果報酬の併用可、初期3ヶ月は応相談、プロジェクトの規模に応じて調整可能"
+                        />
                       ) : (
-                        <p className="text-gray-500 italic">エリアが未設定です</p>
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                          {formData.compensation ? (
+                            <p className="text-gray-900 whitespace-pre-wrap">{formData.compensation}</p>
+                          ) : (
+                            <p className="text-gray-500 italic">詳細情報なし</p>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
+
+                    {/* 稼働条件詳細 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        ⏰ 稼働条件に関する詳細・特記事項
+                      </label>
+                      <p className="text-xs text-gray-500 mb-2">
+                        上記の基本設定に加えて、稼働時間や働き方に関する詳細条件があれば記入してください
+                      </p>
+                      {isEditing ? (
+                        <textarea
+                          value={formData.weeklyAvailability || ''}
+                          onChange={(e) => handleInputChange('weeklyAvailability', e.target.value)}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                          placeholder="例：平日夜間・土日対応可、緊急時は柔軟対応、定期的な出社も可能"
+                        />
+                      ) : (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                          {formData.weeklyAvailability ? (
+                            <p className="text-gray-900 whitespace-pre-wrap">{formData.weeklyAvailability}</p>
+                          ) : (
+                            <p className="text-gray-500 italic">詳細情報なし</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 対応エリア詳細 */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        🗺️ 対応エリアに関する詳細・特記事項
+                      </label>
+                      <p className="text-xs text-gray-500 mb-2">
+                        上記の基本設定に加えて、地域対応に関する詳細条件があれば記入してください
+                      </p>
+                      {isEditing ? (
+                        <textarea
+                          value={formData.availableAreas.join('\n')}
+                          onChange={(e) => {
+                            const areas = e.target.value.split('\n').filter(area => area.trim() !== '')
+                            setFormData(prev => ({ ...prev, availableAreas: areas }))
+                          }}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+                          placeholder="例：出張費別途、海外案件対応可、特定地域は追加料金"
+                        />
+                      ) : (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                          {formData.availableAreas.length > 0 ? (
+                            <ul className="space-y-1">
+                              {formData.availableAreas.map((area, index) => (
+                                <li key={index} className="text-gray-900">・ {area}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-gray-500 italic">詳細情報なし</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* 紹介文 */}
@@ -783,6 +901,7 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
+
 
         </div>
       </div>

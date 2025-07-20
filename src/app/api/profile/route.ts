@@ -60,6 +60,14 @@ export async function GET(request: NextRequest) {
           workingAreas: data.cfo_working_areas || '',
           introduction: data.cfo_introduction || '',
           avatarUrl: data.avatar_url || '',
+          // 🆕 構造化フィールドの取得を追加
+          compensationType: data.compensation_type || '',
+          monthlyFeeMin: data.monthly_fee_min || '',
+          monthlyFeeMax: data.monthly_fee_max || '',
+          weeklyDays: data.weekly_days || '',
+          weeklyDaysFlexible: data.weekly_days_flexible || false,
+          supportedPrefectures: data.supported_prefectures || [],
+          fullRemoteAvailable: data.full_remote_available || false,
           createdAt: data.created_at,
           updatedAt: data.updated_at
         }
@@ -183,6 +191,14 @@ export async function PUT(request: NextRequest) {
         cfo_working_areas: body.workingAreas || '',
         cfo_introduction: body.introduction || '',
         avatar_url: body.avatarUrl,
+        // 🆕 構造化フィールドの保存を追加
+        compensation_type: body.compensationType || null,
+        monthly_fee_min: body.monthlyFeeMin || null,
+        monthly_fee_max: body.monthlyFeeMax || null,
+        weekly_days: body.weeklyDays || null,
+        weekly_days_flexible: body.weeklyDaysFlexible || false,
+        supported_prefectures: body.supportedPrefectures || [],
+        full_remote_available: body.fullRemoteAvailable || false,
         updated_at: new Date().toISOString()
       }
 

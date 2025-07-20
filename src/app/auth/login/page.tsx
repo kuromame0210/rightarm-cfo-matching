@@ -41,19 +41,19 @@ export default function LoginPage() {
       if (result.success) {
         showToast('ログインしました', 'success')
         
-        // ログイン成功後はホームページにリダイレクト
-        setTimeout(() => {
-          router.push('/home')
-        }, 1500)
+        // AuthGuardが自動的にリダイレクトするので、手動リダイレクトは不要
+        // NextAuth.jsのセッション更新を待つ
+        // ローディング状態は継続してAuthGuardのリダイレクトを待つ
       } else {
         showToast(result.error || 'ログインに失敗しました', 'error')
+        setIsLoading(false) // エラー時はローディングを解除
       }
     } catch (error) {
       console.error('Login error:', error)
       showToast('ネットワークエラーが発生しました', 'error')
-    } finally {
       setIsLoading(false)
     }
+    // 成功時のローディング解除はAuthGuardのリダイレクト後に自然に行われる
   }
 
   return (

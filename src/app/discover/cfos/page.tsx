@@ -54,54 +54,47 @@ export default function DiscoverCFOsPage() {
     { value: 'experience', label: '経験順' }
   ]
 
-  // マスターデータ取得
+  // マスターデータを固定値で設定（EssentialProfileInputs.tsxと統一）
   const fetchMasterData = async () => {
     try {
       setMasterDataLoading(true)
       
-      if (!isOnline) {
-        showToastMessage('インターネット接続がありません。接続を確認してください。')
-        return
-      }
+      // 🆕 固定データ設定（プロフィール編集と統一）
+      const defaultSkills = [
+        'M&A支援', 'IPOサポート', '資金調達', '管理会計', '財務分析',
+        '予算管理', '原価計算', '資金管理', '経営企画', '投資計画',
+        '税務対応', '監査対応', '内部統制', '業績管理', '海外業務'
+      ]
       
-      // 並列でマスターデータを取得
-      const [skillsRes, regionsRes, workStylesRes] = await Promise.all([
-        fetch('/api/master/skills?category=finance'),
-        fetch('/api/master/regions?popular=true'),
-        fetch('/api/master/work-styles?popular=true')
+      const defaultRegions = [
+        { id: 'all', name: '全国' },
+        { id: 'kanto', name: '関東エリア' },
+        { id: 'kansai', name: '関西エリア' },
+        { id: 'chubu', name: '中部エリア' },
+        { id: 'tohoku', name: '東北エリア' },
+        { id: 'kyushu', name: '九州エリア' }
+      ]
+      
+      const defaultWorkStyles = [
+        { id: '1', name: '週1日' },
+        { id: '2', name: '週2日' },
+        { id: '3', name: '週3日' },
+        { id: '4', name: '週4日' },
+        { id: '5', name: '週5日（フルタイム）' }
+      ]
+      
+      setSkillCategories(defaultSkills)
+      setRegions(defaultRegions)
+      setWorkStyles(defaultWorkStyles)
+      
+      // 🆕 報酬検索を250万円以下まで対応
+      setCompensationRanges([
+        '応相談', '月額制：20万円以下', '月額制：30万円以下', '月額制：50万円以下', '月額制：80万円以下', '月額制：100万円以下', '月額制：150万円以下', '月額制：200万円以下', '月額制：250万円以下'
       ])
 
-      if (skillsRes.ok) {
-        const skillsData = await skillsRes.json()
-        if (skillsData.success) {
-          setSkillCategories(skillsData.data.categories || [])
-        }
-      }
-
-      if (regionsRes.ok) {
-        const regionsData = await regionsRes.json()
-        if (regionsData.success) {
-          setRegions(regionsData.data.regions || [])
-        }
-      }
-
-      if (workStylesRes.ok) {
-        const workStylesData = await workStylesRes.json()
-        if (workStylesData.success) {
-          setWorkStyles(workStylesData.data.workStyles || [])
-        }
-      }
-
-      // 報酬レンジは一旦固定（将来的にはマスターデータ化）
-      setCompensationRanges(['〜50万円', '50〜100万円', '100〜150万円', '150〜200万円', '200万円〜'])
-
     } catch (error) {
-      console.error('Master data fetch error:', error)
-      if (isNetworkError(error)) {
-        showToastMessage(getNetworkErrorMessage(error))
-      } else {
-        showToastMessage('マスターデータの取得に失敗しました')
-      }
+      console.error('Master data setup error:', error)
+      showToastMessage('設定の読み込みに失敗しました')
     } finally {
       setMasterDataLoading(false)
     }
@@ -158,9 +151,52 @@ export default function DiscoverCFOsPage() {
       })
       
       if (searchQuery) params.append('search', searchQuery)
-      if (selectedRegion && selectedRegion !== '全国') params.append('region', selectedRegion)
+      if (selectedRegion && selectedRegion !== '全国') {
+        if (selectedRegion === '関東エリア') params.append('regions', 'kanto')
+        else if (selectedRegion === '関西エリア') params.append('regions', 'kansai')
+        else if (selectedRegion === '中部エリア') params.append('regions', 'chubu')
+        else if (selectedRegion === '東北エリア') params.append('regions', 'tohoku')
+        else if (selectedRegion === '九州エリア') params.append('regions', 'kyushu')
+      }
       if (selectedSkills.length > 0) params.append('skills', selectedSkills.join(','))
-      if (selectedWorkStyle) params.append('available', 'true')
+      
+      // 🆕 稼働形態フィルタを修正（週日数として送信）
+      if (selectedWorkStyle && selectedWorkStyle !== '') {
+        if (selectedWorkStyle === '週1日') params.append('weeklyDays', '1')
+        else if (selectedWorkStyle === '週2日') params.append('weeklyDays', '2')
+        else if (selectedWorkStyle === '週3日') params.append('weeklyDays', '3')
+        else if (selectedWorkStyle === '週4日') params.append('weeklyDays', '4')
+        else if (selectedWorkStyle === '週5日（フルタイム）') params.append('weeklyDays', '5')
+      }
+      
+      // 🆕 報酬フィルタをプロフィール編集設計に合わせて改善
+      if (selectedCompensation && selectedCompensation !== '') {
+        if (selectedCompensation === '応相談') {
+          // 応相談のCFOのみ
+          params.append('compensationType', 'negotiable')
+        } else if (selectedCompensation.startsWith('月額制：')) {
+          // 月額制で予算上限指定検索
+          params.append('compensationType', 'monthly')
+          
+          if (selectedCompensation === '月額制：20万円以下') {
+            params.append('budgetMax', '200000')
+          } else if (selectedCompensation === '月額制：30万円以下') {
+            params.append('budgetMax', '300000')
+          } else if (selectedCompensation === '月額制：50万円以下') {
+            params.append('budgetMax', '500000')
+          } else if (selectedCompensation === '月額制：80万円以下') {
+            params.append('budgetMax', '800000')
+          } else if (selectedCompensation === '月額制：100万円以下') {
+            params.append('budgetMax', '1000000')
+          } else if (selectedCompensation === '月額制：150万円以下') {
+            params.append('budgetMax', '1500000')
+          } else if (selectedCompensation === '月額制：200万円以下') {
+            params.append('budgetMax', '2000000')
+          } else if (selectedCompensation === '月額制：250万円以下') {
+            params.append('budgetMax', '2500000')
+          }
+        }
+      }
       
       const response = await fetch(`/api/cfos?${params}`)
       
@@ -189,7 +225,7 @@ export default function DiscoverCFOsPage() {
     } finally {
       setLoading(false)
     }
-  }, [pagination.page, pagination.limit, selectedSkills, selectedRegion, selectedWorkStyle, searchQuery, isOnline])
+  }, [pagination.page, pagination.limit, selectedSkills, selectedRegion, selectedWorkStyle, selectedCompensation, searchQuery, isOnline])
 
   // 検索実行関数
   const handleSearch = useCallback(async () => {
@@ -305,20 +341,43 @@ export default function DiscoverCFOsPage() {
   const filteredCFOs = displayCFOs.filter((cfo: any) => {
     const matchesSearch = searchQuery === '' || 
       cfo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cfo.nickname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (cfo.displayName && cfo.displayName.toLowerCase().includes(searchQuery.toLowerCase())) ||
       cfo.skills.some((skill: string) => skill.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      cfo.achievements.toLowerCase().includes(searchQuery.toLowerCase())
+      (cfo.introduction && cfo.introduction.toLowerCase().includes(searchQuery.toLowerCase()))
     
     const matchesSkills = selectedSkills.length === 0 || 
       selectedSkills.some((skill: string) => cfo.skills.includes(skill))
     
     const matchesRegion = selectedRegion === '' || selectedRegion === '全国' || 
-      cfo.region === selectedRegion
+      (cfo.structured?.supportedPrefectures && cfo.structured.supportedPrefectures.length > 0) ||
+      cfo.structured?.fullRemoteAvailable
     
-    const matchesWorkStyle = selectedWorkStyle === '' || 
-      cfo.workPreference.includes(selectedWorkStyle)
+    // 🆕 稼働形態フィルタを修正
+    const matchesWorkStyle = selectedWorkStyle === '' ||
+      (selectedWorkStyle === '週1日' && cfo.structured?.weeklyDays === 1) ||
+      (selectedWorkStyle === '週2日' && cfo.structured?.weeklyDays === 2) ||
+      (selectedWorkStyle === '週3日' && cfo.structured?.weeklyDays === 3) ||
+      (selectedWorkStyle === '週4日' && cfo.structured?.weeklyDays === 4) ||
+      (selectedWorkStyle === '週5日（フルタイム）' && cfo.structured?.weeklyDays === 5) ||
+      cfo.structured?.weeklyDaysFlexible // 柔軟対応可能な場合はマッチ
     
-    return matchesSearch && matchesSkills && matchesRegion && matchesWorkStyle
+    // 🆕 報酬フィルタ（API検索と連携、フロントエンドは補完的）
+    const matchesCompensation = selectedCompensation === '' ||
+      (selectedCompensation === '応相談' && (
+        cfo.structured?.compensationType === 'negotiable' || 
+        (cfo.compensation && cfo.compensation.includes('応相談'))
+      )) ||
+      // 月額制の場合：具体的な予算範囲をチェック
+      (selectedCompensation === '月額制：20万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 200000) ||
+      (selectedCompensation === '月額制：30万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 300000) ||
+      (selectedCompensation === '月額制：50万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 500000) ||
+      (selectedCompensation === '月額制：80万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 800000) ||
+      (selectedCompensation === '月額制：100万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 1000000) ||
+      (selectedCompensation === '月額制：150万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 1500000) ||
+      (selectedCompensation === '月額制：200万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 2000000) ||
+      (selectedCompensation === '月額制：250万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 2500000)
+    
+    return matchesSearch && matchesSkills && matchesRegion && matchesWorkStyle && matchesCompensation
   })
 
   // ソート処理
@@ -327,14 +386,17 @@ export default function DiscoverCFOsPage() {
       case 'newest':
         return new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()
       case 'compensation_high':
-        const aComp = parseInt(a.compensationRange.replace(/[^\d]/g, ''))
-        const bComp = parseInt(b.compensationRange.replace(/[^\d]/g, ''))
-        return bComp - aComp
+        // 構造化データの下限金額でソート（下限が高い順）
+        const aCompMin = a.structured?.monthlyFeeMin || (a.feeMin ? a.feeMin * 10000 : 0)
+        const bCompMin = b.structured?.monthlyFeeMin || (b.feeMin ? b.feeMin * 10000 : 0)
+        return bCompMin - aCompMin
       case 'rating':
         return b.rating - a.rating
       case 'experience':
-        // 実績の長さを経験の指標として使用
-        return b.achievements.length - a.achievements.length
+        // 経験年数または構造化データの経験年数を使用
+        const aExp = a.structured?.experienceYears || (a.experience ? a.experience.length / 100 : 0)
+        const bExp = b.structured?.experienceYears || (b.experience ? b.experience.length / 100 : 0)
+        return bExp - aExp
       default:
         return 0
     }
@@ -662,36 +724,43 @@ export default function DiscoverCFOsPage() {
               <div className="space-y-4 md:space-y-6">
                 {sortedCFOs.map((cfo: any) => (
                 <div key={cfo.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 hover:shadow-md transition-shadow">
-                  {/* 名前・評価・ステータス・ボタン */}
-                  <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-3">
-                    <div className="flex-1 min-w-0 mb-2 md:mb-0">
-                      <div className="flex items-center gap-3 mb-1 flex-wrap">
+                  {/* ヘッダー: 名前・居住地・アクションボタン */}
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4">
+                    <div className="flex-1 min-w-0 mb-3 md:mb-0">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
                         {/* CFO写真 */}
-                        <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-100 rounded-full flex-shrink-0 flex items-center justify-center">
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-100 rounded-full flex-shrink-0 flex items-center justify-center">
                           {cfo.photoUrl && cfo.photoUrl.startsWith('http') ? (
                             <Image 
                               src={cfo.photoUrl} 
                               alt={cfo.name} 
-                              width={40}
-                              height={40}
+                              width={48}
+                              height={48}
                               className="w-full h-full rounded-full object-cover" 
                               unoptimized={true}
                             />
                           ) : cfo.photoUrl && (cfo.photoUrl.includes('👨') || cfo.photoUrl.includes('👩') || cfo.photoUrl.includes('🧑')) ? (
-                            <span className="text-sm md:text-base">{cfo.photoUrl}</span>
+                            <span className="text-lg md:text-xl">{cfo.photoUrl}</span>
                           ) : (
-                            <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                             </svg>
                           )}
                         </div>
-                        <h3 className="text-base md:text-lg font-semibold text-gray-900">
-                          {cfo.name || '名前未設定'}
-                        </h3>
+                        <div>
+                          <h3 className="text-lg md:text-xl font-semibold text-gray-900">
+                            {cfo.name || '名前未設定'}
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            📍 {cfo.location || '居住地未設定'}
+                            {cfo.structured?.fullRemoteAvailable && (
+                              <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+                                完全リモート可
+                              </span>
+                            )}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-gray-600 text-sm ml-11 md:ml-13">
-                        📍 {cfo.location || '居住地未設定'}
-                      </p>
                     </div>
                     <div className="flex gap-2 flex-wrap md:flex-nowrap">
                       <Link 
@@ -725,44 +794,106 @@ export default function DiscoverCFOsPage() {
                     </div>
                   </div>
                   
-                  {/* 可能な業務/スキル */}
-                  <div className="mb-3">
-                    <p className="text-xs text-gray-500 mb-1">可能な業務/スキル:</p>
+                  {/* 🆕 構造化情報（最重要） */}
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {/* 報酬情報 */}
+                      {cfo.structured?.compensationType && (
+                        <div className="px-3 py-1.5 bg-green-100 text-green-800 text-sm rounded-lg font-medium">
+                          💰 {cfo.structured.compensationType === 'monthly' ? '月額制' : '応相談'}
+                          {cfo.structured.compensationType === 'monthly' && cfo.structured.monthlyFeeMin && (
+                            <span className="ml-1">
+                              {Math.floor(cfo.structured.monthlyFeeMin / 10000)}万円
+                              {cfo.structured.monthlyFeeMax && cfo.structured.monthlyFeeMax !== cfo.structured.monthlyFeeMin ? 
+                                `〜${Math.floor(cfo.structured.monthlyFeeMax / 10000)}万円` : '〜'}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* 稼働条件 */}
+                      {cfo.structured?.weeklyDays && (
+                        <div className="px-3 py-1.5 bg-blue-100 text-blue-800 text-sm rounded-lg font-medium">
+                          ⏰ 週{cfo.structured.weeklyDays}日
+                          {cfo.structured.weeklyDaysFlexible && <span className="ml-1">（応相談可）</span>}
+                        </div>
+                      )}
+                      
+                      {/* 対応エリア */}
+                      {cfo.structured?.supportedPrefectures && cfo.structured.supportedPrefectures.length > 0 && (
+                        <div className="px-3 py-1.5 bg-purple-100 text-purple-800 text-sm rounded-lg font-medium">
+                          🗺️ {cfo.structured.supportedPrefectures.map((region: string) => {
+                            const regionMap: { [key: string]: string } = {
+                              'kanto': '関東',
+                              'kansai': '関西',
+                              'chubu': '中部',
+                              'tohoku': '東北',
+                              'kyushu': '九州',
+                              'nationwide': '全国'
+                            }
+                            return regionMap[region] || region
+                          }).slice(0, 2).join('・')}
+                          {cfo.structured.supportedPrefectures.length > 2 && '他'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 専門スキル（重要なもの優先表示） */}
+                  <div className="mb-4">
+                    <p className="text-xs text-gray-500 mb-2">専門スキル:</p>
                     <div className="flex flex-wrap gap-1 md:gap-2">
-                      {cfo.skills.map((skill: string) => (
-                        <span key={skill} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded border border-blue-200">
+                      {cfo.skills.slice(0, 6).map((skill: string, index: number) => (
+                        <span key={skill} className={`px-2 py-1 text-xs rounded border ${
+                          index < 3 ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium' : 'bg-gray-50 text-gray-700 border-gray-200'
+                        }`}>
                           {skill}
                         </span>
                       ))}
+                      {cfo.skills.length > 6 && (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                          +{cfo.skills.length - 6}個
+                        </span>
+                      )}
                     </div>
                   </div>
-                  
 
-                  {/* 保有資格 */}
-                  <div className="mb-3">
-                    <p className="text-xs text-gray-500 mb-1">保有資格:</p>
-                    <p className="text-gray-600 text-sm">
-                      {cfo.certifications || '未設定'}
+                  {/* 簡潔な紹介文 */}
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">紹介:</p>
+                    <p className="text-gray-700 text-sm line-clamp-2 leading-relaxed">
+                      {cfo.introduction || '経験豊富なCFOとして、企業の財務戦略をサポートします。'}
                     </p>
                   </div>
 
-                  {/* 対応エリア・報酬 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4 text-sm text-gray-600 mb-3">
-                    <div>
-                      <span className="text-xs text-gray-500">対応エリア:</span>
-                      <p className="font-medium">{cfo.workingAreas || '未設定'}</p>
+                  {/* 詳細情報（折り畳み可能） */}
+                  <details className="mt-3">
+                    <summary className="text-xs text-blue-600 cursor-pointer hover:text-blue-800">
+                      詳細情報を表示
+                    </summary>
+                    <div className="mt-2 pt-2 border-t border-gray-100 space-y-2">
+                      {/* 保有資格 */}
+                      <div>
+                        <span className="text-xs text-gray-500">保有資格:</span>
+                        <p className="text-gray-600 text-xs">{cfo.certifications || '未設定'}</p>
+                      </div>
+                      
+                      {/* テキストベースの詳細情報 */}
+                      {cfo.compensation && (
+                        <div>
+                          <span className="text-xs text-gray-500">報酬詳細:</span>
+                          <p className="text-gray-600 text-xs">{cfo.compensation}</p>
+                        </div>
+                      )}
+                      
+                      {cfo.workingAreas && (
+                        <div>
+                          <span className="text-xs text-gray-500">エリア詳細:</span>
+                          <p className="text-gray-600 text-xs">{cfo.workingAreas}</p>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <span className="text-xs text-gray-500">報酬:</span>
-                      <p className="font-medium">{cfo.compensation || '応相談'}</p>
-                    </div>
-                  </div>
-                  
-                  {/* 自己紹介/一言 */}
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">自己紹介:</p>
-                    <p className="text-gray-600 text-sm line-clamp-2">{cfo.introduction}</p>
-                  </div>
+                  </details>
                 </div>
                 ))}
               </div>

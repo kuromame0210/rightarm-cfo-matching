@@ -76,7 +76,13 @@ export const authOptions: NextAuthOptions = {
 
           // プロフィール情報を取得（CFOまたは企業）
           let profile = null
-          let userType = 'cfo' // デフォルト
+          let userType = 'company' // デフォルト（企業向けプラットフォームのため）
+          
+          // まずメタデータのroleをチェック（最優先）
+          if (user.user_metadata?.role === 'cfo' || user.user_metadata?.role === 'company') {
+            userType = user.user_metadata.role
+            console.log('🏷️ NextAuth: メタデータからuserType取得:', userType)
+          }
           
           // CFOプロフィールを確認
           const { data: cfoProfile } = await supabaseAdmin
@@ -87,7 +93,9 @@ export const authOptions: NextAuthOptions = {
           
           if (cfoProfile) {
             profile = cfoProfile
-            userType = 'cfo'
+            if (!user.user_metadata?.role) {
+              userType = 'cfo' // メタデータがない場合のみプロフィール存在で判定
+            }
           } else {
             // 企業プロフィールを確認
             const { data: bizProfile } = await supabaseAdmin
@@ -98,7 +106,9 @@ export const authOptions: NextAuthOptions = {
             
             if (bizProfile) {
               profile = bizProfile
-              userType = 'company'
+              if (!user.user_metadata?.role) {
+                userType = 'company' // メタデータがない場合のみプロフィール存在で判定
+              }
             }
           }
 
