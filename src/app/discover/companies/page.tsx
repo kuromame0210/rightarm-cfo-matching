@@ -176,13 +176,15 @@ export default function DiscoverCompaniesPage() {
   }
 
   const handleInterested = async (company: any) => {
+    // 操作前の状態を記録
+    const wasInterested = isInterested(company.id)
     const success = await toggleInterest(company.id, 'company')
     if (success) {
-      if (isInterested(company.id)) {
-        showToastMessage('気になるに追加しました ❤️')
-      } else {
-        showToastMessage('気になるから削除しました')
-      }
+      // 操作内容に基づいてメッセージを決定
+      const message = !wasInterested
+        ? '気になるに追加しました ❤️'
+        : '気になるから削除しました'
+      showToastMessage(message)
     } else {
       showToastMessage('操作に失敗しました。再度お試しください。')
     }

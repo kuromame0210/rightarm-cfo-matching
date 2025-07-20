@@ -58,6 +58,11 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
 
+  // Remove console.log in production
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+
   // アセット最適化
   images: {
     domains: ['ipovokidhyhojjqhanwj.supabase.co'],

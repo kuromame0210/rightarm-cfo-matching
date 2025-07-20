@@ -25,10 +25,13 @@ export default function CFODetailPage() {
   // 気になるボタンのトグル（useInterests版）
   const handleToggleInterested = async () => {
     try {
+      // 操作前の状態を記録
+      const wasInterested = isInterested(cfoId)
       const success = await toggleInterest(cfoId, 'cfo')
       
       if (success) {
-        const message = isInterested(cfoId) 
+        // 操作内容に基づいてメッセージを決定
+        const message = !wasInterested
           ? '気になるに追加しました ❤️' 
           : '気になるから削除しました'
         setToastMessage(message)

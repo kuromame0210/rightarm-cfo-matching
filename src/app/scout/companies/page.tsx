@@ -478,9 +478,12 @@ export default function ScoutCompaniesPage() {
                           <div className="flex gap-0.5 md:gap-2 mt-1.5 md:mt-0 md:flex-shrink-0">
                             <button 
                               onClick={async () => {
+                                // 操作前の状態を記録
+                                const wasInterested = isInterested(company.senderUserId)
                                 const success = await toggleInterest(company.senderUserId, 'company')
                                 if (success) {
-                                  showToastMessage(isInterested(company.senderUserId) ? '気になるに追加しました ❤️' : '気になるから削除しました')
+                                  const message = !wasInterested ? '気になるに追加しました ❤️' : '気になるから削除しました'
+                                  showToastMessage(message)
                                 }
                               }}
                               className={`flex-1 md:flex-none min-h-[28px] md:min-h-[36px] px-1.5 md:px-3 py-0.5 md:py-1.5 border text-xs font-medium transition-all duration-200 active:scale-95 rounded-lg flex items-center justify-center whitespace-nowrap ${

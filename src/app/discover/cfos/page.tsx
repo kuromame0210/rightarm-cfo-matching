@@ -249,22 +249,17 @@ export default function DiscoverCFOsPage() {
 
   const handleInterested = async (cfo: any) => {
     try {
-      
+      // 操作前の状態を記録
+      const wasInterested = isInterested(cfo.id)
       const success = await toggleInterest(cfo.id, 'cfo')
       
       if (success) {
-        const currentlyInterested = isInterested(cfo.id)
-        const message = currentlyInterested 
+        // 操作内容に基づいてメッセージを決定
+        const message = !wasInterested
           ? '気になるに追加しました ❤️' 
           : '気になるから削除しました'
         showToastMessage(message)
-        
-        console.log('✅ お気に入り操作成功:', {
-          cfoId: cfo.id,
-          action: currentlyInterested ? 'added' : 'removed'
-        })
       } else {
-        console.warn('❌ お気に入り操作失敗:', cfo.id)
         showToastMessage('操作に失敗しました。もう一度お試しください。')
       }
     } catch (error) {
