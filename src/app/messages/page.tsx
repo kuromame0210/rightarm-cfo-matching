@@ -25,7 +25,6 @@ function MessagesContent() {
   const [creatingConversation, setCreatingConversation] = useState(false)
   const [conversationInitialized, setConversationInitialized] = useState(false)
   const [showChatList, setShowChatList] = useState(true)
-  const [scoutProcessed, setScoutProcessed] = useState(false)
   const [targetUserName, setTargetUserName] = useState<string | null>(null)
   const [targetUserType, setTargetUserType] = useState<'cfo' | 'company' | undefined>(undefined)
   const [targetUserAvatar, setTargetUserAvatar] = useState<string>('👤')
@@ -136,35 +135,15 @@ function MessagesContent() {
 
   // メッセージ送信
   const sendMessage = async () => {
-    // スカウトメッセージがある場合は、メッセージ入力なしでも送信可能
-    const hasScoutMessage = scoutId && !scoutProcessed
-    if (!messageInput.trim() && !hasScoutMessage) return
+    // メッセージボタンからの場合は必ずユーザー入力が必要
+    if (!messageInput.trim()) return
 
     // 一時的な会話ID（temp_で始まる）の場合は新しい会話を作成
     if (selectedChatId && selectedChatId.startsWith('temp_')) {
       const targetUserId = selectedChatId.replace('temp_', '')
       try {
-        // スカウトIDがある場合は、スカウトメッセージを最初のメッセージとして送信
+        // メッセージボタンからの場合はユーザー入力のみ送信
         let initialMessage = messageInput.trim()
-        
-        if (scoutId && !scoutProcessed) {
-          try {
-            console.log('スカウトメッセージを取得中:', scoutId)
-            const scoutResponse = await fetch(`/api/scouts/${scoutId}`)
-            
-            if (scoutResponse.ok) {
-              const scoutData = await scoutResponse.json()
-              if (scoutData.success) {
-                const scout = scoutData.data
-                const scoutMessageText = `【スカウト】\n\n${scout.message || scout.title || ''}`
-                initialMessage = scoutMessageText
-                console.log('スカウトメッセージを最初のメッセージとして設定:', scoutMessageText)
-              }
-            }
-          } catch (scoutError) {
-            console.error('スカウトメッセージ取得エラー:', scoutError)
-          }
-        }
         
         console.log('新規会話でメッセージ送信中:', initialMessage)
         const response = await fetch('/api/conversations', {
@@ -183,9 +162,6 @@ function MessagesContent() {
           console.log('新規会話作成とメッセージ送信成功:', data)
           if (data.success) {
             setMessageInput('')
-            if (scoutId && !scoutProcessed) {
-              setScoutProcessed(true)
-            }
             // 会話一覧を再取得して新しい会話を選択
             await fetchConversations(false)
             // 新しく作成された会話を自動選択
@@ -271,49 +247,6 @@ function MessagesContent() {
     }
   }, [targetUserId, creatingConversation, chatList])
 
-  // スカウト内容を会話に追加する関数
-  const addScoutMessageToConversation = useCallback(async (conversationId: string) => {
-    if (!scoutId || scoutProcessed) return
-
-    // 一時的な会話IDの場合は処理しない（実際のメッセージ送信時に一緒に処理される）
-    if (conversationId.startsWith('temp_')) {
-      console.log('一時的な会話IDのため、スカウトメッセージの追加をスキップ:', conversationId)
-      return
-    }
-
-    try {
-      // スカウト詳細を取得
-      const scoutResponse = await fetch(`/api/scouts/${scoutId}`)
-      
-      if (scoutResponse.ok) {
-        const scoutData = await scoutResponse.json()
-        if (scoutData.success) {
-          const scout = scoutData.data
-          const scoutMessageText = `【スカウト】\n\n${scout.message || scout.title || ''}`
-          
-          // スカウトメッセージを会話に追加
-          const messageResponse = await fetch('/api/messages', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              conversationId,
-              message: scoutMessageText
-            })
-          })
-          
-          if (messageResponse.ok) {
-            setScoutProcessed(true)
-            // メッセージを再取得して更新
-            await fetchMessages(conversationId)
-          }
-        }
-      }
-    } catch (error) {
-      console.error('スカウトメッセージ追加エラー:', error)
-    }
-  }, [scoutId, scoutProcessed, fetchMessages])
 
   // ターゲットユーザーの詳細情報を取得
   const fetchTargetUserInfo = async (userId: string) => {
@@ -382,16 +315,13 @@ function MessagesContent() {
       console.log('selectedChatId変更:', selectedChatId)
       console.log('現在のselectedChat:', selectedChat)
       fetchMessages(selectedChatId)
-      // スカウトIDがある場合は、スカウト内容を会話に追加
-      if (scoutId && !scoutProcessed) {
-        addScoutMessageToConversation(selectedChatId)
-      }
+      // スカウトIDがある場合の自動送信は削除（メッセージボタンでは何も送信しない）
       // メッセージを取得した後、会話一覧を再取得して未読カウントを更新
       setTimeout(() => {
         fetchConversations(true) // 選択状態を保持
       }, 500)
     }
-  }, [selectedChatId, scoutId, scoutProcessed]) // 依存配列を最小限に
+  }, [selectedChatId]) // 依存配列を最小限に
 
   useEffect(() => {
     // URLパラメータでユーザーIDが指定されている場合、会話を作成または選択
