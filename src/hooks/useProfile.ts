@@ -58,15 +58,21 @@ export function useProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // プロフィール取得
+  // プロフィール取得（重複呼び出し防止版）
   const fetchProfile = useCallback(async () => {
     if (!isAuthenticated) {
       setLoading(false)
       return
     }
 
+    // 重複呼び出し防止
+    if (loading) {
+      console.log('⏳ useProfile: 既に取得中のためスキップ')
+      return
+    }
+
     try {
-      // console.log('📥 === useProfile: プロフィール取得開始 ===')
+      console.log('📥 useProfile: プロフィール取得開始')
       setLoading(true)
       setError(null)
 
@@ -77,29 +83,30 @@ export function useProfile() {
         credentials: 'include'
       })
 
-      // console.log('📡 useProfile レスポンス:', response.status)
+      console.log('📡 useProfile レスポンス:', response.status)
 
       if (response.ok) {
         const data = await response.json()
-        // console.log('✅ useProfile: 取得成功', data)
         
         if (data.success) {
-          console.log('📄 プロフィール取得データ:', data.profile)
+          console.log('✅ useProfile: 取得成功')
           setProfile(data.profile)
         } else {
+          console.error('❌ useProfile: APIエラー', data.error)
           setError(data.error || 'プロフィールの取得に失敗しました')
         }
       } else {
         const errorData = await response.json()
+        console.error('❌ useProfile: HTTPエラー', response.status, errorData)
         setError(errorData.error || 'プロフィールの取得に失敗しました')
       }
     } catch (err) {
-      console.error('useProfile fetch error:', err)
+      console.error('❌ useProfile: ネットワークエラー', err)
       setError('ネットワークエラーが発生しました')
     } finally {
       setLoading(false)
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, loading])
 
   // プロフィール更新
   const updateProfile = useCallback(async (profileData: Partial<ProfileData>) => {

@@ -133,32 +133,31 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
     }
   }, [fetchInterests, isAuthenticated, user, session])
 
-  // ページ変更時の再取得（Next.jsルーティング対応）
+  // ページ変更時の再取得（必要最小限に削減）
   useEffect(() => {
-    const handleRouteChange = () => {
-      if (isAuthenticated && user && session) {
-        console.log('🔄 ページ遷移: お気に入りリストを再取得')
-        fetchInterests()
-      }
-    }
+    let lastFetchTime = 0
+    const FETCH_COOLDOWN = 30000 // 30秒のクールダウン
 
-    // Next.jsのページ遷移を検知
     const handleVisibilityChange = () => {
-      if (!document.hidden && isAuthenticated && user && session) {
-        console.log('🔄 ページ表示: お気に入りリストを再取得')
+      const now = Date.now()
+      
+      if (!document.hidden && 
+          isAuthenticated && 
+          user && 
+          session && 
+          now - lastFetchTime > FETCH_COOLDOWN) {
+        
+        console.log('🔄 ページ表示後の限定的再取得（30秒クールダウン後）')
         fetchInterests()
+        lastFetchTime = now
       }
     }
 
-    // ページが表示状態になった時に再取得（タブ切り替え対応）
+    // 長時間のタブ切り替え後のみ再取得（クールダウン付き）
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    
-    // ブラウザフォーカス時も念のため再取得
-    window.addEventListener('focus', handleRouteChange)
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('focus', handleRouteChange)
     }
   }, [isAuthenticated, user, session, fetchInterests])
 
@@ -171,7 +170,7 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
     return interests.some(interest => interest.targetId === targetUserId)
   }, [interests])
 
-  // お気に入りに追加
+  // お気に入りに追加（楽観的UI更新版）
   const addInterest = useCallback(async (
     targetUserId: string, 
     targetType: 'cfo' | 'company'
@@ -187,6 +186,20 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
       return true
     }
 
+    // 楽観的UI更新: 即座にローカル状態を更新
+    const optimisticInterest: LikeItem = {
+      likerId: user.id,
+      targetId: targetUserId,
+      targetType,
+      targetName: 'Loading...',
+      targetAvatar: '',
+      createdAt: new Date().toISOString(),
+      meta: { architecture: 'optimistic', table: 'likes' }
+    }
+    
+    setInterests(prev => [...prev, optimisticInterest])
+    console.log('🔥 楽観的UI更新: お気に入り追加', targetUserId)
+
     try {
       setError(null)
 
@@ -196,16 +209,19 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
       const response = await api.interests.add(targetUserId, targetType)
 
       if (isSuccessResponse(response)) {
-        // サーバーから最新データを再取得して確実に同期
-        await fetchInterests()
-        
-        console.log('Like added and data refreshed:', targetUserId)
+        // 成功時: 正確なデータで更新（必要時のみ）
+        // NOTE: 楽観的更新で十分な場合は再取得をスキップ
+        console.log('✅ お気に入り追加API成功:', targetUserId)
         return true
       } else {
         throw new Error(response.error?.message || 'お気に入りの追加に失敗しました')
       }
     } catch (err) {
       console.error('Add interest error:', err)
+      
+      // 失敗時: 楽観的更新をロールバック
+      setInterests(prev => prev.filter(item => item.targetId !== targetUserId))
+      console.log('❌ 楽観的UI更新ロールバック:', targetUserId)
       
       if (err instanceof ApiError) {
         setError(err.message)
@@ -216,12 +232,23 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
     }
   }, [isAuthenticated, user, session, isInterested])
 
-  // お気に入りから削除
+  // お気に入りから削除（楽観的UI更新版）
   const removeInterest = useCallback(async (targetUserId: string): Promise<boolean> => {
     if (!isAuthenticated || !user || !session) {
       setError('認証が必要です')
       return false
     }
+
+    // 削除対象を保存（ロールバック用）
+    const targetInterest = interests.find(item => item.targetId === targetUserId)
+    if (!targetInterest) {
+      console.log('Target not found in interests:', targetUserId)
+      return true // 既に存在しない場合は成功とみなす
+    }
+
+    // 楽観的UI更新: 即座にローカル状態から削除
+    setInterests(prev => prev.filter(item => item.targetId !== targetUserId))
+    console.log('🔥 楽観的UI更新: お気に入り削除', targetUserId)
 
     try {
       setError(null)
@@ -232,16 +259,18 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
       const response = await api.interests.remove(targetUserId)
 
       if (isSuccessResponse(response)) {
-        // サーバーから最新データを再取得して確実に同期
-        await fetchInterests()
-        
-        console.log('Like removed and data refreshed:', targetUserId)
+        // 成功時: 楽観的更新で十分
+        console.log('✅ お気に入り削除API成功:', targetUserId)
         return true
       } else {
         throw new Error(response.error?.message || 'お気に入りの削除に失敗しました')
       }
     } catch (err) {
       console.error('Remove interest error:', err)
+      
+      // 失敗時: 楽観的更新をロールバック（削除したアイテムを復元）
+      setInterests(prev => [...prev, targetInterest])
+      console.log('❌ 楽観的UI更新ロールバック:', targetUserId)
       
       if (err instanceof ApiError) {
         setError(err.message)
@@ -250,7 +279,7 @@ export function InterestsProvider({ children }: InterestsProviderProps) {
       }
       return false
     }
-  }, [isAuthenticated, user, session])
+  }, [isAuthenticated, user, session, interests])
 
   // お気に入りのトグル
   const toggleInterest = useCallback(async (
