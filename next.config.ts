@@ -58,9 +58,9 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
 
-  // Remove console.log in production (temporarily disabled for debugging)
+  // Remove console.log in production
   compiler: {
-    removeConsole: false, // Temporarily disabled for production debugging
+    removeConsole: process.env.NODE_ENV === 'production',
   },
 
   // アセット最適化

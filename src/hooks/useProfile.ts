@@ -62,19 +62,9 @@ export function useProfile() {
 
   // プロフィール取得（重複呼び出し防止版）
   const fetchProfile = useCallback(async () => {
-    const callId = Math.random().toString(36).substr(2, 9)
     const now = Date.now()
-    
-    console.log(`🚀 useProfile[${callId}]: fetchProfile called`, {
-      isAuthenticated,
-      loading,
-      retryCount,
-      timeSinceLastFetch: now - lastFetchTime,
-      timestamp: new Date().toISOString()
-    })
 
     if (!isAuthenticated) {
-      console.log(`⛔ useProfile[${callId}]: Not authenticated, stopping`)
       setLoading(false)
       setRetryCount(0)
       return
@@ -82,26 +72,22 @@ export function useProfile() {
 
     // 重複呼び出し防止（時間ベース + 状態ベース）
     if (loading) {
-      console.log(`⏳ useProfile[${callId}]: Already loading, skipping`)
       return
     }
 
-    // 短時間での連続呼び出し防止（5秒以内）
-    if (now - lastFetchTime < 5000) {
-      console.log(`⏱️ useProfile[${callId}]: Too soon since last fetch (${now - lastFetchTime}ms), skipping`)
+    // 短時間での連続呼び出し防止（10秒以内に変更）
+    if (now - lastFetchTime < 10000) {
       return
     }
 
-    // 無限ループ防止（10回以上の連続リトライ）
-    if (retryCount >= 10) {
-      console.error(`🛑 useProfile[${callId}]: Max retry count exceeded (${retryCount}), stopping`)
+    // 無限ループ防止（5回以上の連続リトライで停止）
+    if (retryCount >= 5) {
       setError('プロフィールの取得に繰り返し失敗しています。ページを更新してください。')
       setLoading(false)
       return
     }
 
     try {
-      console.log(`📥 useProfile[${callId}]: Starting profile fetch`)
       setLoading(true)
       setError(null)
 
@@ -112,48 +98,33 @@ export function useProfile() {
         credentials: 'include'
       })
 
-      console.log(`📡 useProfile[${callId}]: Response status:`, response.status)
-
       if (response.ok) {
         const data = await response.json()
-        console.log(`📄 useProfile[${callId}]: Response data:`, {
-          success: data.success,
-          hasProfile: !!data.profile,
-          profileId: data.profile?.id
-        })
         
         if (data.success) {
-          console.log(`✅ useProfile[${callId}]: Profile fetch successful`)
           setProfile(data.profile)
           setRetryCount(0) // 成功時にリトライカウントをリセット
         } else {
-          console.error(`❌ useProfile[${callId}]: API error:`, data.error)
           setError(data.error || 'プロフィールの取得に失敗しました')
           setRetryCount(prev => prev + 1)
         }
       } else {
         const errorData = await response.json()
-        console.error(`❌ useProfile[${callId}]: HTTP error ${response.status}:`, errorData)
         setError(errorData.error || 'プロフィールの取得に失敗しました')
         setRetryCount(prev => prev + 1)
       }
     } catch (err) {
-      console.error(`❌ useProfile[${callId}]: Network error:`, err)
       setError('ネットワークエラーが発生しました')
       setRetryCount(prev => prev + 1)
     } finally {
-      console.log(`🏁 useProfile[${callId}]: fetchProfile completed, setting loading = false`)
       setLoading(false)
       setLastFetchTime(now)
     }
-  }, [isAuthenticated, loading, lastFetchTime, retryCount])
+  }, [isAuthenticated, loading])
 
   // プロフィール更新
   const updateProfile = useCallback(async (profileData: Partial<ProfileData>) => {
     try {
-      console.log('🔥 保存処理開始:', profileData.name || profileData.displayName)
-      console.log('📤 送信するデータ:', JSON.stringify(profileData, null, 2))
-
       const response = await fetch('/api/profile', {
         method: 'PUT',
         headers: {
@@ -164,23 +135,18 @@ export function useProfile() {
       })
 
       const result = await response.json()
-      console.log('📡 API応答:', result.success ? '成功' : `失敗: ${result.error}`)
 
       if (response.ok && result.success) {
-        console.log('✅ プロフィール更新API成功')
         // 更新成功後にプロフィールを再取得
         await fetchProfile()
-        console.log('🔄 データ再取得完了')
         return { success: true, message: result.message }
       } else {
-        console.error('❌ プロフィール更新API失敗:', result.error)
         return { 
           success: false, 
           error: result.error || 'プロフィールの更新に失敗しました' 
         }
       }
     } catch (err) {
-      console.error('useProfile update error:', err)
       return { 
         success: false, 
         error: 'ネットワークエラーが発生しました' 
@@ -190,9 +156,8 @@ export function useProfile() {
 
   // 初回ロード
   useEffect(() => {
-    console.log('🔄 useProfile: useEffect triggered, calling fetchProfile')
     fetchProfile()
-  }, [fetchProfile])
+  }, [isAuthenticated, user])
 
   return {
     profile,
@@ -213,7 +178,6 @@ export function useMasterData() {
 
   const fetchMasterData = useCallback(async () => {
     try {
-      console.log('📋 === useMasterData: マスターデータ取得開始 ===')
       setLoading(true)
 
       const [skillsRes, regionsRes, workStylesRes] = await Promise.all([
@@ -243,10 +207,8 @@ export function useMasterData() {
           setWorkStyles(workStylesData.data.workStyles || [])
         }
       }
-
-      console.log('✅ useMasterData: 取得完了')
     } catch (error) {
-      console.error('Master data fetch error:', error)
+      // Silent error handling
     } finally {
       setLoading(false)
     }
