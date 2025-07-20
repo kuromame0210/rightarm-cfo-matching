@@ -2,16 +2,19 @@
 
 import { memo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 interface Message {
   msg_id?: number
   id?: number | string
-  sender_id: string
-  receiver_id: string
+  sender_id?: string
+  receiver_id?: string
+  senderId?: string
+  receiverId?: string
   msg_type?: 'chat' | 'scout'
-  body: string
+  body?: string
   content?: string
-  sent_at: string
+  sent_at?: string
   sentAt?: string
 }
 
@@ -33,6 +36,7 @@ interface MessageAreaProps {
 
 const MessageArea = memo(({ messages, messageInput, onMessageInputChange, onSendMessage, currentUserId, selectedChat }: MessageAreaProps) => {
   const router = useRouter()
+  const { data: session } = useSession()
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
 
@@ -162,22 +166,49 @@ const MessageArea = memo(({ messages, messageInput, onMessageInputChange, onSend
 
       {/* メッセージ履歴 */}
       <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4">
-        {Array.isArray(messages) ? messages.map((message, index) => (
-          <div
-            key={message.msg_id || message.id || `message-${index}-${message.sent_at}`}
-            className={`flex ${message.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
-          >
+        {Array.isArray(messages) ? messages.map((message, index) => {
+          const isCurrentUser = (message.sender_id || message.senderId) === currentUserId
+          
+          // 送信者名の表示: 自分のメッセージなら表示しない、相手なら会話相手の名前
+          const showSenderName = !isCurrentUser && selectedChat?.name
+          
+          return (
             <div
-              className={`max-w-xs md:max-w-sm lg:max-w-md px-3 md:px-4 py-2 rounded-lg ${
-                message.sender_id === currentUserId
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-200 text-gray-900'
-              }`}
+              key={message.msg_id || message.id || `message-${index}-${message.sent_at}`}
+              className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-3`}
             >
-              <p className="text-xs md:text-sm">{message.body || message.content || ''}</p>
-              <p className={`text-xs mt-1 ${
-                message.sender_id === currentUserId ? 'text-gray-300' : 'text-gray-500'
-              }`}>
+              {/* アバター（左側：相手、右側：自分） */}
+              {!isCurrentUser && (
+                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2 flex-shrink-0 overflow-hidden">
+                  {selectedChat?.avatar && (selectedChat.avatar.startsWith('http') || selectedChat.avatar.startsWith('/')) ? (
+                    <img 
+                      src={selectedChat.avatar} 
+                      alt="プロフィール画像"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm">{selectedChat?.avatar || '👤'}</span>
+                  )}
+                </div>
+              )}
+              
+              <div className={`max-w-xs md:max-w-sm lg:max-w-md ${isCurrentUser ? 'ml-auto' : ''}`}>
+                {/* 送信者名（相手のメッセージのみ） */}
+                {showSenderName && (
+                  <p className="text-xs text-gray-500 mb-1 ml-1">{selectedChat.name}</p>
+                )}
+                
+                <div
+                  className={`px-3 md:px-4 py-2 rounded-lg ${
+                    isCurrentUser
+                      ? 'bg-blue-600 text-white rounded-br-sm'
+                      : 'bg-gray-200 text-gray-900 rounded-bl-sm'
+                  }`}
+                >
+                  <p className="text-xs md:text-sm">{message.content || message.body || ''}</p>
+                  <p className={`text-xs mt-1 ${
+                    isCurrentUser ? 'text-blue-100' : 'text-gray-500'
+                  }`}>
                 {(() => {
                   const timestamp = message.sent_at || message.sentAt
                   if (!timestamp) return '送信中...'
@@ -200,10 +231,27 @@ const MessageArea = memo(({ messages, messageInput, onMessageInputChange, onSend
                     })
                   }
                 })()}
-              </p>
+                  </p>
+                </div>
+              </div>
+              
+              {/* 自分のアバター（右側） */}
+              {isCurrentUser && (
+                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center ml-2 flex-shrink-0 overflow-hidden">
+                  {session?.user?.image && (session.user.image.startsWith('http') || session.user.image.startsWith('/')) ? (
+                    <img 
+                      src={session.user.image} 
+                      alt="自分のプロフィール画像"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm">👤</span>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-        )) : (
+          )
+        }) : (
           <div className="text-center text-gray-500 py-8">
             <p>メッセージを読み込み中...</p>
           </div>

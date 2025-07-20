@@ -9,6 +9,7 @@ declare module 'next-auth' {
     id: string
     email: string
     name: string
+    image?: string
     userType: 'company' | 'cfo'
     status: string
   }
@@ -18,6 +19,7 @@ declare module 'next-auth' {
       id: string
       email: string
       name: string
+      image?: string
       userType: 'company' | 'cfo'
       status: string
     }
@@ -29,5 +31,6 @@ declare module 'next-auth/jwt' {
     userId?: string
     userType?: 'company' | 'cfo'
     status?: string
+    picture?: string
   }
 }

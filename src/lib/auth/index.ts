@@ -75,7 +75,7 @@ export const authOptions: NextAuthOptions = {
           // CFOプロフィールを確認
           const { data: cfoProfile } = await supabaseAdmin
             .from(TABLES.CFO_PROFILES)
-            .select('cfo_name, cfo_display_name')
+            .select('cfo_name, cfo_display_name, avatar_url')
             .eq('cfo_user_id', user.id)
             .single()
           
@@ -88,7 +88,7 @@ export const authOptions: NextAuthOptions = {
             // 企業プロフィールを確認
             const { data: bizProfile } = await supabaseAdmin
               .from(TABLES.BIZ_PROFILES)
-              .select('biz_company_name')
+              .select('biz_company_name, avatar_url')
               .eq('biz_user_id', user.id)
               .single()
             
@@ -108,6 +108,7 @@ export const authOptions: NextAuthOptions = {
               : (userType === 'company' && profile)
               ? (profile as any).biz_company_name || user.email?.split('@')[0] || 'ユーザー'
               : user.email?.split('@')[0] || 'ユーザー',
+            image: profile?.avatar_url || null,
             userType: userType as 'company' | 'cfo',
             status: 'active' // Supabase Auth ユーザーは基本的にアクティブ
           }
@@ -133,10 +134,12 @@ export const authOptions: NextAuthOptions = {
         token.userId = user.id        // ✅ 明示的にuserIdを設定
         token.userType = user.userType // ✅ 既に変換済み
         token.status = user.status
+        token.picture = user.image    // ✅ アバター画像を設定
         console.log('🔑 JWT: セッション作成', {
           userId: token.userId,
           userType: token.userType,
-          email: user.email
+          email: user.email,
+          picture: token.picture
         })
       }
       return token
@@ -147,6 +150,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.userId as string      // ✅ userIdを使用
         session.user.userType = token.userType as 'company' | 'cfo'
         session.user.status = token.status as string
+        session.user.image = token.picture as string  // ✅ アバター画像を設定
         console.log('🔑 Session: セッション取得', {
           userId: session.user.id,
           userType: session.user.userType,

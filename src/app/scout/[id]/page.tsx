@@ -84,10 +84,6 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
       receivedAt: data.sent_at ? new Date(data.sent_at).toLocaleString('ja-JP') : '日時不明',
       status: data.status || 'pending',
       urgency: data.urgency || 'medium',
-      compensation: data.compensation || '相談',
-      workStyle: data.work_style || '相談',
-      startDate: data.start_date || '相談',
-      projectDuration: data.duration || '相談'
     }
   }
 
@@ -389,27 +385,6 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {/* 条件概要 */}
-            <div className="bg-gray-50 rounded-lg p-3 md:p-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">報酬</div>
-                  <div className="text-xs md:text-sm font-medium text-gray-900">{displayScout.compensation}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">稼働</div>
-                  <div className="text-xs md:text-sm font-medium text-gray-900">{displayScout.workStyle}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">開始時期</div>
-                  <div className="text-xs md:text-sm font-medium text-gray-900">{displayScout.startDate}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">期間</div>
-                  <div className="text-xs md:text-sm font-medium text-gray-900">{displayScout.projectDuration}</div>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* スカウトメッセージ */}
@@ -426,8 +401,16 @@ export default function ScoutDetailPage({ params }: { params: Promise<{ id: stri
               <h2 className="text-lg font-semibold text-gray-900 mb-4">送信者情報</h2>
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    <span className="text-lg">{scoutData.sender_type === 'company' ? '🏢' : '👤'}</span>
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                    {scoutData.sender_avatar && (scoutData.sender_avatar.startsWith('http') || scoutData.sender_avatar.startsWith('/')) ? (
+                      <img 
+                        src={scoutData.sender_avatar} 
+                        alt="送信者プロフィール画像"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-lg">{scoutData.sender_avatar || (scoutData.sender_type === 'company' ? '🏢' : '👤')}</span>
+                    )}
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">{displayScout.from}</p>

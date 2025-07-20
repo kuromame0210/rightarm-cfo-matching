@@ -152,6 +152,79 @@ export async function GET(
       }
     }
 
+    // CFOプロフィール情報から報酬・稼働条件を取得
+    let cfoProfileData = null
+    if (scout.receiver_id && senderInfo?.type === 'company') {
+      // 企業→CFO のスカウトの場合、受信者（CFO）のプロフィール情報を取得
+      const { data: cfoProfile } = await supabaseAdmin
+        .from(TABLES.CFO_PROFILES)
+        .select('cfo_fee_min, cfo_fee_max, cfo_availability, cfo_location, cfo_skills')
+        .eq('cfo_user_id', scout.receiver_id)
+        .single()
+      
+      cfoProfileData = cfoProfile
+    } else if (scout.sender_id && receiverInfo?.type === 'company') {
+      // CFO→企業 のスカウトの場合、送信者（CFO）のプロフィール情報を取得
+      const { data: cfoProfile } = await supabaseAdmin
+        .from(TABLES.CFO_PROFILES)
+        .select('cfo_fee_min, cfo_fee_max, cfo_availability, cfo_location, cfo_skills')
+        .eq('cfo_user_id', scout.sender_id)
+        .single()
+      
+      cfoProfileData = cfoProfile
+    }
+
+    // 企業プロフィール情報を取得
+    let bizProfileData = null
+    if (scout.sender_id && senderInfo?.type === 'company') {
+      // 企業が送信者の場合
+      const { data: bizProfile } = await supabaseAdmin
+        .from(TABLES.BIZ_PROFILES)
+        .select('biz_company_name, biz_location, biz_revenue_min, biz_revenue_max, biz_issues')
+        .eq('biz_user_id', scout.sender_id)
+        .single()
+      
+      bizProfileData = bizProfile
+    } else if (scout.receiver_id && receiverInfo?.type === 'company') {
+      // 企業が受信者の場合
+      const { data: bizProfile } = await supabaseAdmin
+        .from(TABLES.BIZ_PROFILES)
+        .select('biz_company_name, biz_location, biz_revenue_min, biz_revenue_max, biz_issues')
+        .eq('biz_user_id', scout.receiver_id)
+        .single()
+      
+      bizProfileData = bizProfile
+    }
+
+    // プロフィール情報から表示用データを生成
+    const formatCompensationFromProfile = () => {
+      if (cfoProfileData?.cfo_fee_min && cfoProfileData?.cfo_fee_max) {
+        const minMan = Math.floor(cfoProfileData.cfo_fee_min / 10000)
+        const maxMan = Math.floor(cfoProfileData.cfo_fee_max / 10000)
+        return `${minMan}万円〜${maxMan}万円`
+      } else if (cfoProfileData?.cfo_fee_min) {
+        const minMan = Math.floor(cfoProfileData.cfo_fee_min / 10000)
+        return `${minMan}万円〜`
+      }
+      return '相談'
+    }
+
+    const formatWorkStyleFromProfile = () => {
+      if (cfoProfileData?.cfo_availability) {
+        return cfoProfileData.cfo_availability
+      }
+      return '相談'
+    }
+
+    const formatLocationFromProfile = () => {
+      if (cfoProfileData?.cfo_location) {
+        return cfoProfileData.cfo_location
+      } else if (bizProfileData?.biz_location) {
+        return bizProfileData.biz_location
+      }
+      return '相談'
+    }
+
     // 整形されたデータを返す
     const enrichedScout = {
       ...scout,
@@ -169,7 +242,11 @@ export async function GET(
       status: status,
       // 表示用フィールド
       title: scout.body?.split('\n')[0] || 'スカウト',
-      message: scout.body || 'メッセージがありません'
+      message: scout.body || 'メッセージがありません',
+      // 詳細情報
+      cfo_profile: cfoProfileData,
+      biz_profile: bizProfileData,
+      location: formatLocationFromProfile()
     }
 
     return createSuccessResponse(enrichedScout)

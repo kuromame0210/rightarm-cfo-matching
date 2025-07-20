@@ -6,21 +6,23 @@ import Link from 'next/link'
 import AppHeader from '@/components/AppHeader'
 import Loading from '@/components/Loading'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useInterests } from '@/lib/interests-context'
 
 export const dynamic = 'force-dynamic'
 
 export default function DiscoverCompaniesPage() {
   const { user, isAuthenticated } = useAuth()
+  const { isInterested, toggleInterest } = useInterests()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRevenueRange, setSelectedRevenueRange] = useState('')
   const [sortBy, setSortBy] = useState('newest')
   const [showMobileFilters, setShowMobileFilters] = useState(false)
-  const [interestedCompanies, setInterestedCompanies] = useState<number[]>([])
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [showScoutModal, setShowScoutModal] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState<any>(null)
+  const [scoutMessage, setScoutMessage] = useState('')
   const [companies, setCompanies] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [pagination, setPagination] = useState({
@@ -144,13 +146,16 @@ export default function DiscoverCompaniesPage() {
     setTimeout(() => setShowToast(false), 3000)
   }
 
-  const handleInterested = (company: any) => {
-    if (interestedCompanies.includes(company.id)) {
-      setInterestedCompanies(prev => prev.filter(id => id !== company.id))
-      showToastMessage('気になるから削除しました')
+  const handleInterested = async (company: any) => {
+    const success = await toggleInterest(company.id, 'company')
+    if (success) {
+      if (isInterested(company.id)) {
+        showToastMessage('気になるに追加しました ❤️')
+      } else {
+        showToastMessage('気になるから削除しました')
+      }
     } else {
-      setInterestedCompanies(prev => [...prev, company.id])
-      showToastMessage('気になるに追加しました ❤️')
+      showToastMessage('操作に失敗しました。再度お試しください。')
     }
   }
 
@@ -160,15 +165,18 @@ export default function DiscoverCompaniesPage() {
   }
 
   const sendScout = async () => {
-    const messageInput = document.querySelector('textarea')?.value?.trim()
-    
-    if (!messageInput) {
+    if (!scoutMessage.trim()) {
       showToastMessage('メッセージを入力してください')
       return
     }
 
     if (!isAuthenticated) {
       showToastMessage('ログインが必要です')
+      return
+    }
+
+    if (!selectedCompany?.id) {
+      showToastMessage('企業情報が取得できません')
       return
     }
 
@@ -180,10 +188,8 @@ export default function DiscoverCompaniesPage() {
         },
         body: JSON.stringify({
           recipientId: selectedCompany.id,
-          recipientType: 'company',
-          senderType: user?.userType || 'cfo',
-          title: `${selectedCompany.companyName}への応募`,
-          message: messageInput
+          message: scoutMessage.trim(),
+          title: `${selectedCompany.companyName}への応募`
         })
       })
 
@@ -192,6 +198,7 @@ export default function DiscoverCompaniesPage() {
       if (response.ok && data.success) {
         showToastMessage(`${selectedCompany.companyName}に応募しました`)
         setShowScoutModal(false)
+        setScoutMessage('') // メッセージをクリア
       } else {
         console.error('スカウト送信API エラー:', response.status, data)
         showToastMessage(`エラー: ${data.error || 'スカウト送信に失敗しました'}`)
@@ -495,12 +502,12 @@ export default function DiscoverCompaniesPage() {
                       <button 
                         onClick={() => handleInterested(company)}
                         className={`flex-1 md:flex-none min-h-[28px] md:min-h-[36px] px-1.5 md:px-3 py-0.5 md:py-1.5 border text-xs font-medium transition-all duration-200 active:scale-95 rounded-lg flex items-center justify-center whitespace-nowrap ${
-                          interestedCompanies.includes(company.id)
+                          isInterested(company.id)
                             ? 'border-pink-500 bg-pink-50 text-pink-700 hover:bg-pink-100'
                             : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
                         }`}
                       >
-                        {interestedCompanies.includes(company.id) ? '❤️ 気になる' : '🤍 気になる'}
+                        {isInterested(company.id) ? '❤️ 気になる' : '🤍 気になる'}
                       </button>
                       <Link 
                         href={`/messages?user=${company.id}`}
@@ -579,18 +586,16 @@ export default function DiscoverCompaniesPage() {
               
               <div className="mb-3">
                 <p className="text-sm text-gray-600 mb-2">財務課題:</p>
-                <div className="flex flex-wrap gap-1">
-                  {selectedCompany.challenges.slice(0, 3).map((challenge: string) => (
-                    <span key={challenge} className="px-2 py-1 bg-red-50 text-red-700 text-xs rounded border border-red-200">
-                      {challenge}
-                    </span>
-                  ))}
+                <div className="bg-gray-50 p-2 rounded text-xs text-gray-700">
+                  {selectedCompany.challenges || '財務課題未設定'}
                 </div>
               </div>
               
               <p className="text-sm text-gray-600 mb-4">応募メッセージを入力してください:</p>
               
               <textarea
+                value={scoutMessage}
+                onChange={(e) => setScoutMessage(e.target.value)}
                 placeholder="応募の動機や提案したいソリューションを入力してください..."
                 className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm resize-none"
               />

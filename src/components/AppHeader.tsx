@@ -27,6 +27,7 @@ const AppHeader = memo(({ userName, userAvatar = '👤' }: AppHeaderProps) => {
   // NextAuth.jsから認証状態を取得
   const actualIsLoggedIn = isAuthenticated
   const actualUserName = userName || user?.name || 'ユーザー'
+  const actualUserAvatar = user?.image || userAvatar || '👤'
   const isAuthLoading = isLoading
   
   // ユーザータイプは認証コンテキストから取得
@@ -367,7 +368,7 @@ const AppHeader = memo(({ userName, userAvatar = '👤' }: AppHeaderProps) => {
               {actualIsLoggedIn && (
                 <UserDropdown 
                   userName={actualUserName} 
-                  userAvatar={userAvatar} 
+                  userAvatar={actualUserAvatar} 
                   showUserMenu={showUserMenu}
                   onToggleUserMenu={handleUserMenuClick}
                   onCloseUserMenu={() => setShowUserMenu(false)}
