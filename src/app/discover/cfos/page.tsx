@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -338,69 +338,75 @@ export default function DiscoverCFOsPage() {
   }
 
   // フィルタリング処理（ローカルフィルタ - APIフィルタを補完）
-  const filteredCFOs = displayCFOs.filter((cfo: any) => {
-    const matchesSearch = searchQuery === '' || 
-      cfo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (cfo.displayName && cfo.displayName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      cfo.skills.some((skill: string) => skill.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (cfo.introduction && cfo.introduction.toLowerCase().includes(searchQuery.toLowerCase()))
-    
-    const matchesSkills = selectedSkills.length === 0 || 
-      selectedSkills.some((skill: string) => cfo.skills.includes(skill))
-    
-    const matchesRegion = selectedRegion === '' || selectedRegion === '全国' || 
-      (cfo.structured?.supportedPrefectures && cfo.structured.supportedPrefectures.length > 0) ||
-      cfo.structured?.fullRemoteAvailable
-    
-    // 🆕 稼働形態フィルタを修正
-    const matchesWorkStyle = selectedWorkStyle === '' ||
-      (selectedWorkStyle === '週1日' && cfo.structured?.weeklyDays === 1) ||
-      (selectedWorkStyle === '週2日' && cfo.structured?.weeklyDays === 2) ||
-      (selectedWorkStyle === '週3日' && cfo.structured?.weeklyDays === 3) ||
-      (selectedWorkStyle === '週4日' && cfo.structured?.weeklyDays === 4) ||
-      (selectedWorkStyle === '週5日（フルタイム）' && cfo.structured?.weeklyDays === 5) ||
-      cfo.structured?.weeklyDaysFlexible // 柔軟対応可能な場合はマッチ
-    
-    // 🆕 報酬フィルタ（API検索と連携、フロントエンドは補完的）
-    const matchesCompensation = selectedCompensation === '' ||
-      (selectedCompensation === '応相談' && (
-        cfo.structured?.compensationType === 'negotiable' || 
-        (cfo.compensation && cfo.compensation.includes('応相談'))
-      )) ||
-      // 月額制の場合：具体的な予算範囲をチェック
-      (selectedCompensation === '月額制：20万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 200000) ||
-      (selectedCompensation === '月額制：30万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 300000) ||
-      (selectedCompensation === '月額制：50万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 500000) ||
-      (selectedCompensation === '月額制：80万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 800000) ||
-      (selectedCompensation === '月額制：100万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 1000000) ||
-      (selectedCompensation === '月額制：150万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 1500000) ||
-      (selectedCompensation === '月額制：200万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 2000000) ||
-      (selectedCompensation === '月額制：250万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 2500000)
-    
-    return matchesSearch && matchesSkills && matchesRegion && matchesWorkStyle && matchesCompensation
-  })
+  const filteredCFOs = useMemo(() => 
+    displayCFOs.filter((cfo: any) => {
+      const matchesSearch = searchQuery === '' || 
+        cfo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (cfo.displayName && cfo.displayName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        cfo.skills.some((skill: string) => skill.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (cfo.introduction && cfo.introduction.toLowerCase().includes(searchQuery.toLowerCase()))
+      
+      const matchesSkills = selectedSkills.length === 0 || 
+        selectedSkills.some((skill: string) => cfo.skills.includes(skill))
+      
+      const matchesRegion = selectedRegion === '' || selectedRegion === '全国' || 
+        (cfo.structured?.supportedPrefectures && cfo.structured.supportedPrefectures.length > 0) ||
+        cfo.structured?.fullRemoteAvailable
+      
+      // 🆕 稼働形態フィルタを修正
+      const matchesWorkStyle = selectedWorkStyle === '' ||
+        (selectedWorkStyle === '週1日' && cfo.structured?.weeklyDays === 1) ||
+        (selectedWorkStyle === '週2日' && cfo.structured?.weeklyDays === 2) ||
+        (selectedWorkStyle === '週3日' && cfo.structured?.weeklyDays === 3) ||
+        (selectedWorkStyle === '週4日' && cfo.structured?.weeklyDays === 4) ||
+        (selectedWorkStyle === '週5日（フルタイム）' && cfo.structured?.weeklyDays === 5) ||
+        cfo.structured?.weeklyDaysFlexible // 柔軟対応可能な場合はマッチ
+      
+      // 🆕 報酬フィルタ（API検索と連携、フロントエンドは補完的）
+      const matchesCompensation = selectedCompensation === '' ||
+        (selectedCompensation === '応相談' && (
+          cfo.structured?.compensationType === 'negotiable' || 
+          (cfo.compensation && cfo.compensation.includes('応相談'))
+        )) ||
+        // 月額制の場合：具体的な予算範囲をチェック
+        (selectedCompensation === '月額制：20万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 200000) ||
+        (selectedCompensation === '月額制：30万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 300000) ||
+        (selectedCompensation === '月額制：50万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 500000) ||
+        (selectedCompensation === '月額制：80万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 800000) ||
+        (selectedCompensation === '月額制：100万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 1000000) ||
+        (selectedCompensation === '月額制：150万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 1500000) ||
+        (selectedCompensation === '月額制：200万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 2000000) ||
+        (selectedCompensation === '月額制：250万円以下' && cfo.structured?.compensationType === 'monthly' && (cfo.structured?.monthlyFeeMin || 0) <= 2500000)
+      
+      return matchesSearch && matchesSkills && matchesRegion && matchesWorkStyle && matchesCompensation
+    }),
+    [displayCFOs, searchQuery, selectedSkills, selectedRegion, selectedWorkStyle, selectedCompensation]
+  )
 
   // ソート処理
-  const sortedCFOs = [...filteredCFOs].sort((a: any, b: any) => {
-    switch (sortBy) {
-      case 'newest':
-        return new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()
-      case 'compensation_high':
-        // 構造化データの下限金額でソート（下限が高い順）
-        const aCompMin = a.structured?.monthlyFeeMin || (a.feeMin ? a.feeMin * 10000 : 0)
-        const bCompMin = b.structured?.monthlyFeeMin || (b.feeMin ? b.feeMin * 10000 : 0)
-        return bCompMin - aCompMin
-      case 'rating':
-        return b.rating - a.rating
-      case 'experience':
-        // 経験年数または構造化データの経験年数を使用
-        const aExp = a.structured?.experienceYears || (a.experience ? a.experience.length / 100 : 0)
-        const bExp = b.structured?.experienceYears || (b.experience ? b.experience.length / 100 : 0)
-        return bExp - aExp
-      default:
-        return 0
-    }
-  })
+  const sortedCFOs = useMemo(() => 
+    [...filteredCFOs].sort((a: any, b: any) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()
+        case 'compensation_high':
+          // 構造化データの下限金額でソート（下限が高い順）
+          const aCompMin = a.structured?.monthlyFeeMin || (a.feeMin ? a.feeMin * 10000 : 0)
+          const bCompMin = b.structured?.monthlyFeeMin || (b.feeMin ? b.feeMin * 10000 : 0)
+          return bCompMin - aCompMin
+        case 'rating':
+          return b.rating - a.rating
+        case 'experience':
+          // 経験年数または構造化データの経験年数を使用
+          const aExp = a.structured?.experienceYears || (a.experience ? a.experience.length / 100 : 0)
+          const bExp = b.structured?.experienceYears || (b.experience ? b.experience.length / 100 : 0)
+          return bExp - aExp
+        default:
+          return 0
+      }
+    }),
+    [filteredCFOs, sortBy]
+  )
 
   // 認証状態が不明の間はローディング画面を表示
   if (isAuthenticated === undefined) {

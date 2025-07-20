@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, memo } from 'react'
 import Link from 'next/link'
 
 interface UserDropdownProps {
@@ -13,7 +13,7 @@ interface UserDropdownProps {
   onLogout?: () => void
 }
 
-export default function UserDropdown({ 
+const UserDropdown = memo(({ 
   userName = "山田さん", 
   userEmail = "yamada@example.com", 
   userAvatar = "👤",
@@ -21,7 +21,7 @@ export default function UserDropdown({
   onToggleUserMenu,
   onCloseUserMenu,
   onLogout
-}: UserDropdownProps) {
+}: UserDropdownProps) => {
   const userMenuRef = useRef<HTMLDivElement>(null)
 
   // 外部クリックでドロップダウンを閉じる
@@ -104,4 +104,7 @@ export default function UserDropdown({
       )}
     </div>
   )
-}
+})
+
+UserDropdown.displayName = 'UserDropdown'
+export default UserDropdown

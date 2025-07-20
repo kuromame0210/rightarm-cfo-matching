@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, memo } from 'react'
 import Image from 'next/image'
 import { 
   uploadFile, 
@@ -24,7 +24,7 @@ interface FileUploadProps {
   className?: string
 }
 
-export default function FileUpload({
+const FileUpload = memo(({
   fileType,
   userId,
   onUploadSuccess,
@@ -35,7 +35,7 @@ export default function FileUpload({
   multiple = false,
   disabled = false,
   className = ''
-}: FileUploadProps) {
+}: FileUploadProps) => {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [dragActive, setDragActive] = useState(false)
@@ -292,4 +292,7 @@ export default function FileUpload({
       </div>
     </div>
   )
-}
+})
+
+FileUpload.displayName = 'FileUpload'
+export default FileUpload

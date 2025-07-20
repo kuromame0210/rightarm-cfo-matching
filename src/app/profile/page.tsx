@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
@@ -73,10 +73,10 @@ export default function ProfilePage() {
   ])
 
   // 年商のvalueからlabelに変換するヘルパー関数
-  const getRevenueLabel = (value: string) => {
+  const getRevenueLabel = useCallback((value: string) => {
     const option = revenueOptions.find(opt => opt.value === value)
     return option ? option.label : value // 見つからない場合は元の値を返す（後方互換性）
-  }
+  }, [revenueOptions])
 
   // プロフィールデータ初期化（cfo_data.md項目に準拠）
   useEffect(() => {

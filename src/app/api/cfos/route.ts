@@ -31,9 +31,41 @@ export async function GET(request: NextRequest) {
     const regions = searchParams.get('regions')?.split(',').filter(Boolean) || []
 
     // 新アーキテクチャ: cfo_profiles テーブルからCFOプロフィールを取得
+    // 🚀 最適化: 必要なカラムのみ選択してネットワーク転送量削減
     let query = supabaseAdmin
       .from(TABLES.CFO_PROFILES)
-      .select('*')
+      .select(`
+        cfo_user_id,
+        cfo_name,
+        cfo_display_name,
+        cfo_location,
+        cfo_availability,
+        cfo_skills,
+        cfo_possible_tasks,
+        cfo_certifications,
+        cfo_working_areas,
+        cfo_compensation,
+        cfo_introduction,
+        cfo_raw_profile,
+        avatar_url,
+        compensation_type,
+        hourly_rate_min,
+        hourly_rate_max,
+        monthly_fee_min,
+        monthly_fee_max,
+        weekly_days,
+        daily_hours,
+        work_styles,
+        supported_prefectures,
+        cfo_level,
+        cfo_experience_years,
+        industry_experience,
+        company_size_experience,
+        project_experience,
+        business_trip_level,
+        full_remote_available,
+        weekly_days_flexible
+      `)
 
     // 🔍 スキル検索（JSONB配列対応）- レガシーデータも含める
     if (skills.length > 0) {

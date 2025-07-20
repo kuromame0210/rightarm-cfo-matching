@@ -165,72 +165,50 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ メッセージ取得成功: ${messages?.length || 0}件`)
 
+    // 🚀 N+1クエリ解決: ユーザー情報をバッチ取得
+    const allUserIds = (messages || []).flatMap(m => [m.sender_id, m.receiver_id])
+    const userIds = Array.from(new Set(allUserIds))
+    
+    // ユーザー情報を一括取得
+    const [cfoProfiles, bizProfiles] = await Promise.all([
+      userIds.length > 0 ? supabaseAdmin
+        .from(TABLES.CFO_PROFILES)
+        .select('cfo_user_id, cfo_name, cfo_display_name, avatar_url')
+        .in('cfo_user_id', userIds) : Promise.resolve({ data: [] }),
+      userIds.length > 0 ? supabaseAdmin
+        .from(TABLES.BIZ_PROFILES)
+        .select('biz_user_id, biz_company_name, avatar_url')
+        .in('biz_user_id', userIds) : Promise.resolve({ data: [] })
+    ])
+
+    // ユーザー情報をMapに変換（高速検索用）
+    const cfoMap = new Map((cfoProfiles.data || []).map(cfo => [
+      cfo.cfo_user_id, 
+      {
+        name: cfo.cfo_display_name || cfo.cfo_name || 'CFO',
+        type: 'cfo',
+        avatar: cfo.avatar_url || '👤'
+      }
+    ]))
+    
+    const bizMap = new Map((bizProfiles.data || []).map(biz => [
+      biz.biz_user_id,
+      {
+        name: biz.biz_company_name || '企業', 
+        type: 'company',
+        avatar: biz.avatar_url || '🏢'
+      }
+    ]))
+
     // メッセージの送信者・受信者情報を追加
-    const enrichedMessages = await Promise.all(
-      (messages || []).map(async (message) => {
-        // 送信者情報を取得
-        let senderInfo = { name: '不明', type: 'unknown', avatar: '❓' }
-        
-        // CFOプロフィールを確認
-        const { data: cfoProfile } = await supabaseAdmin
-          .from(TABLES.CFO_PROFILES)
-          .select('cfo_name, cfo_display_name, avatar_url')
-          .eq('cfo_user_id', message.sender_id)
-          .single()
+    const enrichedMessages = (messages || []).map((message) => {
+        // 送信者情報を取得（Mapから高速検索）
+        const senderInfo = cfoMap.get(message.sender_id) || bizMap.get(message.sender_id) || 
+          { name: '不明', type: 'unknown', avatar: '❓' }
 
-        if (cfoProfile) {
-          senderInfo = {
-            name: cfoProfile.cfo_display_name || cfoProfile.cfo_name || 'CFO',
-            type: 'cfo',
-            avatar: cfoProfile.avatar_url || '👤'
-          }
-        } else {
-          // 企業プロフィールを確認
-          const { data: bizProfile } = await supabaseAdmin
-            .from(TABLES.BIZ_PROFILES)
-            .select('biz_company_name, avatar_url')
-            .eq('biz_user_id', message.sender_id)
-            .single()
-
-          if (bizProfile) {
-            senderInfo = {
-              name: bizProfile.biz_company_name || '企業',
-              type: 'company',
-              avatar: bizProfile.avatar_url || '🏢'
-            }
-          }
-        }
-
-        // 受信者情報を取得
-        let receiverInfo = { name: '不明', type: 'unknown', avatar: '❓' }
-        
-        const { data: receiverCfoProfile } = await supabaseAdmin
-          .from(TABLES.CFO_PROFILES)
-          .select('cfo_name, cfo_display_name, avatar_url')
-          .eq('cfo_user_id', message.receiver_id)
-          .single()
-
-        if (receiverCfoProfile) {
-          receiverInfo = {
-            name: receiverCfoProfile.cfo_display_name || receiverCfoProfile.cfo_name || 'CFO',
-            type: 'cfo',
-            avatar: receiverCfoProfile.avatar_url || '👤'
-          }
-        } else {
-          const { data: receiverBizProfile } = await supabaseAdmin
-            .from(TABLES.BIZ_PROFILES)
-            .select('biz_company_name, avatar_url')
-            .eq('biz_user_id', message.receiver_id)
-            .single()
-
-          if (receiverBizProfile) {
-            receiverInfo = {
-              name: receiverBizProfile.biz_company_name || '企業',
-              type: 'company',
-              avatar: receiverBizProfile.avatar_url || '🏢'
-            }
-          }
-        }
+        // 受信者情報を取得（Mapから高速検索）
+        const receiverInfo = cfoMap.get(message.receiver_id) || bizMap.get(message.receiver_id) || 
+          { name: '不明', type: 'unknown', avatar: '❓' }
 
         const isFromMe = message.sender_id === userId
         const otherUser = isFromMe ? receiverInfo : senderInfo
@@ -267,7 +245,6 @@ export async function GET(request: NextRequest) {
           }
         }
       })
-    )
 
     // 会話をグループ化（otherUserIdごと）
     const conversations: Record<string, any> = {}

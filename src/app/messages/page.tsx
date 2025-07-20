@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import ChatList from '@/components/ChatList'
@@ -29,7 +29,8 @@ function MessagesContent() {
   const [targetUserType, setTargetUserType] = useState<'cfo' | 'company' | undefined>(undefined)
   const [targetUserAvatar, setTargetUserAvatar] = useState<string>('👤')
   
-  const selectedChat = chatList.find(chat => chat.id === selectedChatId) || 
+  const selectedChat = useMemo(() => 
+    chatList.find(chat => chat.id === selectedChatId) || 
     (targetUserId ? {
       id: 0,
       name: targetUserName || '読み込み中...',
@@ -41,7 +42,9 @@ function MessagesContent() {
       unreadCount: 0,
       status: '新規',
       avatar: targetUserAvatar
-    } : null)
+    } : null),
+    [chatList, selectedChatId, targetUserId, targetUserName, targetUserType, targetUserAvatar]
+  )
 
   // 会話一覧を取得
   const fetchConversations = useCallback(async (preserveSelection = false) => {
@@ -136,7 +139,7 @@ function MessagesContent() {
       const targetUserId = selectedChatId.replace('temp_', '')
       try {
         // メッセージボタンからの場合はユーザー入力のみ送信
-        let initialMessage = messageInput.trim()
+        const initialMessage = messageInput.trim()
         
         console.log('新規会話でメッセージ送信中:', initialMessage)
         const response = await fetch('/api/conversations', {

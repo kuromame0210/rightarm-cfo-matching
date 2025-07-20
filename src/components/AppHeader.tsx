@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, memo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import UserDropdown from './UserDropdown'
@@ -21,7 +21,7 @@ interface AppHeaderProps {
   isLoggedIn?: boolean
 }
 
-export default function AppHeader({ userName, userAvatar = '👤' }: AppHeaderProps) {
+const AppHeader = memo(({ userName, userAvatar = '👤' }: AppHeaderProps) => {
   const { user, isAuthenticated, logout, isLoading } = useAuth()
   
   // NextAuth.jsから認証状態を取得
@@ -440,4 +440,7 @@ export default function AppHeader({ userName, userAvatar = '👤' }: AppHeaderPr
 
     </header>
   )
-}
+})
+
+AppHeader.displayName = 'AppHeader'
+export default AppHeader

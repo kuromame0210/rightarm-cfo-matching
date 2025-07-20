@@ -1,5 +1,7 @@
 'use client'
 
+import { memo } from 'react'
+
 // 必要最小限の選択肢定義
 export const COMPENSATION_TYPES = [
   { value: 'monthly', label: '月額制' },
@@ -38,7 +40,7 @@ export const REGIONS = [
 ]
 
 // 報酬設定（シンプル版）
-export const EssentialCompensationInput = ({ formData, setFormData, isEditing, required = false }: any) => {
+export const EssentialCompensationInput = memo(({ formData, setFormData, isEditing, required = false }: any) => {
   return (
     <div className="structured-input-section">
       <h4 className="text-lg font-semibold mb-4">
@@ -131,10 +133,12 @@ export const EssentialCompensationInput = ({ formData, setFormData, isEditing, r
       )}
     </div>
   )
-}
+})
+
+EssentialCompensationInput.displayName = 'EssentialCompensationInput'
 
 // 稼働条件（シンプル版）
-export const EssentialAvailabilityInput = ({ formData, setFormData, isEditing, required = false }: any) => {
+export const EssentialAvailabilityInput = memo(({ formData, setFormData, isEditing, required = false }: any) => {
   return (
     <div className="structured-input-section">
       <h4 className="text-lg font-semibold mb-4">
@@ -195,10 +199,12 @@ export const EssentialAvailabilityInput = ({ formData, setFormData, isEditing, r
       )}
     </div>
   )
-}
+})
+
+EssentialAvailabilityInput.displayName = 'EssentialAvailabilityInput'
 
 // 地域対応（シンプル版）
-export const EssentialLocationInput = ({ formData, setFormData, isEditing, required = false }: any) => {
+export const EssentialLocationInput = memo(({ formData, setFormData, isEditing, required = false }: any) => {
   return (
     <div className="structured-input-section">
       <h4 className="text-lg font-semibold mb-4">
@@ -280,4 +286,5 @@ export const EssentialLocationInput = ({ formData, setFormData, isEditing, requi
       )}
     </div>
   )
-}
+})
+EssentialLocationInput.displayName = 'EssentialLocationInput'
