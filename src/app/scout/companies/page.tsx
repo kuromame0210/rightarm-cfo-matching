@@ -25,6 +25,7 @@ export default function ScoutCompaniesPage() {
   const [toastMessage, setToastMessage] = useState('')
   const [companies, setCompanies] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [appliedCompanies, setAppliedCompanies] = useState<Set<string>>(new Set())
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -98,6 +99,31 @@ export default function ScoutCompaniesPage() {
     }
   }, [searchQuery, selectedRegion, pagination.page, pagination.limit])
 
+  // 応募済み企業を取得する関数
+  const fetchAppliedCompanies = useCallback(async () => {
+    if (!isAuthenticated) return
+
+    try {
+      const response = await fetch('/api/scouts?type=sent')
+      const data = await response.json()
+      
+      console.log('🔍 応募済み企業取得レスポンス:', data)
+      
+      if (data.success) {
+        // type=sentの場合、data.sentに送信済みスカウトが入っている
+        const sentScouts = data.data?.sent || []
+        console.log('📤 送信済みスカウト:', sentScouts)
+        const appliedSet = new Set<string>(
+          sentScouts.map((scout: any) => String(scout.receiverId || scout.receiver_id))
+        )
+        setAppliedCompanies(appliedSet)
+        console.log('✅ 応募済み企業セット:', appliedSet)
+      }
+    } catch (error) {
+      console.error('応募済み企業の取得エラー:', error)
+    }
+  }, [isAuthenticated])
+
   const toggleSkill = (skill: string) => {
     setSelectedSkills(prev =>
       prev.includes(skill)
@@ -115,8 +141,9 @@ export default function ScoutCompaniesPage() {
     
     if (isAuthenticated) {
       fetchCompanies()
+      fetchAppliedCompanies()
     }
-  }, [isAuthenticated, router, fetchCompanies])
+  }, [isAuthenticated, router, fetchCompanies, fetchAppliedCompanies])
 
   // 企業データをScoutCard形式に変換
   const formatCompanyAsScout = (company: any) => {
@@ -130,7 +157,7 @@ export default function ScoutCompaniesPage() {
       message: company.description || company.biz_raw_profile || '詳細は企業概要をご覧ください',
       receivedAt: company.created_at || new Date().toISOString(),
       sentAt: null,
-      status: 'available', // スカウト可能状態
+      status: appliedCompanies.has(String(company.id || company.biz_user_id)) ? 'applied' : 'available', // 応募済みかスカウト可能か
       urgency: 'medium',
       compensation: company.revenueRange || '応相談',
       workStyle: '応相談',
@@ -190,6 +217,8 @@ export default function ScoutCompaniesPage() {
       
       if (response.ok && data.success) {
         showToastMessage('企業への応募を送信しました')
+        // 応募済み企業リストを更新
+        setAppliedCompanies(prev => new Set([...Array.from(prev), companyId.toString()]))
         // 企業データを再取得
         fetchCompanies()
       } else {
@@ -462,12 +491,21 @@ export default function ScoutCompaniesPage() {
                             >
                               {isInterested(company.senderUserId) ? '❤️ 気になる' : '🤍 気になる'}
                             </button>
-                            <button 
-                              onClick={() => handleCompanyScout(company.senderUserId)}
-                              className="flex-1 md:flex-none min-h-[28px] md:min-h-[36px] px-1.5 md:px-3 py-0.5 md:py-1.5 rounded-lg text-xs font-medium transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg flex items-center justify-center whitespace-nowrap bg-gray-900 text-white hover:bg-gray-800 hover:scale-105"
-                            >
-                              応募
-                            </button>
+                            {appliedCompanies.has(String(company.senderUserId)) ? (
+                              <button 
+                                disabled
+                                className="flex-1 md:flex-none min-h-[28px] md:min-h-[36px] px-1.5 md:px-3 py-0.5 md:py-1.5 rounded-lg text-xs font-medium flex items-center justify-center whitespace-nowrap bg-gray-400 text-white cursor-not-allowed opacity-75"
+                              >
+                                応募済み
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => handleCompanyScout(company.senderUserId)}
+                                className="flex-1 md:flex-none min-h-[28px] md:min-h-[36px] px-1.5 md:px-3 py-0.5 md:py-1.5 rounded-lg text-xs font-medium transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg flex items-center justify-center whitespace-nowrap bg-gray-900 text-white hover:bg-gray-800 hover:scale-105"
+                              >
+                                応募
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>

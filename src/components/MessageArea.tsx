@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useState } from 'react'
+import { memo, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 
@@ -16,13 +16,19 @@ interface Message {
   content?: string
   sent_at?: string
   sentAt?: string
+  attachments?: Array<{
+    file_id: number
+    file_url: string
+    file_name: string
+    file_size?: number
+  }>
 }
 
 interface MessageAreaProps {
   messages: Message[]
   messageInput: string
   onMessageInputChange: (value: string) => void
-  onSendMessage: () => void
+  onSendMessage: (attachmentFiles?: File[]) => void
   currentUserId?: string
   selectedChat?: {
     name: string
@@ -37,8 +43,11 @@ interface MessageAreaProps {
 const MessageArea = memo(({ messages, messageInput, onMessageInputChange, onSendMessage, currentUserId, selectedChat }: MessageAreaProps) => {
   const router = useRouter()
   const { data: session } = useSession()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false)
 
 
   const showToastMessage = (message: string) => {
@@ -47,6 +56,73 @@ const MessageArea = memo(({ messages, messageInput, onMessageInputChange, onSend
     setTimeout(() => {
       setShowToast(false)
     }, 3000)
+  }
+
+  // ファイル選択処理
+  const handleFileSelect = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      // ファイルサイズとタイプのバリデーション
+      const validFiles = files.filter(file => {
+        const maxSize = 20 * 1024 * 1024 // 20MB
+        if (file.size > maxSize) {
+          showToastMessage(`${file.name} は20MBを超えています`)
+          return false
+        }
+        return true
+      })
+      
+      setSelectedFiles(prev => [...prev, ...validFiles])
+    }
+    // inputをリセット
+    if (e.target) {
+      e.target.value = ''
+    }
+  }
+
+  // ファイルを削除
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // メッセージ送信（ファイル添付対応）
+  const handleSendMessage = () => {
+    if (!messageInput.trim() && selectedFiles.length === 0) {
+      return
+    }
+    
+    onSendMessage(selectedFiles)
+    setSelectedFiles([]) // ファイル選択をクリア
+  }
+
+  // ファイルサイズをフォーマット
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
+  // ファイルアイコンを取得
+  const getFileIcon = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase()
+    switch (ext) {
+      case 'pdf': return '📄'
+      case 'doc':
+      case 'docx': return '📝'
+      case 'xls':
+      case 'xlsx': return '📊'
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'webp': return '🖼️'
+      default: return '📎'
+    }
   }
 
   // 一時的にコメントアウト - 面談設定機能
@@ -205,7 +281,54 @@ const MessageArea = memo(({ messages, messageInput, onMessageInputChange, onSend
                       : 'bg-gray-200 text-gray-900 rounded-bl-sm'
                   }`}
                 >
-                  <p className="text-xs md:text-sm">{message.content || message.body || ''}</p>
+                  {/* メッセージテキスト */}
+                  {(message.content || message.body) && (
+                    <p className="text-xs md:text-sm">{message.content || message.body || ''}</p>
+                  )}
+                  
+                  {/* 添付ファイル表示 */}
+                  {message.attachments && message.attachments.length > 0 && (
+                    <div className={`${(message.content || message.body) ? 'mt-2' : ''} space-y-1`}>
+                      {message.attachments.map((attachment, attachIndex) => (
+                        <div 
+                          key={attachment.file_id || attachIndex}
+                          className={`flex items-center space-x-2 p-2 rounded border ${
+                            isCurrentUser 
+                              ? 'bg-blue-500 border-blue-400' 
+                              : 'bg-white border-gray-200'
+                          }`}
+                        >
+                          <span className="text-sm">{getFileIcon(attachment.file_name)}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-medium truncate ${
+                              isCurrentUser ? 'text-blue-100' : 'text-gray-900'
+                            }`}>
+                              {attachment.file_name}
+                            </p>
+                            {attachment.file_size && (
+                              <p className={`text-xs ${
+                                isCurrentUser ? 'text-blue-200' : 'text-gray-500'
+                              }`}>
+                                {formatFileSize(attachment.file_size)}
+                              </p>
+                            )}
+                          </div>
+                          <a
+                            href={attachment.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`text-xs px-2 py-1 rounded transition-colors ${
+                              isCurrentUser 
+                                ? 'bg-blue-400 text-white hover:bg-blue-300' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            開く
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <p className={`text-xs mt-1 ${
                     isCurrentUser ? 'text-blue-100' : 'text-gray-500'
                   }`}>
@@ -260,8 +383,44 @@ const MessageArea = memo(({ messages, messageInput, onMessageInputChange, onSend
 
       {/* メッセージ入力フォーム */}
       <div className="p-3 md:p-4 border-t border-gray-200">
+        {/* 選択されたファイルのプレビュー */}
+        {selectedFiles.length > 0 && (
+          <div className="mb-3 space-y-2">
+            <p className="text-xs text-gray-600">添付ファイル:</p>
+            {selectedFiles.map((file, index) => (
+              <div key={index} className="flex items-center space-x-2 p-2 bg-gray-50 rounded border">
+                <span className="text-sm">{getFileIcon(file.name)}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate text-gray-900">{file.name}</p>
+                  <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                </div>
+                <button
+                  onClick={() => removeFile(index)}
+                  className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                >
+                  削除
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* ファイル入力（非表示） */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        
         <div className="flex space-x-2">
-          <button className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-600 hover:text-gray-900 flex-shrink-0 rounded-lg hover:bg-gray-100">
+          <button 
+            onClick={handleFileSelect}
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-600 hover:text-gray-900 flex-shrink-0 rounded-lg hover:bg-gray-100 transition-colors"
+            title="ファイルを添付"
+          >
             <span className="text-lg">📎</span>
           </button>
           <input
@@ -270,10 +429,17 @@ const MessageArea = memo(({ messages, messageInput, onMessageInputChange, onSend
             onChange={(e) => onMessageInputChange(e.target.value)}
             placeholder="メッセージを入力..."
             className="flex-1 min-h-[44px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm md:text-base"
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSendMessage()
+              }
+            }}
           />
           <button 
-            onClick={onSendMessage}
-            className="min-h-[44px] px-3 md:px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 text-sm md:text-base"
+            onClick={handleSendMessage}
+            disabled={!messageInput.trim() && selectedFiles.length === 0}
+            className="min-h-[44px] px-3 md:px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             送信
           </button>

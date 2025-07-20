@@ -29,6 +29,30 @@ function MessagesContent() {
   const [targetUserType, setTargetUserType] = useState<'cfo' | 'company' | undefined>(undefined)
   const [targetUserAvatar, setTargetUserAvatar] = useState<string>('👤')
   
+  // ファイル添付データを準備する関数
+  const prepareAttachments = async (files: File[]) => {
+    const attachments = []
+    for (const file of files) {
+      // FileをBase64に変換
+      const base64Data = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const base64 = (reader.result as string).split(',')[1] // data:mime;base64, を除去
+          resolve(base64)
+        }
+        reader.readAsDataURL(file)
+      })
+      
+      attachments.push({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        data: base64Data
+      })
+    }
+    return attachments
+  }
+  
   const selectedChat = useMemo(() => 
     chatList.find(chat => chat.id === selectedChatId) || 
     (targetUserId ? {
@@ -125,17 +149,18 @@ function MessagesContent() {
     }
   }, [])
 
-  // メッセージ送信
-  const sendMessage = async () => {
-    // メッセージボタンからの場合は必ずユーザー入力が必要
-    if (!messageInput.trim()) return
+  // メッセージ送信（ファイル添付対応）
+  const sendMessage = async (attachmentFiles?: File[]) => {
+    // テキストメッセージまたは添付ファイルのいずれかが必要
+    if (!messageInput.trim() && (!attachmentFiles || attachmentFiles.length === 0)) return
 
     // 一時的な会話ID（temp_で始まる）の場合は新しい会話を作成
     if (selectedChatId && selectedChatId.startsWith('temp_')) {
       const targetUserId = selectedChatId.replace('temp_', '')
       try {
-        // メッセージボタンからの場合はユーザー入力のみ送信
+        // 初回メッセージとファイル添付を準備
         const initialMessage = messageInput.trim()
+        const attachments = attachmentFiles ? await prepareAttachments(attachmentFiles) : []
         
         const response = await fetch('/api/conversations', {
           method: 'POST',
@@ -144,7 +169,8 @@ function MessagesContent() {
           },
           body: JSON.stringify({
             receiverId: targetUserId,
-            message: initialMessage
+            message: initialMessage,
+            attachments: attachments
           })
         })
         
@@ -170,6 +196,9 @@ function MessagesContent() {
     // 既存の会話がある場合は通常のメッセージ送信
     else if (selectedChatId) {
       try {
+        // ファイル添付を準備
+        const attachments = attachmentFiles ? await prepareAttachments(attachmentFiles) : []
+        
         const response = await fetch('/api/messages', {
           method: 'POST',
           headers: {
@@ -177,7 +206,8 @@ function MessagesContent() {
           },
           body: JSON.stringify({
             conversationId: selectedChatId,
-            message: messageInput.trim()
+            message: messageInput.trim(),
+            attachments: attachments
           })
         })
         

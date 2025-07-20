@@ -32,10 +32,17 @@ export async function GET(request: NextRequest) {
       targetUserId = userIds[0] === userId ? userIds[1] : userIds[0]
     }
 
-    // 新アーキテクチャ: messages テーブルから直接取得
+    // 新アーキテクチャ: messages テーブルから直接取得（添付ファイル情報を含む）
     let query = supabaseAdmin
       .from(TABLES.MESSAGES)
-      .select('*')
+      .select(`
+        *,
+        attachments (
+          file_id,
+          file_url,
+          file_name
+        )
+      `)
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
       .order('sent_at', { ascending: false })
       .limit(limit)
@@ -220,6 +227,9 @@ export async function GET(request: NextRequest) {
           sentAt: message.sent_at,
           isFromMe,
           
+          // 添付ファイル情報
+          attachments: message.attachments || [],
+          
           // 表示用情報
           senderName: senderInfo.name,
           senderType: senderInfo.type,
@@ -296,7 +306,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: 新しいメッセージを送信（新アーキテクチャ: messagesテーブル）
+// POST: 新しいメッセージを送信（新アーキテクチャ: messagesテーブル + ファイル添付対応）
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -310,7 +320,7 @@ export async function POST(request: NextRequest) {
 
     const userId = session.user.id
     const body = await request.json()
-    const { receiverId, conversationId, message, msgType = 'chat' } = body
+    const { receiverId, conversationId, message, msgType = 'chat', attachments = [] } = body
 
     // conversationIdからreceiverIdを導出
     let targetReceiverId = receiverId
@@ -319,10 +329,10 @@ export async function POST(request: NextRequest) {
       targetReceiverId = userIds[0] === userId ? userIds[1] : userIds[0]
     }
 
-    // 必須フィールドのバリデーション
-    if (!targetReceiverId || !message) {
+    // 必須フィールドのバリデーション（メッセージまたはファイル添付が必要）
+    if (!targetReceiverId || (!message && (!attachments || attachments.length === 0))) {
       return NextResponse.json(
-        { success: false, error: '受信者IDとメッセージは必須です' },
+        { success: false, error: '受信者IDとメッセージまたは添付ファイルは必須です' },
         { status: 400 }
       )
     }
@@ -335,7 +345,7 @@ export async function POST(request: NextRequest) {
         sender_id: userId,
         receiver_id: targetReceiverId,
         msg_type: msgType,
-        body: message
+        body: message || ''
       })
       .select()
       .single()
@@ -348,6 +358,57 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ファイル添付がある場合、アップロードと保存処理
+    const uploadedAttachments: Array<{
+      file_id: number
+      file_url: string
+      file_name: string
+      file_size?: number
+    }> = []
+
+    if (attachments && attachments.length > 0) {
+      try {
+        for (const attachment of attachments) {
+          // Base64データをFileオブジェクトに変換
+          const buffer = Buffer.from(attachment.data, 'base64')
+          const blob = new Blob([buffer], { type: attachment.type })
+          const file = new File([blob], attachment.name, { type: attachment.type })
+
+          // storage.tsのuploadFile関数を使用してアップロード
+          const { uploadFile } = await import('@/lib/storage')
+          const uploadResult = await uploadFile(file, 'ATTACHMENT', userId)
+
+          if (uploadResult.success && uploadResult.url) {
+            // attachmentsテーブルに記録
+            const { data: attachmentRecord, error: attachmentError } = await supabaseAdmin
+              .from('attachments')
+              .insert({
+                file_url: uploadResult.url,
+                file_name: attachment.name,
+                msg_id: newMessage.msg_id,
+                uploaded_by: userId
+              })
+              .select()
+              .single()
+
+            if (attachmentError) {
+              console.error('🚨 添付ファイル記録エラー:', attachmentError)
+            } else {
+              uploadedAttachments.push({
+                file_id: attachmentRecord.file_id,
+                file_url: attachmentRecord.file_url,
+                file_name: attachmentRecord.file_name || attachment.name,
+                file_size: attachment.size
+              })
+            }
+          } else {
+            console.error('🚨 ファイルアップロード失敗:', uploadResult.error)
+          }
+        }
+      } catch (error) {
+        console.error('🚨 ファイル処理エラー:', error)
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -361,7 +422,8 @@ export async function POST(request: NextRequest) {
         sent_at: newMessage.sent_at,
         sentAt: newMessage.sent_at,
         msg_type: newMessage.msg_type,
-        isFromMe: true
+        isFromMe: true,
+        attachments: uploadedAttachments
       },
       meta: {
         architecture: 'new',

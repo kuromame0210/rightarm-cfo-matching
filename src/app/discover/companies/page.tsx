@@ -25,6 +25,7 @@ export default function DiscoverCompaniesPage() {
   const [scoutMessage, setScoutMessage] = useState('')
   const [companies, setCompanies] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [appliedCompanies, setAppliedCompanies] = useState<Set<string>>(new Set())
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -78,6 +79,31 @@ export default function DiscoverCompaniesPage() {
       setLoading(false)
     }
   }, [searchQuery, selectedRevenueRange, pagination.page, pagination.limit])
+
+  // 応募済み企業を取得する関数
+  const fetchAppliedCompanies = useCallback(async () => {
+    if (!isAuthenticated) return
+
+    try {
+      const response = await fetch('/api/scouts?type=sent')
+      const data = await response.json()
+      
+      console.log('🔍 応募済み企業取得レスポンス:', data)
+      
+      if (data.success) {
+        // type=sentの場合、data.sentに送信済みスカウトが入っている
+        const sentScouts = data.data?.sent || []
+        console.log('📤 送信済みスカウト:', sentScouts)
+        const appliedSet = new Set<string>(
+          sentScouts.map((scout: any) => String(scout.receiverId || scout.receiver_id))
+        )
+        setAppliedCompanies(appliedSet)
+        console.log('✅ 応募済み企業セット:', appliedSet)
+      }
+    } catch (error) {
+      console.error('応募済み企業の取得エラー:', error)
+    }
+  }, [isAuthenticated])
   
   // 実際の企業編集可能項目のみ使用するフォーマット関数
   const formatCompanyData = (company: any) => {
@@ -136,10 +162,11 @@ export default function DiscoverCompaniesPage() {
     
     if (isAuthenticated) {
       fetchCompanies()
-      // ページ表示時にお気に入り状態も再取得
+      // ページ表示時にお気に入り状態と応募済み状態も再取得
       refetchInterests()
+      fetchAppliedCompanies()
     }
-  }, [isAuthenticated, router, fetchCompanies, refetchInterests])
+  }, [isAuthenticated, router, fetchCompanies, refetchInterests, fetchAppliedCompanies])
 
 
   const showToastMessage = (message: string) => {
@@ -201,6 +228,8 @@ export default function DiscoverCompaniesPage() {
         showToastMessage(`${selectedCompany.companyName}に応募しました`)
         setShowScoutModal(false)
         setScoutMessage('') // メッセージをクリア
+        // 応募済み企業リストを更新
+        setAppliedCompanies(prev => new Set([...Array.from(prev), String(selectedCompany.id)]))
       } else {
         console.error('スカウト送信API エラー:', response.status, data)
         showToastMessage(`エラー: ${data.error || 'スカウト送信に失敗しました'}`)
@@ -517,12 +546,21 @@ export default function DiscoverCompaniesPage() {
                       >
                         💬 メッセージ
                       </Link>
-                      <button 
-                        onClick={() => handleScout(company)}
-                        className="flex-1 md:flex-none min-h-[28px] md:min-h-[36px] px-1.5 md:px-3 py-0.5 md:py-1.5 rounded-lg text-xs font-medium transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg flex items-center justify-center whitespace-nowrap bg-gray-900 text-white hover:bg-gray-800 hover:scale-105"
-                      >
-                        応募
-                      </button>
+                      {appliedCompanies.has(String(company.id)) ? (
+                        <button 
+                          disabled
+                          className="flex-1 md:flex-none min-h-[28px] md:min-h-[36px] px-1.5 md:px-3 py-0.5 md:py-1.5 rounded-lg text-xs font-medium flex items-center justify-center whitespace-nowrap bg-gray-400 text-white cursor-not-allowed opacity-75"
+                        >
+                          応募済み
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => handleScout(company)}
+                          className="flex-1 md:flex-none min-h-[28px] md:min-h-[36px] px-1.5 md:px-3 py-0.5 md:py-1.5 rounded-lg text-xs font-medium transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg flex items-center justify-center whitespace-nowrap bg-gray-900 text-white hover:bg-gray-800 hover:scale-105"
+                        >
+                          応募
+                        </button>
+                      )}
                     </div>
                   </div>
                   
