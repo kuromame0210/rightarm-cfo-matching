@@ -410,6 +410,7 @@ export async function POST(request: NextRequest) {
         const { error: resendError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'signup',
           email: data.email,
+          password: data.password,
           options: {
             redirectTo: `${process.env.NEXTAUTH_URL || 'https://rextrix-dev.vercel.app'}/auth/login?message=confirmed`
           }
@@ -424,7 +425,7 @@ export async function POST(request: NextRequest) {
           const { data: afterEmailUser } = await supabaseAdmin.auth.admin.getUserById(authUser.user.id)
           console.log('📧 [EMAIL_DEBUG] 手動送信後のユーザー状況:', {
             confirmation_sent_at: afterEmailUser?.user?.confirmation_sent_at,
-            hasConfirmationToken: !!afterEmailUser?.user?.confirmation_token
+            updated_at: afterEmailUser?.user?.updated_at
           })
         }
       } catch (manualSendError) {
@@ -561,10 +562,8 @@ export async function POST(request: NextRequest) {
         userId: finalUser?.user?.id,
         email: finalUser?.user?.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
         email_confirmed_at: finalUser?.user?.email_confirmed_at,
-        confirmation_sent_at: finalUser?.user?.confirmation_sent_at,
         created_at: finalUser?.user?.created_at,
-        last_sign_in_at: finalUser?.user?.last_sign_in_at,
-        email_change_confirm_status: finalUser?.user?.email_change_confirm_status
+        last_sign_in_at: finalUser?.user?.last_sign_in_at
       })
       
       // 📧 Supabase Auth設定の推測
