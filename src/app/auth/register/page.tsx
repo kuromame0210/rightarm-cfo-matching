@@ -221,26 +221,20 @@ function RegisterPageContent() {
 
       if (data.success) {
         console.log('📧 [EMAIL_DEBUG] 登録成功 - メール送信状況分析:')
-        console.log('📧 [EMAIL_DEBUG] - セッション情報:', !!data.data?.session)
         console.log('📧 [EMAIL_DEBUG] - ユーザー情報:', !!data.data?.user)
         console.log('📧 [EMAIL_DEBUG] - メール認証必要:', data.data?.emailVerificationRequired)
         console.log('📧 [EMAIL_DEBUG] - メッセージ:', data.message)
         
-        // セッション情報がある場合は自動ログイン
-        if (data.data?.session && data.data?.user) {
+        // 開発環境では自動ログイン、本番環境ではメール認証待ち
+        if (!data.data?.emailVerificationRequired && data.data?.user) {
           console.log('📧 [EMAIL_DEBUG] 自動ログイン実行（メール認証スキップ）')
-          login(data.data.session.access_token, data.data.user)
-          
-          // ダッシュボードにリダイレクト
+          // 開発環境での自動ログインは現在無効（NextAuth.js統合のため）
+          showToast('登録が完了しました。ログイン画面に移動します。', 'success')
           setTimeout(() => {
-            if (userType === 'company') {
-              router.push('/discover/cfos')
-            } else {
-              router.push('/discover/companies')
-            }
-          }, 100)
+            router.push('/auth/login')
+          }, 1000)
         } else {
-          // セッション情報がない場合はログインページに誘導
+          // メール認証が必要な場合はログインページに誘導
           console.log('📧 [EMAIL_DEBUG] メール認証必要 - ログイン画面に誘導')
           console.log('📧 [EMAIL_DEBUG] 確認メール送信済み（理論上）')
           showToast(data.message || 'ユーザー登録が完了しました', 'success')

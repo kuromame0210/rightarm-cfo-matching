@@ -523,7 +523,6 @@ export async function POST(request: NextRequest) {
         userType: data.userType,
         emailVerificationRequired: !isDevelopment,
         ...(isDevelopment && {
-          session: authUser.session,
           user: authUser.user
         })
       }
