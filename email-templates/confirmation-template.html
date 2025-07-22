@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>メールアドレスの確認 - Rextrix</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+            line-height: 1.6;
+            background-color: #f8fafc;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .content h2 {
+            color: #1a202c;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .content p {
+            color: #4a5568;
+            font-size: 16px;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .alternative {
+            background-color: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        .alternative h3 {
+            color: #2d3748;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .alternative p {
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+        
+        .token {
+            background-color: #edf2f7;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 2px;
+            color: #2d3748;
+            margin: 10px 0;
+            border: 2px solid #cbd5e0;
+        }
+        
+        .footer {
+            background-color: #f7fafc;
+            padding: 30px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+        }
+        
+        .footer p {
+            margin-bottom: 10px;
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .security-note {
+            background-color: #fef5e7;
+            border: 1px solid #f6e05e;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        
+        .security-note p {
+            color: #744210;
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .header,
+            .content,
+            .footer {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .content h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Rextrix</div>
+            <h1>ようこそ！</h1>
+            <p>CFO・企業マッチングプラットフォーム</p>
+        </div>
+        
+        <div class="content">
+            <h2>メールアドレスの確認</h2>
+            
+            <p>
+                Rextrixにご登録いただき、ありがとうございます！<br>
+                アカウントを有効化するため、以下のボタンをクリックしてメールアドレスの確認を完了してください。
+            </p>
+            
+            <div class="button-container">
+                <a href="{{ .ConfirmationURL }}" class="cta-button">
+                    メールアドレスを確認する
+                </a>
+            </div>
+            
+            <div class="alternative">
+                <h3>ボタンが機能しない場合</h3>
+                <p>上記のボタンが機能しない場合は、以下の確認コードを使用してください：</p>
+                <div class="token">{{ .Token }}</div>
+                <p>このコードをサイトの確認画面で入力してください。</p>
+            </div>
+            
+            <div class="security-note">
+                <p>
+                    <strong>セキュリティに関する注意：</strong><br>
+                    このメールに心当たりがない場合は、無視してください。このリンクの有効期限は24時間です。
+                </p>
+            </div>
+            
+            <p>
+                確認が完了すると、CFO・企業マッチングプラットフォームの全ての機能をご利用いただけます。
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>このメールは <strong>Rextrix</strong> から送信されています</p>
+            <p>
+                <a href="https://www.rextrix.jp">https://www.rextrix.jp</a>
+            </p>
+            <p>© 2025 Rextrix. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

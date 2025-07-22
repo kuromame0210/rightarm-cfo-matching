@@ -4,6 +4,7 @@
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { translateError } from '@/lib/utils/errorMessages'
 
 export function useAuth() {
   const { data: session, status } = useSession()
@@ -98,7 +99,7 @@ export function useAuth() {
       if (result?.error) {
         return {
           success: false,
-          error: result.error // より具体的なエラーメッセージを返す
+          error: translateError(result.error) // 日本語化されたエラーメッセージを返す
         }
       }
 
@@ -108,7 +109,7 @@ export function useAuth() {
     } catch (error) {
       return {
         success: false,
-        error: 'ネットワークエラーまたは予期せぬ問題が発生しました'
+        error: translateError(error) // catchブロックでも日本語化を適用
       }
     }
   }, [])
