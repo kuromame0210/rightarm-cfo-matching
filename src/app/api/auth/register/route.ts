@@ -218,8 +218,18 @@ export async function POST(request: NextRequest) {
     console.log('📧 [EMAIL_DEBUG] 環境変数確認:', {
       NODE_ENV: process.env.NODE_ENV,
       SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      SUPABASE_URL_DOMAIN: process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1],
       SUPABASE_SERVICE_ROLE: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      NEXTAUTH_URL: process.env.NEXTAUTH_URL
+      SERVICE_ROLE_KEY_PREFIX: process.env.SUPABASE_SERVICE_ROLE_KEY?.substring(0, 20) + '...',
+      NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+      // Supabase Auth 関連設定の確認
+      SUPABASE_AUTH_EXTERNAL_EMAIL: process.env.SUPABASE_AUTH_EXTERNAL_EMAIL_ENABLED,
+      SMTP_CONFIG: {
+        hasHost: !!process.env.SMTP_HOST,
+        hasUser: !!process.env.SMTP_USER,
+        hasPass: !!process.env.SMTP_PASS,
+        hasPort: !!process.env.SMTP_PORT
+      }
     })
 
     // リクエストボディの解析
@@ -359,7 +369,13 @@ export async function POST(request: NextRequest) {
       isDevelopment,
       email_confirm: isDevelopment,
       emailDomain: data.email.split('@')[1],
-      willSkipEmailConfirmation: isDevelopment
+      willSkipEmailConfirmation: isDevelopment,
+      actualEmailConfirmValue: isDevelopment
+    })
+    
+    console.log('📧 [EMAIL_DEBUG] Supabase createUser 実行前:', {
+      willSendConfirmationEmail: !isDevelopment,
+      expectedBehavior: isDevelopment ? 'auto-confirm' : 'send-email'
     })
     
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -370,6 +386,20 @@ export async function POST(request: NextRequest) {
         name: data.displayName,
         role: data.userType, // userTypeをメタデータに保存
         email_verified: isDevelopment
+      }
+    })
+    
+    console.log('📧 [EMAIL_DEBUG] Supabase createUser 実行完了:', {
+      success: !authError,
+      userCreated: !!authUser?.user,
+      emailConfirmedAtCreation: authUser?.user?.email_confirmed_at,
+      emailConfirmationSent: authUser?.user && !authUser.user.email_confirmed_at,
+      rawUserObject: {
+        id: authUser?.user?.id,
+        email: authUser?.user?.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
+        created_at: authUser?.user?.created_at,
+        email_confirmed_at: authUser?.user?.email_confirmed_at,
+        confirmation_sent_at: authUser?.user?.confirmation_sent_at
       }
     })
 
@@ -494,13 +524,43 @@ export async function POST(request: NextRequest) {
     }
 
     // 成功レスポンス
+    // 📧 Supabaseでのメール送信状況を最終確認
+    console.log('📧 [EMAIL_DEBUG] 最終メール送信状況確認:')
+    try {
+      const { data: finalUser } = await supabaseAdmin.auth.admin.getUserById(authUser.user.id)
+      console.log('📧 [EMAIL_DEBUG] 作成直後のユーザー状況:', {
+        userId: finalUser?.user?.id,
+        email: finalUser?.user?.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
+        email_confirmed_at: finalUser?.user?.email_confirmed_at,
+        confirmation_sent_at: finalUser?.user?.confirmation_sent_at,
+        created_at: finalUser?.user?.created_at,
+        last_sign_in_at: finalUser?.user?.last_sign_in_at,
+        email_change_confirm_status: finalUser?.user?.email_change_confirm_status
+      })
+      
+      // 📧 Supabase Auth設定の推測
+      const wasEmailSent = !finalUser?.user?.email_confirmed_at && !isDevelopment
+      console.log('📧 [EMAIL_DEBUG] メール送信判定:', {
+        shouldHaveSentEmail: wasEmailSent,
+        reasoning: wasEmailSent 
+          ? 'email_confirmed_at is null and not development mode' 
+          : isDevelopment 
+            ? 'development mode - auto confirmed' 
+            : 'email already confirmed or error'
+      })
+      
+    } catch (userCheckError) {
+      console.error('📧 [EMAIL_DEBUG] ユーザー状況確認エラー:', userCheckError)
+    }
+
     console.log('📧 [EMAIL_DEBUG] 登録完了 - 最終結果:', {
       userId: authUser.user.id,
       userType: data.userType,
       email: data.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
       isDevelopment,
       emailConfirmed: authUser.user.email_confirmed_at,
-      willRequireEmailVerification: !isDevelopment
+      willRequireEmailVerification: !isDevelopment,
+      expectedMailDelivery: !isDevelopment ? 'should-be-sent' : 'skipped-dev-mode'
     })
 
     const message = isDevelopment 
