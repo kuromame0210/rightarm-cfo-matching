@@ -403,6 +403,35 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // 🚨 Admin API では確認メールが自動送信されない場合があるため手動送信
+    if (!isDevelopment && authUser?.user && !authUser.user.email_confirmed_at) {
+      console.log('📧 [EMAIL_DEBUG] 手動確認メール送信開始')
+      try {
+        const { error: resendError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'signup',
+          email: data.email,
+          options: {
+            redirectTo: `${process.env.NEXTAUTH_URL || 'https://rextrix-dev.vercel.app'}/auth/login?message=confirmed`
+          }
+        })
+
+        if (resendError) {
+          console.error('📧 [EMAIL_DEBUG] 確認メール送信エラー:', resendError)
+        } else {
+          console.log('📧 [EMAIL_DEBUG] 確認メール送信成功')
+          
+          // 送信後のユーザー状況を再確認
+          const { data: afterEmailUser } = await supabaseAdmin.auth.admin.getUserById(authUser.user.id)
+          console.log('📧 [EMAIL_DEBUG] 手動送信後のユーザー状況:', {
+            confirmation_sent_at: afterEmailUser?.user?.confirmation_sent_at,
+            hasConfirmationToken: !!afterEmailUser?.user?.confirmation_token
+          })
+        }
+      } catch (manualSendError) {
+        console.error('📧 [EMAIL_DEBUG] 手動メール送信処理エラー:', manualSendError)
+      }
+    }
+
     if (authError || !authUser.user) {
       console.error('📧 [EMAIL_DEBUG] ユーザー作成エラー:', {
         error: authError,
