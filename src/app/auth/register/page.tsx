@@ -212,12 +212,18 @@ function RegisterPageContent() {
         hasMessage: !!data.message,
         hasError: !!data.error,
         hasData: !!data.data,
+        hasDebug: !!data.debug,
         ...(data.data && {
           userId: data.data.userId,
           email: data.data.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
           emailVerificationRequired: data.data.emailVerificationRequired
         })
       })
+
+      // 🚨 サーバーデバッグ情報の表示
+      if (data.debug) {
+        console.log('📧 [EMAIL_DEBUG] サーバーデバッグ情報:', data.debug)
+      }
 
       if (data.success) {
         console.log('📧 [EMAIL_DEBUG] 登録成功 - メール送信状況分析:')

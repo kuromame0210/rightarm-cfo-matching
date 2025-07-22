@@ -618,7 +618,21 @@ export async function POST(request: NextRequest) {
       debug: {
         serverLogs: 'Check Vercel Function Logs for detailed email sending info',
         manualEmailAttempted: !isDevelopment && !authUser.user.email_confirmed_at,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        environment: {
+          isDevelopment,
+          NODE_ENV: process.env.NODE_ENV,
+          hasSMTP: {
+            host: !!process.env.SMTP_HOST,
+            user: !!process.env.SMTP_USER,
+            pass: !!process.env.SMTP_PASS
+          }
+        },
+        supabaseUser: {
+          id: authUser.user.id,
+          email_confirmed_at: authUser.user.email_confirmed_at,
+          created_at: authUser.user.created_at
+        }
       }
     })
 
