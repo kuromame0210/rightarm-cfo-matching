@@ -658,7 +658,17 @@ export async function POST(request: NextRequest) {
           created_at: authUser.user.created_at
         },
         // 🔥 メール送信の詳細結果
-        emailSending: emailSendingResult
+        emailSending: {
+          ...emailSendingResult,
+          // サーバーログをレスポンスに含める
+          logs: !isDevelopment && emailSendingResult.attempted ? [
+            'Manual email sending attempted',
+            `Email: ${data.email?.replace(/(.{3}).*(@.*)/, '$1***$2')}`,
+            `Redirect URL: https://www.rextrix.jp/auth/login?message=confirmed`,
+            `Success: ${emailSendingResult.success}`,
+            `Error: ${emailSendingResult.error ? 'Yes' : 'None'}`
+          ] : []
+        }
       }
     })
 

@@ -224,6 +224,14 @@ function RegisterPageContent() {
       if (data.debug) {
         console.log('📧 [EMAIL_DEBUG] サーバーデバッグ情報:', data.debug)
         
+        // 🔥 メール送信詳細ログ表示
+        if (data.debug.emailSending?.logs) {
+          console.log('📧 [EMAIL_DEBUG] メール送信詳細ログ:')
+          data.debug.emailSending.logs.forEach((log: string) => {
+            console.log(`  - ${log}`)
+          })
+        }
+        
         // 🔥 メール送信エラーの詳細表示
         if (data.debug.emailSending?.error) {
           console.error('📧 [EMAIL_DEBUG] メール送信エラー詳細:', data.debug.emailSending.error)
