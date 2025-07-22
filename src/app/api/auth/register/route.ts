@@ -420,7 +420,8 @@ export async function POST(request: NextRequest) {
       })
       
       try {
-        const { error: resendError } = await supabaseAdmin.auth.admin.generateLink({
+        // 🔥 generateLinkでリンクを生成
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'signup',
           email: data.email,
           password: data.password,
@@ -428,6 +429,33 @@ export async function POST(request: NextRequest) {
             redirectTo: `https://www.rextrix.jp/auth/login?message=confirmed`
           }
         })
+
+        let resendError = linkError
+
+        if (!linkError && linkData) {
+          console.log('📧 [EMAIL_DEBUG] 確認リンク生成成功:', linkData.properties?.action_link ? 'リンクあり' : 'リンクなし')
+          
+          // 🔥 実際のメール送信 - resend API経由
+          try {
+            const { error: actualSendError } = await supabaseAdmin.auth.resend({
+              type: 'signup',
+              email: data.email,
+              options: {
+                emailRedirectTo: `https://www.rextrix.jp/auth/login?message=confirmed`
+              }
+            })
+            
+            if (actualSendError) {
+              console.error('📧 [EMAIL_DEBUG] resend API エラー:', actualSendError)
+              resendError = actualSendError
+            } else {
+              console.log('📧 [EMAIL_DEBUG] resend API 成功')
+            }
+          } catch (resendApiError) {
+            console.error('📧 [EMAIL_DEBUG] resend API 例外:', resendApiError)
+            resendError = resendApiError as any
+          }
+        }
 
         if (resendError) {
           console.error('📧 [EMAIL_DEBUG] 確認メール送信エラー:', resendError)
