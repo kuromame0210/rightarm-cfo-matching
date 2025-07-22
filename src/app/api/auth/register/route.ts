@@ -404,7 +404,11 @@ export async function POST(request: NextRequest) {
     })
 
     // 🚨 Admin API では確認メールが自動送信されない場合があるため手動送信
-    let emailSendingResult = { attempted: false, success: false, error: null }
+    const emailSendingResult: { 
+      attempted: boolean; 
+      success: boolean; 
+      error: any; 
+    } = { attempted: false, success: false, error: null }
     
     if (!isDevelopment && authUser?.user && !authUser.user.email_confirmed_at) {
       emailSendingResult.attempted = true
