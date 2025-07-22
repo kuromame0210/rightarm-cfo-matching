@@ -413,6 +413,11 @@ export async function POST(request: NextRequest) {
     if (!isDevelopment && authUser?.user && !authUser.user.email_confirmed_at) {
       emailSendingResult.attempted = true
       console.log('📧 [EMAIL_DEBUG] 手動確認メール送信開始')
+      console.log('📧 [EMAIL_DEBUG] 送信パラメータ:', {
+        type: 'signup',
+        email: data.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
+        redirectTo: 'https://www.rextrix.jp/auth/login?message=confirmed'
+      })
       
       try {
         const { error: resendError } = await supabaseAdmin.auth.admin.generateLink({
@@ -420,7 +425,7 @@ export async function POST(request: NextRequest) {
           email: data.email,
           password: data.password,
           options: {
-            redirectTo: `${process.env.NEXTAUTH_URL || 'https://rextrix-dev.vercel.app'}/auth/login?message=confirmed`
+            redirectTo: `https://www.rextrix.jp/auth/login?message=confirmed`
           }
         })
 
