@@ -223,6 +223,11 @@ function RegisterPageContent() {
       // 🚨 サーバーデバッグ情報の表示
       if (data.debug) {
         console.log('📧 [EMAIL_DEBUG] サーバーデバッグ情報:', data.debug)
+        
+        // 🔥 メール送信エラーの詳細表示
+        if (data.debug.emailSending?.error) {
+          console.error('📧 [EMAIL_DEBUG] メール送信エラー詳細:', data.debug.emailSending.error)
+        }
       }
 
       if (data.success) {

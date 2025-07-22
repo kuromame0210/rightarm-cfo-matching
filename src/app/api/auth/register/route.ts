@@ -404,8 +404,12 @@ export async function POST(request: NextRequest) {
     })
 
     // 🚨 Admin API では確認メールが自動送信されない場合があるため手動送信
+    let emailSendingResult = { attempted: false, success: false, error: null }
+    
     if (!isDevelopment && authUser?.user && !authUser.user.email_confirmed_at) {
+      emailSendingResult.attempted = true
       console.log('📧 [EMAIL_DEBUG] 手動確認メール送信開始')
+      
       try {
         const { error: resendError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'signup',
@@ -418,8 +422,14 @@ export async function POST(request: NextRequest) {
 
         if (resendError) {
           console.error('📧 [EMAIL_DEBUG] 確認メール送信エラー:', resendError)
+          emailSendingResult.error = {
+            message: resendError.message,
+            code: resendError.code || 'unknown',
+            details: resendError
+          }
         } else {
           console.log('📧 [EMAIL_DEBUG] 確認メール送信成功')
+          emailSendingResult.success = true
           
           // 送信後のユーザー状況を再確認
           const { data: afterEmailUser } = await supabaseAdmin.auth.admin.getUserById(authUser.user.id)
@@ -430,6 +440,11 @@ export async function POST(request: NextRequest) {
         }
       } catch (manualSendError) {
         console.error('📧 [EMAIL_DEBUG] 手動メール送信処理エラー:', manualSendError)
+        emailSendingResult.error = {
+          message: (manualSendError as Error)?.message || 'Unknown error',
+          type: 'exception',
+          details: manualSendError
+        }
       }
     }
 
@@ -632,7 +647,9 @@ export async function POST(request: NextRequest) {
           id: authUser.user.id,
           email_confirmed_at: authUser.user.email_confirmed_at,
           created_at: authUser.user.created_at
-        }
+        },
+        // 🔥 メール送信の詳細結果
+        emailSending: emailSendingResult
       }
     })
 
