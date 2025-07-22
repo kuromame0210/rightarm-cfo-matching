@@ -164,33 +164,23 @@ function RegisterPageContent() {
         profileImage: profileImage || undefined, // プロフィール画像データを追加
       }
 
-      // デバッグ: 送信データの詳細確認
-      console.log('🚀 デバッグモード: 登録データ送信をスキップ')
-      console.log('📋 送信予定の登録データ:', registrationData)
-      console.log('📊 データ詳細分析:', {
-        userType: registrationData.userType,
-        email: registrationData.email,
-        displayName: registrationData.displayName,
-        // 画像関連
-        hasProfileImage: !!registrationData.profileImage,
-        profileImageType: typeof registrationData.profileImage,
-        profileImageLength: registrationData.profileImage?.length,
-        profileImagePreview: registrationData.profileImage?.substring(0, 100),
-        // CFO固有フィールド
-        ...(registrationData.userType === 'cfo' && {
-          cfoFields: {
-            location: (registrationData as any).location,
-            workingHours: (registrationData as any).workingHours,
-            possibleTasks: (registrationData as any).possibleTasks?.length + '文字',
-            certifications: (registrationData as any).certifications?.length + '文字',
-            monthlyCompensation: (registrationData as any).monthlyCompensation?.length + '文字',
-            workingArea: (registrationData as any).workingArea?.length + '文字',
-            introduction: (registrationData as any).introduction?.length + '文字',
-            experience: (registrationData as any).experience?.length + '文字',
-            skills: (registrationData as any).skills
-          }
-        })
+      // 📧 メール送信デバッグ: 詳細ログ開始
+      console.log('📧 [EMAIL_DEBUG] 登録プロセス開始')
+      console.log('📧 [EMAIL_DEBUG] 環境確認:', {
+        NODE_ENV: process.env.NODE_ENV,
+        isClient: typeof window !== 'undefined',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'server'
       })
+      console.log('📧 [EMAIL_DEBUG] 登録データ概要:', {
+        userType: registrationData.userType,
+        email: registrationData.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
+        displayName: registrationData.displayName,
+        hasProfileImage: !!registrationData.profileImage
+      })
+      
+      // 📧 APIリクエスト直前ログ
+      console.log('📧 [EMAIL_DEBUG] APIリクエスト開始: /api/auth/register')
+      const requestStartTime = Date.now()
       
       // 実際の登録処理を実行
       const response = await fetch('/api/auth/register', {
@@ -201,11 +191,44 @@ function RegisterPageContent() {
         body: JSON.stringify(registrationData),
       })
 
+      // 📧 APIレスポンス詳細ログ
+      const requestDuration = Date.now() - requestStartTime
+      console.log('📧 [EMAIL_DEBUG] APIレスポンス受信:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        duration: `${requestDuration}ms`,
+        headers: {
+          contentType: response.headers.get('content-type'),
+          contentLength: response.headers.get('content-length')
+        }
+      })
+
       const data = await response.json()
+      
+      // 📧 レスポンスデータ詳細ログ
+      console.log('📧 [EMAIL_DEBUG] APIレスポンスデータ:', {
+        success: data.success,
+        hasMessage: !!data.message,
+        hasError: !!data.error,
+        hasData: !!data.data,
+        ...(data.data && {
+          userId: data.data.userId,
+          email: data.data.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
+          emailVerificationRequired: data.data.emailVerificationRequired
+        })
+      })
 
       if (data.success) {
+        console.log('📧 [EMAIL_DEBUG] 登録成功 - メール送信状況分析:')
+        console.log('📧 [EMAIL_DEBUG] - セッション情報:', !!data.data?.session)
+        console.log('📧 [EMAIL_DEBUG] - ユーザー情報:', !!data.data?.user)
+        console.log('📧 [EMAIL_DEBUG] - メール認証必要:', data.data?.emailVerificationRequired)
+        console.log('📧 [EMAIL_DEBUG] - メッセージ:', data.message)
+        
         // セッション情報がある場合は自動ログイン
         if (data.data?.session && data.data?.user) {
+          console.log('📧 [EMAIL_DEBUG] 自動ログイン実行（メール認証スキップ）')
           login(data.data.session.access_token, data.data.user)
           
           // ダッシュボードにリダイレクト
@@ -218,18 +241,27 @@ function RegisterPageContent() {
           }, 100)
         } else {
           // セッション情報がない場合はログインページに誘導
+          console.log('📧 [EMAIL_DEBUG] メール認証必要 - ログイン画面に誘導')
+          console.log('📧 [EMAIL_DEBUG] 確認メール送信済み（理論上）')
           showToast(data.message || 'ユーザー登録が完了しました', 'success')
           setTimeout(() => {
             router.push('/auth/login')
           }, 2000)
         }
       } else {
+        console.log('📧 [EMAIL_DEBUG] 登録失敗:', data.error)
         showToast(data.error || '登録に失敗しました', 'error')
       }
     } catch (error) {
-      console.error('Registration error:', error)
+      console.error('📧 [EMAIL_DEBUG] 登録エラー (catch):', error)
+      console.error('📧 [EMAIL_DEBUG] エラー詳細:', {
+        name: (error as Error)?.name,
+        message: (error as Error)?.message,
+        stack: (error as Error)?.stack
+      })
       showToast('ネットワークエラーが発生しました', 'error')
     } finally {
+      console.log('📧 [EMAIL_DEBUG] 登録プロセス完了')
       setIsLoading(false)
     }
   }

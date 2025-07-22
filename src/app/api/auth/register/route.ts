@@ -214,11 +214,17 @@ async function rollbackUserCreation(userId: string, avatarUrl: string | null) {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('📝 登録API: リクエスト受信')
+    console.log('📧 [EMAIL_DEBUG] API: リクエスト受信')
+    console.log('📧 [EMAIL_DEBUG] 環境変数確認:', {
+      NODE_ENV: process.env.NODE_ENV,
+      SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      NEXTAUTH_URL: process.env.NEXTAUTH_URL
+    })
 
     // リクエストボディの解析
     const body = await request.json()
-    console.log('📋 登録データ:', {
+    console.log('📧 [EMAIL_DEBUG] 登録データ:', {
       email: body.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
       userType: body.userType,
       hasPassword: !!body.password,
@@ -346,8 +352,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Supabase Auth でユーザー作成
-    console.log('👤 Supabase Authユーザー作成開始')
+    console.log('📧 [EMAIL_DEBUG] Supabase Authユーザー作成開始')
     const isDevelopment = process.env.NODE_ENV === 'development' || data.email.includes('@example.com')
+    
+    console.log('📧 [EMAIL_DEBUG] メール送信設定:', {
+      isDevelopment,
+      email_confirm: isDevelopment,
+      emailDomain: data.email.split('@')[1],
+      willSkipEmailConfirmation: isDevelopment
+    })
     
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
@@ -361,14 +374,25 @@ export async function POST(request: NextRequest) {
     })
 
     if (authError || !authUser.user) {
-      console.error('❌ ユーザー作成エラー:', authError)
+      console.error('📧 [EMAIL_DEBUG] ユーザー作成エラー:', {
+        error: authError,
+        errorMessage: authError?.message,
+        errorCode: authError?.status,
+        hasUser: !!authUser?.user
+      })
       return NextResponse.json({
         success: false,
         error: 'ユーザー作成に失敗しました: ' + (authError?.message || '不明なエラー')
       }, { status: 500 })
     }
 
-    console.log('✅ Supabase Authユーザー作成完了:', authUser.user.id)
+    console.log('📧 [EMAIL_DEBUG] Supabase Authユーザー作成完了:', {
+      userId: authUser.user.id,
+      email: authUser.user.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
+      emailConfirmed: authUser.user.email_confirmed_at,
+      createdAt: authUser.user.created_at,
+      userMetadata: authUser.user.user_metadata
+    })
 
     // プロフィール画像のアップロード処理
     let avatarUrl: string | null = null
@@ -470,15 +494,25 @@ export async function POST(request: NextRequest) {
     }
 
     // 成功レスポンス
-    console.log('🎉 登録完了:', {
+    console.log('📧 [EMAIL_DEBUG] 登録完了 - 最終結果:', {
       userId: authUser.user.id,
       userType: data.userType,
-      email: data.email?.replace(/(.{3}).*(@.*)/, '$1***$2')
+      email: data.email?.replace(/(.{3}).*(@.*)/, '$1***$2'),
+      isDevelopment,
+      emailConfirmed: authUser.user.email_confirmed_at,
+      willRequireEmailVerification: !isDevelopment
     })
 
     const message = isDevelopment 
       ? '登録が完了しました。開発環境のため、メール認証をスキップしました。すぐにログインできます。'
       : '登録が完了しました。メールアドレスに送信された認証リンクをクリックして、アカウントを有効化してください。'
+
+    console.log('📧 [EMAIL_DEBUG] レスポンス送信:', {
+      success: true,
+      messagePreview: message.substring(0, 50) + '...',
+      emailVerificationRequired: !isDevelopment,
+      hasSession: !isDevelopment ? false : 'auto-login'
+    })
 
     return NextResponse.json({
       success: true,
@@ -487,12 +521,21 @@ export async function POST(request: NextRequest) {
         userId: authUser.user.id,
         email: authUser.user.email,
         userType: data.userType,
-        emailVerificationRequired: !isDevelopment
+        emailVerificationRequired: !isDevelopment,
+        ...(isDevelopment && {
+          session: authUser.session,
+          user: authUser.user
+        })
       }
     })
 
   } catch (error) {
-    console.error('❌ 登録API エラー:', error)
+    console.error('📧 [EMAIL_DEBUG] 登録API エラー (catch):', {
+      error,
+      errorName: (error as Error)?.name,
+      errorMessage: (error as Error)?.message,
+      errorStack: (error as Error)?.stack
+    })
     return NextResponse.json({
       success: false,
       error: 'サーバーエラーが発生しました'
