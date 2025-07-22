@@ -614,6 +614,12 @@ export async function POST(request: NextRequest) {
         ...(isDevelopment && {
           user: authUser.user
         })
+      },
+      // 🚨 一時的にサーバー情報をクライアントに送信（デバッグ用）
+      debug: {
+        serverLogs: 'Check Vercel Function Logs for detailed email sending info',
+        manualEmailAttempted: !isDevelopment && !authUser.user.email_confirmed_at,
+        timestamp: new Date().toISOString()
       }
     })
 
